@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Cover } from "./Cover";
 import "./shelf-hover.css";
+import "./shelf-loading.css";
 import { pct } from "./format";
 import {
   activateReading,
@@ -62,7 +63,18 @@ export function Shelf({ token, onAuthError }: Props) {
     return (
       <div className="stack">
         <h1 className="sr-only">Estante</h1>
-        {err ? <p className="toast error" role="status">{err}</p> : <div className="skel c" aria-hidden="true" />}
+        {err ? (
+          <p className="toast error" role="status">{err}</p>
+        ) : (
+          <ul className="shelf" data-testid="shelf-skeleton" aria-busy="true" aria-label="Carregando estante">
+            {Array.from({ length: 6 }, (_, n) => (
+              <li key={n}>
+                <div className="shelf-skel-tile" />
+                <div className="shelf-skel-title" />
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     );
 
@@ -82,7 +94,7 @@ export function Shelf({ token, onAuthError }: Props) {
           {items.map((i) => (
             <li key={i.id}>
               <button className="shelf-item" onClick={() => setOpenId(i.id)}>
-                <Cover url={i.cover_url} title={i.title} />
+                <Cover url={i.cover_url} title={i.title} loading />
                 <span className="shelf-title">{i.title}</span>
                 <span className={`chip ${i.status}`}>{STATUS[i.status]}</span>
               </button>

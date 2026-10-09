@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReadingListItem } from "./api";
@@ -117,5 +117,35 @@ describe("Shelf", () => {
     ]);
     const { dlg } = await open("Neuromancer");
     expect(within(dlg).getByText(text)).toBeTruthy();
+  });
+});
+
+describe("Shelf loading", () => {
+  it("shows a skeleton grid until the list resolves", async () => {
+    let resolve!: (v: ReadingListItem[]) => void;
+    vi.mocked(api.listReadings).mockReturnValue(new Promise((r) => (resolve = r)));
+    render(<Shelf token="tok" />);
+    const sk = screen.getByTestId("shelf-skeleton");
+    expect(sk.getAttribute("aria-busy")).toBe("true");
+    expect(sk.getAttribute("aria-label")).toBe("Carregando estante");
+    expect(sk.querySelectorAll(".shelf-skel-tile").length).toBe(6);
+    resolve(READINGS);
+    await screen.findByAltText("Duna");
+    expect(screen.queryByTestId("shelf-skeleton")).toBeNull();
+  });
+
+  it("shows a cover spinner until the image loads", async () => {
+    render(<Shelf token="tok" />);
+    const img = await screen.findByAltText("Duna");
+    expect(screen.getByRole("status", { name: "Carregando capa" })).toBeTruthy();
+    fireEvent.load(img);
+    await waitFor(() => expect(screen.queryByRole("status", { name: "Carregando capa" })).toBeNull());
+  });
+
+  it("falls back to initials when the image errors", async () => {
+    render(<Shelf token="tok" />);
+    fireEvent.error(await screen.findByAltText("Duna"));
+    expect(screen.queryByRole("status", { name: "Carregando capa" })).toBeNull();
+    expect(screen.getAllByTestId("cover-placeholder").length).toBe(2);
   });
 });

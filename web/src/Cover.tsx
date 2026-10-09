@@ -10,11 +10,16 @@ interface Props {
   url: string | null;
   title: string;
   small?: boolean;
+  loading?: boolean;
 }
 
-export function Cover({ url, title, small }: Props) {
+export function Cover({ url, title, small, loading }: Props) {
   const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [url]);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    setFailed(false);
+    setLoaded(false);
+  }, [url]);
   const cls = small ? "cover small" : "cover";
   if (!url || failed)
     return (
@@ -22,15 +27,27 @@ export function Cover({ url, title, small }: Props) {
         {initials(title)}
       </div>
     );
-  return (
+  const img = (
     <img
-      className={cls}
+      className={cls + (loading ? (loaded ? " fade loaded" : " fade") : "")}
       src={url}
       alt={title}
       loading="eager"
       decoding="async"
       referrerPolicy="no-referrer"
+      onLoad={() => setLoaded(true)}
       onError={() => setFailed(true)}
     />
+  );
+  if (!loading) return img;
+  return (
+    <div className="cover-slot">
+      {img}
+      {!loaded && (
+        <div className="cover-loading" role="status" aria-label="Carregando capa">
+          <span className="spinner" />
+        </div>
+      )}
+    </div>
   );
 }
