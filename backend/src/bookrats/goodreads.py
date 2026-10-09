@@ -63,10 +63,14 @@ async def poll_once(conn, client: httpx.AsyncClient) -> int:
     for user in store.list_users(conn):
         if not user.goodreads_user_id:
             continue
-        resp = await client.get(
-            FEED_URL.format(user_id=user.goodreads_user_id), headers={"User-Agent": USER_AGENT}
-        )
-        resp.raise_for_status()
+        try:
+            resp = await client.get(
+                FEED_URL.format(user_id=user.goodreads_user_id), headers={"User-Agent": USER_AGENT}
+            )
+            resp.raise_for_status()
+        except httpx.HTTPError as exc:
+            log.warning("goodreads fetch failed for user %s: %s", user.id, exc)
+            continue
         for u in sorted(parse_updates(resp.text), key=lambda u: u.ts):
             active = store.active_reading(conn)
             rid = active["id"] if active and u.book_id and active["goodreads_book_id"] == u.book_id else None
@@ -78,10 +82,13 @@ async def poll_once(conn, client: httpx.AsyncClient) -> int:
 
 async def poll_forever(db_path: str, interval: int) -> None:
     conn = db.connect(db_path)
-    async with httpx.AsyncClient(timeout=20) as client:
-        while True:
-            try:
-                await poll_once(conn, client)
-            except httpx.HTTPError as exc:
-                log.warning("goodreads poll failed: %s", exc)
-            await asyncio.sleep(interval)
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            while True:
+                try:
+                    await poll_once(conn, client)
+                except Exception:
+                    log.exception("goodreads poll failed")
+                await asyncio.sleep(interval)
+    finally:
+        conn.close()

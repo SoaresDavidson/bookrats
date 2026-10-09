@@ -81,3 +81,33 @@ def test_poll_once_other_book_has_no_reading(conn, colega):
     n = conn.execute("SELECT COUNT(*) FROM snapshots WHERE user_id=?", (colega.id,)).fetchone()[0]
     assert n == 2
     assert store.snapshots_for(conn, colega.id, r) == []
+
+
+def test_poll_once_isolates_failing_user(conn, colega):
+    store.add_user(conn, "Outro", "t-outro", goodreads_user_id="456")
+
+    def handler(req):
+        if str(req.url).endswith("/123"):
+            return httpx.Response(404)
+        return httpx.Response(200, text=FIX)
+
+    assert run_poll(conn, httpx.AsyncClient(transport=httpx.MockTransport(handler))) == 2
+    outro = next(u for u in store.list_users(conn) if u.name == "Outro")
+    assert conn.execute("SELECT COUNT(*) FROM snapshots WHERE user_id=?", (outro.id,)).fetchone()[0] == 2
+
+
+def test_poll_forever_survives_errors(monkeypatch, tmp_path):
+    from bookrats import goodreads
+
+    calls = []
+
+    async def fake(conn, client):
+        calls.append(1)
+        if len(calls) == 1:
+            raise RuntimeError("boom")
+        raise asyncio.CancelledError
+
+    monkeypatch.setattr(goodreads, "poll_once", fake)
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(goodreads.poll_forever(str(tmp_path / "x.db"), 0))
+    assert len(calls) == 2
