@@ -30,12 +30,15 @@ export function Dashboard({ token, onAuthError }: Props) {
       }
     };
     void load();
-    const id = setInterval(() => {
+    const tick = () => {
       if (document.visibilityState === "visible") void load();
-    }, 60000);
+    };
+    const id = setInterval(tick, 60000);
+    document.addEventListener("visibilitychange", tick);
     return () => {
       alive = false;
       clearInterval(id);
+      document.removeEventListener("visibilitychange", tick);
     };
   }, [token, onAuthError]);
 
@@ -55,7 +58,7 @@ export function Dashboard({ token, onAuthError }: Props) {
     };
   }, [token, names, onAuthError]);
 
-  if (!summary) return <p className="muted">{error ? "Não foi possível carregar. Tente de novo em instantes." : "Carregando…"}</p>;
+  if (!summary) return error ? <p className="alert" role="alert">Não foi possível carregar o progresso. Verifique sua conexão; vamos tentar de novo em 1 minuto.</p> : <p className="muted">Carregando…</p>;
   if (!summary.reading)
     return (
       <section className="card">
@@ -67,7 +70,7 @@ export function Dashboard({ token, onAuthError }: Props) {
   const { reading, readers } = summary;
   return (
     <section className="stack">
-      {error && <p className="muted">Desatualizado: falha ao atualizar.</p>}
+      {error && <p className="alert" role="alert">Desatualizado: não foi possível atualizar agora.</p>}
       <div>
         <h2 className="title">{reading.title}</h2>
         {reading.author && <p className="muted">{reading.author}</p>}
@@ -92,7 +95,8 @@ export function Dashboard({ token, onAuthError }: Props) {
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={v}
-                style={{ width: `${v}%`, background: COLORS[i % 2], zIndex: 2 - i, opacity: i ? 0.9 : 1 }}
+                data-reader={r.name}
+                style={{ width: `${v}%`, background: COLORS[i % 2], zIndex: 101 - v, ["--c" as string]: COLORS[i % 2] }}
               />
             );
           })}

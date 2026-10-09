@@ -87,8 +87,9 @@ export function Manage({ token, onAuthError }: Props) {
 
   return (
     <div className="stack">
-      {msg && <p className="toast" role="status">{msg}</p>}
+      {msg && <p className={msg.startsWith("Algo") || msg.startsWith("Informe") ? "toast error" : "toast"} role="status">{msg}</p>}
       <form className="card stack" onSubmit={saveProgress}>
+        <h3 className="sub">Atualizar meu progresso</h3>
         <label className="field">
           <span>Meu progresso (%)</span>
           <input type="number" inputMode="numeric" min={0} max={100} value={value} onChange={(e) => setValue(e.target.value)} />
@@ -97,6 +98,7 @@ export function Manage({ token, onAuthError }: Props) {
       </form>
 
       <form className="card stack" onSubmit={create}>
+        <h3 className="sub">Nova leitura</h3>
         <label className="field">
           <span>Título</span>
           <input value={title} onChange={(e) => setTitle(e.target.value)} />

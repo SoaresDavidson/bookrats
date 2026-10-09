@@ -64,3 +64,28 @@ describe("Dashboard", () => {
     expect(within(document.body).queryByText(/undefined/)).toBeNull();
   });
 });
+
+describe("Dashboard bar stacking", () => {
+  const order = (a: number, b: number) => {
+    const s = makeSummary();
+    s.readers[0].percentage = a;
+    s.readers[1].percentage = b;
+    vi.mocked(api.getSummary).mockResolvedValue(s);
+  };
+  const z = (name: string) =>
+    Number(document.querySelector<HTMLElement>(`[data-reader="${name}"]`)!.style.zIndex);
+
+  it("keeps the shorter fill on top when the first reader leads", async () => {
+    order(0.6, 0.4);
+    render(<Dashboard token="tok" />);
+    await screen.findByText(/Duna/);
+    expect(z("Colega")).toBeGreaterThan(z("Davi"));
+  });
+
+  it("keeps the shorter fill on top when the second reader leads", async () => {
+    order(0.4, 0.6);
+    render(<Dashboard token="tok" />);
+    await screen.findByText(/Duna/);
+    expect(z("Davi")).toBeGreaterThan(z("Colega"));
+  });
+});

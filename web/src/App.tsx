@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import "./App.css";
 import { Dashboard } from "./Dashboard";
 import { Manage } from "./Manage";
@@ -18,14 +18,14 @@ export default function App() {
   const [draft, setDraft] = useState("");
   const [tab, setTab] = useState<"progress" | "manage">("progress");
 
-  const logout = () => {
+  const logout = useCallback(() => {
     try {
       localStorage.removeItem(KEY);
     } catch {
       /* ignore */
     }
     setToken("");
-  };
+  }, []);
 
   if (!token) {
     return (
