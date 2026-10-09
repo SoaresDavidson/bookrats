@@ -43,10 +43,5 @@ uv run uvicorn bookrats.asgi:app --port 8000   # open http://localhost:8000/app/
 6. No git remote yet.
 
 ## Known minor follow-ups (non-blocking)
-- `web/src/pages/Dashboard/Dashboard.test.tsx` uses `["col","lapse"].join("")` to avoid Tailwind scanning tests; cleaner: `@source not "../**/*.test.{ts,tsx}";` in `src/styles/tailwind.css`.
-- Mobile `App.tsx` `run()` has no catch (stale message on SecureStore error); no handler test for the cache fallback after the read-on-failure change.
-- Create-reading 422 is always labelled as a cover error when a cover URL was sent; 409 on "Começar a ler este" shows a generic error.
-- Palette labels duplicated in web (not served by `/api/palette`).
 - Shelf 40ms neighbour "wave" delay is neutralised by the cover fade transition.
-- Open Library rarely has PT-BR editions — consider Google Books as a second cover source.
 - Session `group_sessions` (backend/src/bookrats/sessions.py) was written by the user; gap = 1800 s.
