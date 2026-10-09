@@ -60,7 +60,13 @@ async function loadSummary() {
     const req = new Request(BASE + "/api/summary");
     req.headers = { Authorization: "Bearer " + TOKEN };
     req.timeoutInterval = 15;
-    const json = await req.loadJSON();
+    let json = null;
+    try {
+      json = await req.loadJSON();
+    } catch (e) {
+      if (req.response && req.response.statusCode === 401) return { summary: null, stale: false, error: "auth" };
+      throw e;
+    }
     const code = req.response ? req.response.statusCode : 0;
     if (code === 401) return { summary: null, stale: false, error: "auth" };
     if (code >= 200 && code < 300 && json && Array.isArray(json.readers)) {
@@ -79,7 +85,8 @@ function barImage(p, color, width, height) {
   ctx.opaque = false;
   ctx.respectScreenScale = true;
   const r = height / 2;
-  ctx.setFillColor(Color.dynamic(new Color("#000000", 0.12), new Color("#FFFFFF", 0.18)));
+  const dark = Device.isUsingDarkAppearance();
+  ctx.setFillColor(dark ? new Color("#FFFFFF", 0.18) : new Color("#000000", 0.12));
   const track = new Path();
   track.addRoundedRect(new Rect(0, 0, width, height), r, r);
   ctx.addPath(track);
@@ -111,6 +118,7 @@ function buildWidget(summary, stale, error) {
 
   const family = config.widgetFamily || "medium";
   const small = family === "small";
+  if (family.indexOf("accessory") === 0) { message(widget, "Use o widget pequeno ou médio"); return widget; }
   const textColor = Color.dynamic(new Color("#111111"), new Color("#F2F2F7"));
   const subColor = Color.dynamic(new Color("#6B6B70"), new Color("#9A9AA0"));
 
@@ -126,13 +134,13 @@ function buildWidget(summary, stale, error) {
     title.lineLimit = 1;
     widget.addSpacer(6);
 
-    const barW = 280;
+    const barW = small ? 120 : 260;
     summary.readers.slice(0, 2).forEach(function (r, i) {
       const color = COLORS[i] || COLORS[0];
       const row = widget.addStack();
       row.layoutVertically();
       const img = row.addImage(barImage(r.percentage, color, barW, 8));
-      img.imageSize = new Size(small ? 120 : 260, 8);
+      img.imageSize = new Size(barW, 8);
       img.resizable = true;
       row.addSpacer(2);
       let line = r.name + " " + pct(r.percentage);
