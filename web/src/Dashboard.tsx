@@ -31,7 +31,7 @@ function ReaderBar({ r, i, animate }: { r: Reader; i: number; animate: boolean }
       </div>
       <div className="bar">
         <div
-          className="bar-fill"
+          className={`bar-fill${shown !== v ? " is-animating" : ""}`}
           role="progressbar"
           aria-label={r.name}
           aria-valuemin={0}

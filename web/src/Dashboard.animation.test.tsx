@@ -102,4 +102,13 @@ describe("Dashboard bar load animation", () => {
     expect(second).toBeLessThan(1);
     expect(first).toBeGreaterThan(second);
   });
+
+  it("disables the CSS transition class only while animating", async () => {
+    await load();
+    const el = document.querySelector('[data-reader="Davi"]') as HTMLElement;
+    await advance(300);
+    expect(el.classList.contains("is-animating")).toBe(true);
+    await advance(1000);
+    expect(el.classList.contains("is-animating")).toBe(false);
+  });
 });

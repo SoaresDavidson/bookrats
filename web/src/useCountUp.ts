@@ -6,8 +6,11 @@ export function useCountUp(target: number, opts: { animate: boolean; delay?: num
   const { animate, delay = 0, duration = 800 } = opts;
   const [val, setVal] = useState(animate ? 0 : target);
   const done = useRef(!animate);
+  const cur = useRef(animate ? 0 : target);
+  cur.current = val;
   useEffect(() => {
     if (!animate || done.current) return;
+    const from = cur.current;
     const start = performance.now() + delay;
     let id = 0;
     const step = () => {
@@ -17,7 +20,7 @@ export function useCountUp(target: number, opts: { animate: boolean; delay?: num
         setVal(target);
         return;
       }
-      setVal(target * ease(t));
+      setVal(from + (target - from) * ease(t));
       id = requestAnimationFrame(step);
     };
     id = requestAnimationFrame(step);

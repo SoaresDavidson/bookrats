@@ -137,15 +137,31 @@ describe("Shelf loading", () => {
   it("shows a cover spinner until the image loads", async () => {
     render(<Shelf token="tok" />);
     const img = await screen.findByAltText("Duna");
-    expect(screen.getByRole("status", { name: "Carregando capa" })).toBeTruthy();
+    expect(document.querySelector(".cover-loading")).toBeTruthy();
+    expect(img.closest(".cover-slot")?.getAttribute("aria-busy")).toBe("true");
     fireEvent.load(img);
-    await waitFor(() => expect(screen.queryByRole("status", { name: "Carregando capa" })).toBeNull());
+    await waitFor(() => expect(document.querySelector(".cover-loading")).toBeNull());
   });
 
   it("falls back to initials when the image errors", async () => {
     render(<Shelf token="tok" />);
     fireEvent.error(await screen.findByAltText("Duna"));
-    expect(screen.queryByRole("status", { name: "Carregando capa" })).toBeNull();
+    expect(document.querySelector(".cover-loading")).toBeNull();
     expect(screen.getAllByTestId("cover-placeholder").length).toBe(2);
+  });
+
+  it("no spinner when the image is already complete on mount", async () => {
+    const d1 = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "complete");
+    const d2 = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "naturalWidth");
+    Object.defineProperty(HTMLImageElement.prototype, "complete", { configurable: true, get: () => true });
+    Object.defineProperty(HTMLImageElement.prototype, "naturalWidth", { configurable: true, get: () => 100 });
+    try {
+      render(<Shelf token="tok" />);
+      await screen.findByAltText("Duna");
+      expect(document.querySelector(".cover-loading")).toBeNull();
+    } finally {
+      if (d1) Object.defineProperty(HTMLImageElement.prototype, "complete", d1); else delete (HTMLImageElement.prototype as any).complete;
+      if (d2) Object.defineProperty(HTMLImageElement.prototype, "naturalWidth", d2); else delete (HTMLImageElement.prototype as any).naturalWidth;
+    }
   });
 });

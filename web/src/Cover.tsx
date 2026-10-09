@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 export function initials(title: string): string {
   const words = title.split(/\s+/).filter((w) => /\p{L}/u.test(w));
@@ -13,13 +13,18 @@ interface Props {
   loading?: boolean;
 }
 
-export function Cover({ url, title, small, loading }: Props) {
+export function Cover(props: Props) {
+  return <CoverInner key={props.url ?? ""} {...props} />;
+}
+
+function CoverInner({ url, title, small, loading }: Props) {
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  useEffect(() => {
-    setFailed(false);
-    setLoaded(false);
-  }, [url]);
+  const ref = useRef<HTMLImageElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (el && el.complete && el.naturalWidth > 0) setLoaded(true);
+  }, []);
   const cls = small ? "cover small" : "cover";
   if (!url || failed)
     return (
@@ -29,6 +34,7 @@ export function Cover({ url, title, small, loading }: Props) {
     );
   const img = (
     <img
+      ref={ref}
       className={cls + (loading ? (loaded ? " fade loaded" : " fade") : "")}
       src={url}
       alt={title}
@@ -41,10 +47,10 @@ export function Cover({ url, title, small, loading }: Props) {
   );
   if (!loading) return img;
   return (
-    <div className="cover-slot">
+    <div className="cover-slot" aria-busy={!loaded}>
       {img}
       {!loaded && (
-        <div className="cover-loading" role="status" aria-label="Carregando capa">
+        <div className="cover-loading" aria-hidden="true">
           <span className="spinner" />
         </div>
       )}

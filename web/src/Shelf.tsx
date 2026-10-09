@@ -71,6 +71,7 @@ export function Shelf({ token, onAuthError }: Props) {
               <li key={n}>
                 <div className="shelf-skel-tile" />
                 <div className="shelf-skel-title" />
+                <div className="shelf-skel-chip" />
               </li>
             ))}
           </ul>
