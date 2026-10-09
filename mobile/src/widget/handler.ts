@@ -13,19 +13,23 @@ export interface Loaded {
 }
 
 export async function load(): Promise<Loaded> {
-  const [url, token, lastRaw] = await Promise.all([
+  const [url, token] = await Promise.all([
     SecureStore.getItemAsync(KEYS.url),
     SecureStore.getItemAsync(KEYS.token),
-    SecureStore.getItemAsync(KEYS.last),
   ]);
+  const outcome: Outcome = url && token ? await fetchSummary(url, token) : { kind: "unconfigured" };
+  if (outcome.kind === "ok") {
+    await SecureStore.setItemAsync(KEYS.last, JSON.stringify(outcome.summary));
+    return { outcome, cached: null };
+  }
+  // Cache is only needed (and only parsed) when the fetch did not succeed.
   let cached: Summary | null = null;
   try {
+    const lastRaw = await SecureStore.getItemAsync(KEYS.last);
     cached = lastRaw ? (JSON.parse(lastRaw) as Summary) : null;
   } catch {
     cached = null;
   }
-  const outcome: Outcome = url && token ? await fetchSummary(url, token) : { kind: "unconfigured" };
-  if (outcome.kind === "ok") await SecureStore.setItemAsync(KEYS.last, JSON.stringify(outcome.summary));
   return { outcome, cached };
 }
 

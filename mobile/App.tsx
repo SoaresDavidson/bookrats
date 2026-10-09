@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
+import React, { memo, useCallback, useEffect, useRef, useState } from "react";
+import { KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
 import { requestWidgetUpdate } from "react-native-android-widget";
@@ -8,90 +8,141 @@ import { BookratsWidget } from "./src/widget/BookratsWidget";
 import { KEYS, load } from "./src/widget/handler";
 import { toWidgetState } from "./src/widget/state";
 
-function Button({ label, onPress, primary }: { label: string; onPress: () => void; primary?: boolean }) {
+const Button = memo(function Button({
+  label, onPress, primary, disabled,
+}: { label: string; onPress: () => void; primary?: boolean; disabled?: boolean }) {
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !!disabled }}
+      disabled={disabled}
       onPress={onPress}
-      style={[styles.button, primary ? styles.primary : styles.secondary]}
+      style={[styles.button, primary ? styles.primary : styles.secondary, disabled && styles.disabled]}
     >
-      <Text style={[styles.buttonText, primary && { color: "#FAFAFA" }]}>{label}</Text>
+      <Text style={[styles.buttonText, primary && styles.primaryText]}>{label}</Text>
     </Pressable>
   );
-}
+});
 
 export default function App() {
   const [url, setUrl] = useState("");
   const [token, setToken] = useState("");
   const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+  const mounted = useRef(true);
+  // Latest field values for stable callbacks (avoids re-creating handlers on every keystroke).
+  const fields = useRef({ url: "", token: "" });
+  fields.current = { url, token };
 
   useEffect(() => {
+    mounted.current = true;
     (async () => {
-      setUrl((await SecureStore.getItemAsync(KEYS.url)) ?? "");
-      setToken((await SecureStore.getItemAsync(KEYS.token)) ?? "");
+      const [u, t] = await Promise.all([SecureStore.getItemAsync(KEYS.url), SecureStore.getItemAsync(KEYS.token)]);
+      if (!mounted.current) return;
+      setUrl(u ?? "");
+      setToken(t ?? "");
     })();
+    return () => {
+      mounted.current = false;
+    };
   }, []);
 
-  const save = async () => {
-    await SecureStore.setItemAsync(KEYS.url, url.trim());
-    await SecureStore.setItemAsync(KEYS.token, token.trim());
-    setMsg("Salvo.");
-  };
+  const run = useCallback(async (fn: () => Promise<string>) => {
+    setBusy(true);
+    try {
+      const m = await fn();
+      if (mounted.current) setMsg(m);
+    } finally {
+      if (mounted.current) setBusy(false);
+    }
+  }, []);
 
-  const test = async () => {
+  const save = useCallback(
+    () =>
+      run(async () => {
+        await Promise.all([
+          SecureStore.setItemAsync(KEYS.url, fields.current.url.trim()),
+          SecureStore.setItemAsync(KEYS.token, fields.current.token.trim()),
+        ]);
+        return "Salvo.";
+      }),
+    [run],
+  );
+
+  const test = useCallback(() => {
     setMsg("Testando…");
-    const o = await fetchSummary(url.trim(), token.trim());
-    if (o.kind === "ok") setMsg(`Leitores: ${o.summary.readers.map((r) => r.name).join(", ") || "nenhum"}`);
-    else if (o.kind === "auth") setMsg("Token inválido");
-    else setMsg("Erro de conexão");
-  };
-
-  const refresh = async () => {
-    await requestWidgetUpdate({
-      widgetName: "Bookrats",
-      renderWidget: async () => {
-        const { outcome, cached } = await load();
-        return <BookratsWidget state={toWidgetState(outcome, cached)} />;
-      },
+    return run(async () => {
+      const o = await fetchSummary(fields.current.url.trim(), fields.current.token.trim());
+      if (o.kind === "ok") return `Leitores: ${o.summary.readers.map((r) => r.name).join(", ") || "nenhum"}`;
+      if (o.kind === "auth") return "Token inválido";
+      return "Erro de conexão";
     });
-    setMsg("Widget atualizado.");
-  };
+  }, [run]);
+
+  const refresh = useCallback(
+    () =>
+      run(async () => {
+        await requestWidgetUpdate({
+          widgetName: "Bookrats",
+          renderWidget: async () => {
+            const { outcome, cached } = await load();
+            return <BookratsWidget state={toWidgetState(outcome, cached)} />;
+          },
+        });
+        return "Widget atualizado.";
+      }),
+    [run],
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      <View style={styles.card}>
-        <Text style={styles.title}>Bookrats</Text>
-        <Text style={styles.label}>Endereço do servidor</Text>
-        <TextInput
-          style={styles.input}
-          value={url}
-          onChangeText={setUrl}
-          placeholder="https://bookrats.exemplo.com"
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-        />
-        <Text style={styles.label}>Token</Text>
-        <TextInput
-          style={styles.input}
-          value={token}
-          onChangeText={setToken}
-          autoCapitalize="none"
-          autoCorrect={false}
-          secureTextEntry
-        />
-        <Button label="Salvar" onPress={save} primary />
-        <Button label="Testar" onPress={test} />
-        <Button label="Atualizar widget" onPress={refresh} />
-        {msg ? <Text style={styles.msg}>{msg}</Text> : null}
-      </View>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          <View style={styles.card}>
+            <Text style={styles.title} accessibilityRole="header">Bookrats</Text>
+            <Text style={styles.label}>Endereço do servidor</Text>
+            <TextInput
+              style={styles.input}
+              value={url}
+              onChangeText={setUrl}
+              placeholder="https://bookrats.exemplo.com"
+              accessibilityLabel="Endereço do servidor"
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              textContentType="URL"
+              returnKeyType="next"
+            />
+            <Text style={styles.label}>Token</Text>
+            <TextInput
+              style={styles.input}
+              value={token}
+              onChangeText={setToken}
+              accessibilityLabel="Token"
+              autoCapitalize="none"
+              autoCorrect={false}
+              secureTextEntry
+              returnKeyType="done"
+            />
+            <Button label="Salvar" onPress={save} primary disabled={busy} />
+            <Button label="Testar" onPress={test} disabled={busy} />
+            <Button label="Atualizar widget" onPress={refresh} disabled={busy} />
+            {msg ? <Text style={styles.msg} accessibilityLiveRegion="polite">{msg}</Text> : null}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F4F4F5", padding: 16, justifyContent: "center" },
+  container: { flex: 1, backgroundColor: "#F4F4F5" },
+  flex: { flex: 1 },
+  scroll: { flexGrow: 1, padding: 16, justifyContent: "center" },
+  disabled: { opacity: 0.5 },
+  primaryText: { color: "#FAFAFA" },
   card: { backgroundColor: "#FFFFFF", borderRadius: 12, padding: 20, gap: 10, borderWidth: 1, borderColor: "#E4E4E7" },
   title: { fontSize: 22, fontWeight: "700", color: "#18181B", marginBottom: 4 },
   label: { fontSize: 13, color: "#52525B" },

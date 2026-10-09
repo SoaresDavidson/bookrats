@@ -32,15 +32,23 @@ export type Outcome =
   | { kind: "network" }
   | { kind: "unconfigured" };
 
+export const FETCH_TIMEOUT_MS = 10_000;
+
 export async function fetchSummary(baseUrl: string, token: string): Promise<Outcome> {
+  // Abort so a stalled connection cannot hang the headless widget task.
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(`${baseUrl.replace(/\/+$/, "")}/api/summary`, {
       headers: { Authorization: `Bearer ${token}` },
+      signal: ctrl.signal,
     });
     if (res.status === 401) return { kind: "auth" };
     if (!res.ok) return { kind: "network" };
     return { kind: "ok", summary: (await res.json()) as Summary };
   } catch {
     return { kind: "network" };
+  } finally {
+    clearTimeout(timer);
   }
 }
