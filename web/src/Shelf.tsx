@@ -17,7 +17,11 @@ const FALLBACK = [
 const STATUS: Record<ReadingListItem["status"], string> = { lendo: "Lendo", lido: "Lido", pausado: "Pausado" };
 const fmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
 const date = (iso: string) => fmt.format(new Date(iso));
-const days = (a: string, b: string) => Math.max(1, Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86400000));
+const days = (a: string, b: string) => {
+  const x = new Date(a);
+  const y = new Date(b);
+  return Math.max(1, Math.round((Date.UTC(y.getFullYear(), y.getMonth(), y.getDate()) - Date.UTC(x.getFullYear(), x.getMonth(), x.getDate())) / 86400000));
+};
 
 interface Props {
   token: string;

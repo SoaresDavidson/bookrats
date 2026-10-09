@@ -106,4 +106,16 @@ describe("Shelf", () => {
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).toBeNull();
   });
+
+  it.each([
+    ["2026-04-01T23:00:00", "2026-04-02T01:00:00", "Leu em 1 dia"],
+    ["2026-10-05T08:00:00", "2026-10-07T20:00:00", "Leu em 2 dias"],
+    ["2026-04-01T08:00:00", "2026-04-01T20:00:00", "Leu em 1 dia"],
+  ])("counts calendar days %s -> %s", async (s, f, text) => {
+    vi.mocked(api.listReadings).mockResolvedValue([
+      { ...READINGS[1], readers: [rd("Davi", 1, s, f), rd("Colega", null, null, null)] },
+    ]);
+    const { dlg } = await open("Neuromancer");
+    expect(within(dlg).getByText(text)).toBeTruthy();
+  });
 });
