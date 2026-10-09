@@ -34,7 +34,7 @@ CLI: `uv run bookrats --help`.
    docker compose exec bookrats bookrats add-user --name Colega --goodreads-id 123456
    docker compose exec bookrats bookrats new-reading --title "Duna" --author "Frank Herbert" --goodreads-book-id 44767458
    ```
-   Each `add-user` prints an `api_token` for the widgets and web app.
+   Each `add-user` prints an `api_token` for the widgets and web app. A user created without `--goodreads-id` (manual progress only) can be linked later with `bookrats set-goodreads --name Colega --goodreads-id 123456`.
 
 ## Configure readers
 

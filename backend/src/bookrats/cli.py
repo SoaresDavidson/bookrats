@@ -16,6 +16,9 @@ def _parser() -> argparse.ArgumentParser:
     u.add_argument("--kosync-user")
     u.add_argument("--kosync-password")
     u.add_argument("--goodreads-id")
+    g = sub.add_parser("set-goodreads", help="link an existing user to a Goodreads profile")
+    g.add_argument("--name", required=True)
+    g.add_argument("--goodreads-id", required=True)
     r = sub.add_parser("new-reading", help="start a new active shared reading")
     r.add_argument("--title", required=True)
     r.add_argument("--author")
@@ -47,6 +50,14 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         print(f"user '{args.name}' created")
         print(f"api_token: {token}")
+        return 0
+    if args.command == "set-goodreads":
+        try:
+            store.set_goodreads_id(conn, args.name, args.goodreads_id)
+        except KeyError:
+            print(f"error: no user named '{args.name}'", file=sys.stderr)
+            return 1
+        print(f"user '{args.name}' linked to Goodreads {args.goodreads_id}")
         return 0
     rid = store.create_reading(conn, args.title, args.author, args.goodreads_book_id, args.cover_url)
     print(f"reading {rid} created: {args.title}")

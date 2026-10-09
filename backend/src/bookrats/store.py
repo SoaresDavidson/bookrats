@@ -56,6 +56,13 @@ def list_users(conn) -> list[User]:
     return [_user(r) for r in conn.execute(f"SELECT {_USER_COLS} FROM users ORDER BY id")]
 
 
+def set_goodreads_id(conn, name, goodreads_user_id) -> None:
+    cur = conn.execute("UPDATE users SET goodreads_user_id=? WHERE name=?", (goodreads_user_id, name))
+    conn.commit()
+    if cur.rowcount == 0:
+        raise KeyError(name)
+
+
 def create_reading(conn, title, author=None, goodreads_book_id=None, cover_url=None) -> int:
     try:
         conn.execute("UPDATE readings SET active=0")

@@ -65,3 +65,21 @@ def test_password_not_echoed(monkeypatch, tmp_path, capsys):
     main(["add-user", "--name", "D", "--kosync-user", "d", "--kosync-password", "s3cret-pw"])
     cap = capsys.readouterr()
     assert "s3cret-pw" not in cap.out + cap.err
+
+
+def test_set_goodreads_links_existing_user(monkeypatch, tmp_path, capsys):
+    path = _setup(monkeypatch, tmp_path)
+    assert main(["add-user", "--name", "Colega"]) == 0
+    token = store.list_users(db.connect(path))[0].api_token
+    capsys.readouterr()
+    assert main(["set-goodreads", "--name", "Colega", "--goodreads-id", "123456"]) == 0
+    assert "123456" in capsys.readouterr().out
+    u = store.list_users(db.connect(path))[0]
+    assert u.goodreads_user_id == "123456"
+    assert u.api_token == token
+
+
+def test_set_goodreads_unknown_user_fails_cleanly(monkeypatch, tmp_path, capsys):
+    _setup(monkeypatch, tmp_path)
+    assert main(["set-goodreads", "--name", "Ninguem", "--goodreads-id", "1"]) != 0
+    assert "Ninguem" in capsys.readouterr().err
