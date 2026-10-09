@@ -185,3 +185,27 @@ def test_no_snapshots_nulls(client, conn, davi, colega):
     store.create_reading(conn, "X")
     row = _list(client)[0]
     assert all(x["started_at"] is None and x["finished_at"] is None for x in row["readers"])
+
+
+def test_start_already_linked_409(client, conn, davi):
+    _doc(conn, davi, "hk", "T")
+    r = store.create_reading(conn, "Velho")
+    store.link_document(conn, "hk", r)
+    resp = client.post("/api/documents/hk/start", headers=AUTH, json={})
+    assert resp.status_code == 409 and resp.json()["detail"] == "documento já ligado a outra leitura"
+
+
+def test_goodreads_relink_skips_linked_docs(client, conn, davi):
+    store.add_snapshot(conn, davi.id, "goodreads", .5, 100, document="gr:777", title="H")
+    a = store.create_reading(conn, "A")
+    store.link_document(conn, "gr:777", a)
+    b = store.create_reading(conn, "B", goodreads_book_id="777")
+    assert [s.document for s in store.snapshots_for(conn, davi.id, a)] == ["gr:777"]
+    assert store.snapshots_for(conn, davi.id, b) == []
+    assert client.patch(f"/api/readings/{b}", headers=AUTH, json={"goodreads_book_id": "777"}).status_code == 204
+    assert store.snapshots_for(conn, davi.id, b) == []
+
+
+def test_patch_title_null_422(client, conn, davi):
+    r = store.create_reading(conn, "T")
+    assert client.patch(f"/api/readings/{r}", headers=AUTH, json={"title": None}).status_code == 422

@@ -96,4 +96,14 @@ describe("Shelf", () => {
     await user.click(d.getByRole("button", { name: "Salvar" }));
     expect(api.updateReading).toHaveBeenCalledWith("tok", 1, { title: "Duna Messias" });
   });
+
+  it("keeps focus inside the dialog across edit toggles; Escape closes", async () => {
+    const { user, dlg } = await open("Duna");
+    await user.click(within(dlg).getByRole("button", { name: "Editar" }));
+    expect(document.activeElement).toBe(within(dlg).getByLabelText("Título"));
+    await user.click(within(dlg).getByRole("button", { name: "Cancelar" }));
+    expect(document.activeElement).toBe(within(dlg).getByRole("button", { name: "Editar" }));
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
 });

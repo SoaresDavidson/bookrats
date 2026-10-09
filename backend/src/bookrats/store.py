@@ -61,7 +61,7 @@ def create_reading(conn, title, author=None, goodreads_book_id=None, cover_url=N
             (title, author, goodreads_book_id, int(time.time()), cover_url),
         )
         if goodreads_book_id is not None:
-            conn.execute("UPDATE documents SET reading_id=? WHERE hash=?",
+            conn.execute("UPDATE documents SET reading_id=? WHERE hash=? AND reading_id IS NULL",
                          (cur.lastrowid, "gr:" + str(goodreads_book_id)))
         conn.commit()
     except Exception:
@@ -184,7 +184,8 @@ def update_reading(conn, reading_id, **fields) -> None:
             conn.execute(f"UPDATE readings SET {cols} WHERE id=?", (*fields.values(), reading_id))
         gid = fields.get("goodreads_book_id")
         if gid:
-            conn.execute("UPDATE documents SET reading_id=? WHERE hash=?", (reading_id, "gr:" + str(gid)))
+            conn.execute("UPDATE documents SET reading_id=? WHERE hash=? AND reading_id IS NULL",
+                         (reading_id, "gr:" + str(gid)))
         conn.commit()
     except Exception:
         conn.rollback()
@@ -221,3 +222,18 @@ def list_readings(conn) -> list[dict]:
                     "sort": (bool(r["active"]), latest if latest is not None else r["created_at"], r["created_at"])})
     out.sort(key=lambda x: x["sort"], reverse=True)
     return out
+
+
+def start_from_document(conn, hash, title, authors, goodreads_book_id, cover_url) -> int:
+    """Create, link and activate a reading from a document in one transaction."""
+    try:
+        conn.execute("UPDATE readings SET active=0")
+        cur = conn.execute(
+            "INSERT INTO readings (title, author, goodreads_book_id, active, created_at, cover_url) VALUES (?,?,?,1,?,?)",
+            (title, authors, goodreads_book_id, int(time.time()), cover_url))
+        conn.execute("UPDATE documents SET reading_id=? WHERE hash=?", (cur.lastrowid, hash))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    return cur.lastrowid

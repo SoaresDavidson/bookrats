@@ -160,8 +160,10 @@ class ReadingPatch(BaseModel):
 def patch_reading(reading_id: int, body: ReadingPatch, _: store.User = Depends(current_user),
                   conn: sqlite3.Connection = Depends(get_conn)):
     fields = {k: getattr(body, k) for k in body.model_fields_set}
-    if fields.get("title") is None:
-        fields.pop("title", None)
+    if "title" in fields and fields["title"] is None:
+        raise HTTPException(422, "title cannot be null")
+    if isinstance(fields.get("author"), str):
+        fields["author"] = fields["author"].strip() or None
     try:
         store.update_reading(conn, reading_id, **fields)
     except KeyError:
@@ -202,13 +204,14 @@ async def start_document(hash: str, _: store.User = Depends(current_user),
     doc = conn.execute("SELECT * FROM documents WHERE hash=?", (hash,)).fetchone()
     if doc is None:
         raise HTTPException(404, "unknown document")
+    if doc["reading_id"] is not None:
+        raise HTTPException(409, "documento já ligado a outra leitura")
     title = (doc["title"] or "").strip()
     if not title:
         raise HTTPException(422, "document has no title")
     cover = await find_cover(http, title, doc["authors"])
     gid = hash[3:] if hash.startswith("gr:") and len(hash) > 3 else None
-    rid = store.create_reading(conn, title, doc["authors"], gid, cover)
-    store.link_document(conn, hash, rid)
+    rid = store.start_from_document(conn, hash, title, doc["authors"], gid, cover)
     return {"id": rid}
 
 
