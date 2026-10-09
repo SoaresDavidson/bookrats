@@ -59,4 +59,10 @@ describe("App", () => {
     expect(await screen.findByLabelText("Cole seu token")).toBeTruthy();
     expect(localStorage.getItem(KEY)).toBeNull();
   });
+
+  it("has Progresso, Estante and Gerenciar tabs", async () => {
+    localStorage.setItem(KEY, "secret");
+    render(<App />);
+    for (const n of ["Progresso", "Estante", "Gerenciar"]) expect(await screen.findByRole("button", { name: n })).toBeTruthy();
+  });
 });

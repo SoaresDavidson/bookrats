@@ -118,3 +118,15 @@ def test_connect_adds_users_color_column_to_old_db(tmp_path):
 def test_set_color_roundtrip(conn, davi):
     store.set_color(conn, davi.id, "verde")
     assert conn.execute("select color from users where id=?", (davi.id,)).fetchone()[0] == "verde"
+
+
+def test_claim_color_only_first_wins_across_connections(db_path, conn, davi, colega):
+    from bookrats import db
+
+    c2 = db.connect(db_path)
+    try:
+        assert store.claim_color(conn, davi.id, "verde") is True
+        assert store.claim_color(c2, colega.id, "verde") is False
+        assert store.claim_color(c2, colega.id, "roxo") is True
+    finally:
+        c2.close()

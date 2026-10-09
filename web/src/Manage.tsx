@@ -15,6 +15,11 @@ import {
   type UnlinkedDocument,
 } from "./api";
 
+function mark(hex: string): string {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.3 ? "#18181b" : "#ffffff";
+}
+
 interface Props {
   token: string;
   onAuthError?: () => void;
@@ -69,7 +74,10 @@ export function Manage({ token, onAuthError }: Props) {
       await setColor(token, id);
       await refresh();
     } catch (e) {
-      if (e instanceof Error && (e as { status?: number }).status === 409) setColorErr("Essa cor já está em uso");
+      if (e instanceof Error && (e as { status?: number }).status === 409) {
+        setColorErr("Essa cor já está em uso");
+        await refresh();
+      }
       else guard(e);
     }
   };
@@ -142,7 +150,7 @@ export function Manage({ token, onAuthError }: Props) {
           {palette.map((c) => {
             const taken = other?.color.id === c.id;
             return (
-              <label key={c.id} className="swatch" style={{ ["--c-light" as string]: c.light, ["--c-dark" as string]: c.dark }}>
+              <label key={c.id} className="swatch" style={{ ["--c-light" as string]: c.light, ["--c-dark" as string]: c.dark, ["--mark" as string]: mark(c.light), ["--mark-dark" as string]: mark(c.dark) }}>
                 <input
                   type="radio"
                   name="bar-color"

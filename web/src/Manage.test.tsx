@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { UnlinkedDocument } from "./api";
@@ -14,6 +14,7 @@ vi.mock("./api", async (orig) => ({
   setCover: vi.fn(),
   getPalette: vi.fn(),
   setColor: vi.fn(),
+  startFromDocument: vi.fn(),
 }));
 
 import * as api from "./api";
@@ -31,6 +32,8 @@ const PALETTE = [
 ].map(([id, light, dark]) => ({ id, light, dark }));
 const LABELS = ["Azul", "Laranja", "Verde", "Roxo", "Rosa", "Ciano", "Âmbar", "Grafite"];
 
+const docRow = async (text: RegExp) => (await screen.findByText(text)).closest("li") as HTMLElement;
+
 beforeEach(() => {
   vi.mocked(api.getSummary).mockReset().mockResolvedValue(makeSummary());
   vi.mocked(api.getUnlinked).mockReset().mockResolvedValue(docs);
@@ -40,6 +43,7 @@ beforeEach(() => {
   vi.mocked(api.setCover).mockReset().mockResolvedValue(undefined);
   vi.mocked(api.getPalette).mockReset().mockResolvedValue(PALETTE);
   vi.mocked(api.setColor).mockReset().mockResolvedValue(undefined);
+  vi.mocked(api.startFromDocument).mockReset().mockResolvedValue({ id: 5 });
 });
 
 describe("Manage", () => {
@@ -161,6 +165,23 @@ describe("Manage", () => {
       render(<Manage token="tok" />);
       await user.click(await screen.findByRole("radio", { name: /^Verde/ }));
       expect(await screen.findByText("Essa cor já está em uso")).toBeTruthy();
+    });
+  });
+  describe("documentos sem leitura: começar", () => {
+    it("titled doc: Começar a ler este calls startFromDocument; also É este livro", async () => {
+      const user = userEvent.setup();
+      render(<Manage token="tok" />);
+      const row = await docRow(/Messias de Duna/);
+      expect(within(row).getByRole("button", { name: "É este livro" })).toBeTruthy();
+      await user.click(within(row).getByRole("button", { name: "Começar a ler este" }));
+      expect(api.startFromDocument).toHaveBeenCalledWith("tok", "gr:99");
+    });
+
+    it("untitled doc: only É este livro", async () => {
+      render(<Manage token="tok" />);
+      const row = await docRow(/abcdef12/);
+      expect(within(row).getByRole("button", { name: "É este livro" })).toBeTruthy();
+      expect(within(row).queryByRole("button", { name: "Começar a ler este" })).toBeNull();
     });
   });
 });

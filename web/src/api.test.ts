@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
-  AuthError, HttpError, createReading, getPalette, getSessions, getSummary, getUnlinked, linkDocument, postProgress, setColor, setCover,
+  AuthError, HttpError, activateReading, listReadings, startFromDocument, updateReading, createReading, getPalette, getSessions, getSummary, getUnlinked, linkDocument, postProgress, setColor, setCover,
 } from "./api";
 
 const fetchMock = vi.fn();
@@ -90,4 +90,35 @@ test("setColor 409 rejects with HttpError status 409", async () => {
   const e = await setColor("tok", "azul").catch((x) => x);
   expect(e).toBeInstanceOf(HttpError);
   expect(e.status).toBe(409);
+});
+
+test("listReadings GETs /api/readings", async () => {
+  fetchMock.mockResolvedValue(json([]));
+  await expect(listReadings("tok")).resolves.toEqual([]);
+  expect(fetchMock.mock.calls[0][0]).toBe("/api/readings");
+});
+
+test("activateReading POSTs activate", async () => {
+  fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+  await activateReading("tok", 3);
+  const [url, init] = fetchMock.mock.calls[0];
+  expect(url).toBe("/api/readings/3/activate");
+  expect(init.method).toBe("POST");
+});
+
+test("updateReading PATCHes only given fields", async () => {
+  fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+  await updateReading("tok", 3, { title: "X" });
+  const [url, init] = fetchMock.mock.calls[0];
+  expect(url).toBe("/api/readings/3");
+  expect(init.method).toBe("PATCH");
+  expect(init.body).toBe('{"title":"X"}');
+});
+
+test("startFromDocument POSTs encoded hash and returns id", async () => {
+  fetchMock.mockResolvedValue(json({ id: 9 }, 201));
+  await expect(startFromDocument("tok", "gr:1")).resolves.toEqual({ id: 9 });
+  const [url, init] = fetchMock.mock.calls[0];
+  expect(url).toBe("/api/documents/gr%3A1/start");
+  expect(init.method).toBe("POST");
 });
