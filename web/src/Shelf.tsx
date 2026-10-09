@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Cover } from "./Cover";
+import "./shelf-hover.css";
 import { pct } from "./format";
 import {
   activateReading,

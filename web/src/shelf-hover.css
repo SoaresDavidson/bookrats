@@ -1,0 +1,31 @@
+@media (hover: hover) and (pointer: fine) {
+  .shelf { overflow: visible; padding-top: 12px; }
+  .shelf-item .cover {
+    transform-origin: 50% 100%;
+    transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease;
+    will-change: transform;
+  }
+  .shelf li:hover, .shelf li:focus-within { position: relative; z-index: 1; }
+  .shelf-item:hover .cover,
+  .shelf-item:focus-visible .cover {
+    transform: scale(1.12);
+    box-shadow: var(--shelf-shadow), 0 14px 24px -10px rgb(24 24 27 / 0.35);
+  }
+  .shelf li:has(+ li > .shelf-item:hover) .cover,
+  .shelf li:has(+ li > .shelf-item:focus-visible) .cover,
+  .shelf li:hover + li .cover,
+  .shelf li:has(> .shelf-item:focus-visible) + li .cover { transform: scale(1.05); }
+  .shelf li:has(+ li + li > .shelf-item:hover) .cover,
+  .shelf li:hover + li + li .cover { transform: scale(1.02); }
+  .shelf li:has(+ li:hover) > .shelf-item .cover { transform: scale(1.05); }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: reduce) {
+  .shelf-item .cover { transition: box-shadow 220ms ease; will-change: auto; }
+  .shelf-item:hover .cover,
+  .shelf-item:focus-visible .cover,
+  .shelf li:hover + li .cover,
+  .shelf li:has(+ li:hover) .cover,
+  .shelf li:hover + li + li .cover { transform: none; }
+  .shelf-item:hover .cover,
+  .shelf-item:focus-visible .cover { box-shadow: var(--shelf-shadow), 0 10px 18px -10px rgb(24 24 27 / 0.3); }
+}
