@@ -64,7 +64,8 @@ export function BookratsWidget({ state }: { state: WidgetState }) {
       {state.kind === "message" ? (
         <TextWidget text={state.text} style={{ fontSize: 14, color: FG, textAlign: "center" }} />
       ) : (
-        <>
+        // The widget renderer calls element types as functions, so React.Fragment is not supported.
+        <FlexWidget style={{ width: "match_parent", flexDirection: "column" }}>
           <FlexWidget style={{ width: "match_parent", flexDirection: "row", justifyContent: "space-between" }}>
             <TextWidget
               text={state.title}
@@ -77,7 +78,7 @@ export function BookratsWidget({ state }: { state: WidgetState }) {
           {state.readers.map((r) => (
             <Row key={r.name} r={r} />
           ))}
-        </>
+        </FlexWidget>
       )}
     </FlexWidget>
   );
