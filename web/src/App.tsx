@@ -65,7 +65,7 @@ export default function App() {
         </nav>
       </header>
       {tab === "progress" ? (
-        <Dashboard token={token} onAuthError={logout} />
+        <Dashboard token={token} onAuthError={logout} onGoManage={() => setTab("manage")} />
       ) : (
         <Manage token={token} onAuthError={logout} />
       )}

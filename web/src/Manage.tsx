@@ -23,6 +23,8 @@ export function Manage({ token, onAuthError }: Props) {
   const [author, setAuthor] = useState("");
   const [grId, setGrId] = useState("");
   const [msg, setMsg] = useState("");
+  const [progErr, setProgErr] = useState("");
+  const [titleErr, setTitleErr] = useState("");
 
   const guard = useCallback(
     (e: unknown) => {
@@ -62,16 +64,21 @@ export function Manage({ token, onAuthError }: Props) {
     e.preventDefault();
     const n = Number(value);
     if (value === "" || Number.isNaN(n) || n < 0 || n > 100) {
-      setMsg("Informe um valor entre 0 e 100.");
+      setProgErr("Informe um valor entre 0 e 100.");
       return;
     }
+    setProgErr("");
     void run(() => postProgress(token, n / 100), "Progresso salvo.");
   };
 
   const create = (e: FormEvent) => {
     e.preventDefault();
     const t = title.trim();
-    if (!t) return;
+    if (!t) {
+      setTitleErr("Informe o título do livro.");
+      return;
+    }
+    setTitleErr("");
     const body: { title: string; author?: string; goodreads_book_id?: string } = { title: t };
     if (author.trim()) body.author = author.trim();
     if (grId.trim()) body.goodreads_book_id = grId.trim();
@@ -87,12 +94,13 @@ export function Manage({ token, onAuthError }: Props) {
 
   return (
     <div className="stack">
-      {msg && <p className={msg.startsWith("Algo") || msg.startsWith("Informe") ? "toast error" : "toast"} role="status">{msg}</p>}
+      {msg && <p className={msg.startsWith("Algo") ? "toast error" : "toast"} role="status">{msg}</p>}
       <form className="card stack" onSubmit={saveProgress}>
         <h3 className="sub">Atualizar meu progresso</h3>
         <label className="field">
           <span>Meu progresso (%)</span>
-          <input type="number" inputMode="numeric" min={0} max={100} value={value} onChange={(e) => setValue(e.target.value)} />
+          <input type="number" inputMode="numeric" min={0} max={100} value={value} aria-invalid={!!progErr} onChange={(e) => setValue(e.target.value)} />
+          {progErr && <span className="field-error">{progErr}</span>}
         </label>
         <button className="btn primary" type="submit">Salvar progresso</button>
       </form>
@@ -101,7 +109,8 @@ export function Manage({ token, onAuthError }: Props) {
         <h3 className="sub">Nova leitura</h3>
         <label className="field">
           <span>Título</span>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} />
+          <input value={title} aria-invalid={!!titleErr} onChange={(e) => setTitle(e.target.value)} />
+          {titleErr && <span className="field-error">{titleErr}</span>}
         </label>
         <label className="field">
           <span>Autor</span>

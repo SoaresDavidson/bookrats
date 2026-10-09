@@ -1,23 +1,32 @@
+@import "@fontsource-variable/geist";
+
+/* Shape lock: cards 16px, inputs/buttons 12px, tabs and bar pill. One zinc gray family.
+   Accent (chrome and first reader) is #2F6FEB; second reader #E8590C. No pure black/white. */
 :root {
-  --bg: #f6f5f1;
-  --card: #ffffff;
-  --ink: #1d2433;
-  --muted: #6a7384;
-  --line: #e3e1da;
-  --track: #e6e4dd;
+  --bg: #f4f4f5;
+  --card: #fbfbfc;
+  --ink: #18181b;
+  --muted: #5a5a64;
+  --line: #e0e0e4;
+  --track: #e4e4e8;
   --accent: #2f6feb;
+  --on-accent: #f8f8fa;
+  --danger: #b42318;
+  --r-card: 16px;
+  --r-control: 12px;
   color-scheme: light dark;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: "Geist Variable", system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #14171f;
-    --card: #1d212c;
-    --ink: #eceef3;
-    --muted: #99a1b3;
-    --line: #2b3040;
-    --track: #2b3040;
+    --bg: #18181b;
+    --card: #202024;
+    --ink: #ececf0;
+    --muted: #a1a1ab;
+    --line: #313137;
+    --track: #313137;
+    --danger: #ff8a80;
   }
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.45; -webkit-text-size-adjust: 100%; }
+body { margin: 0; min-height: 100dvh; background: var(--bg); color: var(--ink); line-height: 1.45; -webkit-text-size-adjust: 100%; }

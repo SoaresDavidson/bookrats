@@ -6,10 +6,11 @@ export const COLORS = ["#2F6FEB", "#E8590C"];
 
 interface Props {
   token: string;
+  onGoManage?: () => void;
   onAuthError?: () => void;
 }
 
-export function Dashboard({ token, onAuthError }: Props) {
+export function Dashboard({ token, onAuthError, onGoManage }: Props) {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState(false);
   const [history, setHistory] = useState<Record<string, SessionOut[]>>({});
@@ -58,12 +59,13 @@ export function Dashboard({ token, onAuthError }: Props) {
     };
   }, [token, names, onAuthError]);
 
-  if (!summary) return error ? <p className="alert" role="alert">Não foi possível carregar o progresso. Verifique sua conexão; vamos tentar de novo em 1 minuto.</p> : <p className="muted">Carregando…</p>;
+  if (!summary) return error ? <p className="alert" role="alert">Não foi possível carregar o progresso. Verifique sua conexão; vamos tentar de novo em 1 minuto.</p> : <div className="stack" aria-busy="true" aria-label="Carregando"><div className="skel t" /><div className="skel c" /><div className="skel b" /></div>;
   if (!summary.reading)
     return (
-      <section className="card">
+      <section className="card empty-state">
         <p className="empty">Nenhuma leitura ativa</p>
-        <p className="muted">Crie uma leitura na aba Gerenciar.</p>
+        <p className="muted">Crie uma leitura para começar a comparar o progresso de vocês.</p>
+        {onGoManage && <button className="btn primary" onClick={onGoManage}>Ir para Gerenciar</button>}
       </section>
     );
 
@@ -78,8 +80,8 @@ export function Dashboard({ token, onAuthError }: Props) {
       <div className="card stack">
         <div className="names">
           {readers.map((r, i) => (
-            <span key={r.name} className="name" style={{ color: COLORS[i % 2] }}>
-              {r.name} {pct(r.percentage)}
+            <span key={r.name} className="name">
+              <span className="dot" style={{ ["--c" as string]: COLORS[i % 2] }} />{r.name} {pct(r.percentage)}
             </span>
           ))}
         </div>
@@ -111,8 +113,8 @@ export function Dashboard({ token, onAuthError }: Props) {
         </div>
       </div>
       {readers.map((r, i) => (
-        <div key={r.name} className="card">
-          <h3 className="sub" style={{ color: COLORS[i % 2] }}>Histórico de {r.name}</h3>
+        <div key={r.name} className="plain">
+          <h3 className="sub"><span className="dot" style={{ ["--c" as string]: COLORS[i % 2] }} />Histórico de {r.name}</h3>
           {(history[r.name] ?? []).length === 0 ? (
             <p className="muted">Sem sessões ainda.</p>
           ) : (
