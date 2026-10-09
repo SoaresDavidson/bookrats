@@ -158,3 +158,25 @@ test("ago", () => {
 - Android widget: cover deferred.
 
 Tests: backend — find_cover hit/miss/HTTP error with MockTransport; POST without cover_url stores resolved URL; POST with cover_url skips lookup; PATCH 204/404; summary includes cover_url. Web — Dashboard renders img with alt=title when cover_url present, placeholder when null; Manage PATCH call.
+
+---
+
+### Task 6: Per-reader bar color
+
+**Decision (user request 2026-10-09):** each user picks the color of their own bar from a curated palette; the two readers may not share a color.
+
+**Palette (id → light-theme hex / dark-theme hex, all ≥3:1 against their track and background in both themes):**
+`azul #2F6FEB/#6F9CF5`, `laranja #E8590C/#FF8A4C`, `verde #2B8A3E/#51CF66`, `roxo #7048E8/#9775FA`, `rosa #D6336C/#F06595`, `ciano #0C8599/#3BC9DB`, `ambar #B76E00/#FCC419`, `grafite #495057/#ADB5BD`.
+Defaults: user id order → azul, laranja.
+
+**Files:**
+- Backend: `db.py` (users.color TEXT, guarded ALTER), `store.py` (`set_color(conn, user_id, color_id)`), `api.py`, new `backend/src/bookrats/palette.py` (`PALETTE: dict[str, tuple[str, str]]`, `DEFAULT_ORDER = ["azul", "laranja"]`).
+- Web: `api.ts` (Reader.color: {id, light, dark}; `setColor(token, colorId)`), `Dashboard.tsx` (bars/dots use the reader's color via CSS custom properties `--c-light/--c-dark`), `Manage.tsx` (new card "Cor da minha barra": radio group of swatches, the other reader's color disabled with label "em uso por <nome>"), CSS.
+- Widgets: Scriptable and Android use `reader.color` (dark/light per appearance; Android widget uses the dark value), falling back to the fixed defaults when absent.
+
+**Interfaces:**
+- `/api/summary` → each reader gains `"color": {"id": "azul", "light": "#2F6FEB", "dark": "#6F9CF5"}` (never null: falls back to the default for that position).
+- `GET /api/palette` → `[{"id", "light", "dark"}]` in palette order.
+- `PUT /api/me/color` body `{"color": "<id>"}` → 204; 422 unknown id; 409 `{"detail": "cor em uso"}` when the other user already has it.
+
+Tests: backend — defaults when unset, set/get roundtrip, unknown id 422, conflict 409, palette endpoint order, summary shape, schema upgrade adds the column. Web — dashboard applies the reader color variables; Manage swatch selection calls setColor, other reader's color disabled, error 409 shown inline. Mobile — state.ts uses reader.color.dark with fallback. Scriptable — reviewed by reading.
