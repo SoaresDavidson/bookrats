@@ -25,6 +25,8 @@ const Button = memo(function Button({
   );
 });
 
+const FAIL_MSG = "Não foi possível concluir. Tente de novo.";
+
 export default function App() {
   const [url, setUrl] = useState("");
   const [token, setToken] = useState("");
@@ -38,10 +40,14 @@ export default function App() {
   useEffect(() => {
     mounted.current = true;
     (async () => {
-      const [u, t] = await Promise.all([SecureStore.getItemAsync(KEYS.url), SecureStore.getItemAsync(KEYS.token)]);
-      if (!mounted.current) return;
-      setUrl(u ?? "");
-      setToken(t ?? "");
+      try {
+        const [u, t] = await Promise.all([SecureStore.getItemAsync(KEYS.url), SecureStore.getItemAsync(KEYS.token)]);
+        if (!mounted.current) return;
+        setUrl(u ?? "");
+        setToken(t ?? "");
+      } catch {
+        if (mounted.current) setMsg(FAIL_MSG);
+      }
     })();
     return () => {
       mounted.current = false;
@@ -53,6 +59,8 @@ export default function App() {
     try {
       const m = await fn();
       if (mounted.current) setMsg(m);
+    } catch {
+      if (mounted.current) setMsg(FAIL_MSG);
     } finally {
       if (mounted.current) setBusy(false);
     }
