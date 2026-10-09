@@ -5,7 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { requestWidgetUpdate } from "react-native-android-widget";
 import { fetchSummary } from "./src/api";
 import { BookratsWidget } from "./src/widget/BookratsWidget";
-import { KEYS } from "./src/widget/handler";
+import { KEYS, load } from "./src/widget/handler";
 import { toWidgetState } from "./src/widget/state";
 
 function Button({ label, onPress, primary }: { label: string; onPress: () => void; primary?: boolean }) {
@@ -50,9 +50,8 @@ export default function App() {
     await requestWidgetUpdate({
       widgetName: "Bookrats",
       renderWidget: async () => {
-        const [u, t] = [await SecureStore.getItemAsync(KEYS.url), await SecureStore.getItemAsync(KEYS.token)];
-        const outcome = u && t ? await fetchSummary(u, t) : ({ kind: "unconfigured" } as const);
-        return <BookratsWidget state={toWidgetState(outcome, null)} />;
+        const { outcome, cached } = await load();
+        return <BookratsWidget state={toWidgetState(outcome, cached)} />;
       },
     });
     setMsg("Widget atualizado.");

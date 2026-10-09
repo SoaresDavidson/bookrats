@@ -7,7 +7,12 @@ import { toWidgetState } from "./state";
 
 export const KEYS = { url: "bookrats.url", token: "bookrats.token", last: "bookrats.last" };
 
-async function load(): Promise<WidgetStateInput> {
+export interface Loaded {
+  outcome: Outcome;
+  cached: Summary | null;
+}
+
+export async function load(): Promise<Loaded> {
   const [url, token, lastRaw] = await Promise.all([
     SecureStore.getItemAsync(KEYS.url),
     SecureStore.getItemAsync(KEYS.token),
@@ -22,11 +27,6 @@ async function load(): Promise<WidgetStateInput> {
   const outcome: Outcome = url && token ? await fetchSummary(url, token) : { kind: "unconfigured" };
   if (outcome.kind === "ok") await SecureStore.setItemAsync(KEYS.last, JSON.stringify(outcome.summary));
   return { outcome, cached };
-}
-
-interface WidgetStateInput {
-  outcome: Outcome;
-  cached: Summary | null;
 }
 
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<void> {
