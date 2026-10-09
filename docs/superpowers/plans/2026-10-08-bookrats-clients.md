@@ -180,3 +180,23 @@ Defaults: user id order → azul, laranja.
 - `PUT /api/me/color` body `{"color": "<id>"}` → 204; 422 unknown id; 409 `{"detail": "cor em uso"}` when the other user already has it.
 
 Tests: backend — defaults when unset, set/get roundtrip, unknown id 422, conflict 409, palette endpoint order, summary shape, schema upgrade adds the column. Web — dashboard applies the reader color variables; Manage swatch selection calls setColor, other reader's color disabled, error 409 shown inline. Mobile — state.ts uses reader.color.dark with fallback. Scriptable — reviewed by reading.
+
+---
+
+### Task 7: Switching readings
+
+**Decision (user 2026-10-09):** one active reading at a time; the user can switch back to any previous reading and edit readings. Starting a new book from an incoming document is one tap.
+
+**Backend interfaces:**
+- `GET /api/readings` → `[{"id","title","author","cover_url","goodreads_book_id","active": bool,"created_at": ISO,"readers":[{"name","percentage": float|null,"updated_at": ISO|null}]}]`, active first, then by most recent progress (fallback created_at) descending. Percentages = each user's latest snapshot for that reading.
+- `POST /api/readings/{id}/activate` → 204; makes it the only active reading; 404 unknown.
+- `PATCH /api/readings/{id}` body any subset of `{"title","author","goodreads_book_id","cover_url"}` → 204 (replaces the cover-only PATCH; same cover_url validation; title non-empty, ≤200 chars; when goodreads_book_id changes and a "gr:<id>" document exists it is linked to this reading).
+- `POST /api/documents/{hash}/start` body `{}` → 201 `{"id"}`: creates a reading from the document's title/authors (422 if the document has no title), links the document, resolves the cover like POST /api/readings, and activates it. For "gr:<id>" documents it also sets goodreads_book_id.
+- `store.activate_reading`, `store.update_reading`, `store.list_readings`.
+
+**Web:**
+- Manage gets a card "Minhas leituras" listing readings: cover thumb (2:3, 48px), title, author, each reader's last pct as small dots+numbers, "Atual" badge on the active one; others have "Retomar" (POST activate, then refresh summary). Each row has "Editar" opening an inline form (title, author, Goodreads ID, cover URL) → PATCH.
+- "Documentos sem leitura": rows with a title get a primary "Começar a ler este" plus the existing "É este livro" (secondary). Rows without title keep only "É este livro".
+- After switching, the Dashboard shows the new active reading (widgets follow automatically through /api/summary).
+
+**Tests:** backend — list order and per-reader pct; activate switches the single active; PATCH partial updates, validation, goodreads relink; start from titled kosync doc and from gr: doc; 422 without title; 404s; auth. Web — list renders, Retomar calls activateReading and refreshes, Editar submits PATCH with only changed fields, "Começar a ler este" visible only for titled documents and calls startFromDocument.
