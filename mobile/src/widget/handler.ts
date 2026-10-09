@@ -16,7 +16,8 @@ export async function load(): Promise<Loaded> {
   const [url, token] = await Promise.all([SecureStore.getItemAsync(KEYS.url), SecureStore.getItemAsync(KEYS.token)]);
   const outcome: Outcome = url && token ? await fetchSummary(url, token) : { kind: "unconfigured" };
   if (outcome.kind === "ok") {
-    await SecureStore.setItemAsync(KEYS.last, JSON.stringify(outcome.summary));
+    // A failed cache write must not hide fresh data.
+    await SecureStore.setItemAsync(KEYS.last, JSON.stringify(outcome.summary)).catch(() => undefined);
     return { outcome, cached: null };
   }
   // Cache is only needed (and only parsed) when the fetch did not succeed.
@@ -37,8 +38,14 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<
     case "WIDGET_RESIZED":
     case "WIDGET_CLICK": {
       if (props.widgetAction === "WIDGET_CLICK" && props.clickAction !== "REFRESH") return;
-      const { outcome, cached } = await load();
-      props.renderWidget(React.createElement(BookratsWidget, { state: toWidgetState(outcome, cached) }));
+      // Render any failure: an uncaught throw leaves the previous widget content in place.
+      try {
+        const { outcome, cached } = await load();
+        props.renderWidget(React.createElement(BookratsWidget, { state: toWidgetState(outcome, cached) }));
+      } catch (e) {
+        const text = `Erro: ${e instanceof Error ? e.message : String(e)}`;
+        props.renderWidget(React.createElement(BookratsWidget, { state: { kind: "message", text } }));
+      }
       return;
     }
     default:

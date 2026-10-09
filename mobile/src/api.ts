@@ -29,7 +29,7 @@ export interface Summary {
 export type Outcome =
   | { kind: "ok"; summary: Summary }
   | { kind: "auth" }
-  | { kind: "network" }
+  | { kind: "network"; reason: string }
   | { kind: "unconfigured" };
 
 export const FETCH_TIMEOUT_MS = 10_000;
@@ -44,10 +44,11 @@ export async function fetchSummary(baseUrl: string, token: string): Promise<Outc
       signal: ctrl.signal,
     });
     if (res.status === 401) return { kind: "auth" };
-    if (!res.ok) return { kind: "network" };
+    if (!res.ok) return { kind: "network", reason: `HTTP ${res.status}` };
     return { kind: "ok", summary: (await res.json()) as Summary };
-  } catch {
-    return { kind: "network" };
+  } catch (e) {
+    if (ctrl.signal.aborted) return { kind: "network", reason: "tempo esgotado" };
+    return { kind: "network", reason: e instanceof Error ? e.message : String(e) };
   } finally {
     clearTimeout(timer);
   }

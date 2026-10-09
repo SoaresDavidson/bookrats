@@ -16,11 +16,16 @@ test("never-resolving fetch yields network after timeout and is aborted", async 
   }) as typeof fetch;
   const p = fetchSummary("http://x", "t");
   await jest.advanceTimersByTimeAsync(FETCH_TIMEOUT_MS + 1);
-  expect(await p).toEqual({ kind: "network" });
+  expect(await p).toEqual({ kind: "network", reason: "tempo esgotado" });
   expect(signal?.aborted).toBe(true);
 });
 
 test("401 -> auth", async () => {
   globalThis.fetch = (async () => ({ status: 401, ok: false })) as unknown as typeof fetch;
   expect(await fetchSummary("http://x/", "t")).toEqual({ kind: "auth" });
+});
+
+test("non-ok status -> network with status", async () => {
+  globalThis.fetch = (async () => ({ status: 502, ok: false })) as unknown as typeof fetch;
+  expect(await fetchSummary("http://x", "t")).toEqual({ kind: "network", reason: "HTTP 502" });
 });

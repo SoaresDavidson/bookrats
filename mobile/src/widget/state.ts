@@ -43,6 +43,6 @@ export function toWidgetState(outcome: Outcome, cached: Summary | null, now: Dat
     case "unconfigured":
       return { kind: "message", text: "Abra o app para configurar" };
     case "network":
-      return cached ? fromSummary(cached, true, now) : { kind: "message", text: "Sem conexão" };
+      return cached ? fromSummary(cached, true, now) : { kind: "message", text: `Sem conexão (${outcome.reason})` };
   }
 }

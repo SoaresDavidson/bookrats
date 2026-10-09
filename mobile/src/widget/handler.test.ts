@@ -28,7 +28,7 @@ test("corrupt cache with failing fetch -> network, no cache", async () => {
   stubFetch(async () => {
     throw new Error("down");
   });
-  expect(await load()).toEqual({ outcome: { kind: "network" }, cached: null });
+  expect(await load()).toEqual({ outcome: { kind: "network", reason: "down" }, cached: null });
 });
 
 test("unconfigured with cache -> unconfigured + cached, no fetch", async () => {
@@ -52,7 +52,7 @@ test("offline with cache -> network + cached", async () => {
   stubFetch(async () => {
     throw new Error("down");
   });
-  expect(await load()).toEqual({ outcome: { kind: "network" }, cached: summary });
+  expect(await load()).toEqual({ outcome: { kind: "network", reason: "down" }, cached: summary });
 });
 
 test("success writes cache", async () => {

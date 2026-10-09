@@ -93,7 +93,7 @@ export default function App() {
       const o = await fetchSummary(fields.current.url.trim(), fields.current.token.trim());
       if (o.kind === "ok") return `Leitores: ${o.summary.readers.map((r) => r.name).join(", ") || "nenhum"}`;
       if (o.kind === "auth") return "Token inválido";
-      return "Erro de conexão";
+      return o.kind === "network" ? `Erro de conexão (${o.reason})` : "Erro de conexão";
     });
   }, [run]);
 

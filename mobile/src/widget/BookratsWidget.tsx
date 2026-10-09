@@ -9,17 +9,21 @@ const TRACK = "#3F3F46";
 const FG = "#FAFAFA";
 const MUTED = "#A1A1AA";
 
+// The native side reads flex weights with getInt, so fractions truncate to 0; scale to integers.
+const WEIGHT_SCALE = 1000;
+
 function Bar({ fill, color }: { fill: number; color: string }) {
+  const filled = Math.round(fill * WEIGHT_SCALE);
   return (
     <FlexWidget
       style={{ flexDirection: "row", width: "match_parent", height: 8, borderRadius: 4, backgroundColor: TRACK }}
     >
-      {fill > 0 && (
+      {filled > 0 && (
         <FlexWidget
-          style={{ flex: fill, height: "match_parent", borderRadius: 4, backgroundColor: color as `#${string}` }}
+          style={{ flex: filled, height: "match_parent", borderRadius: 4, backgroundColor: color as `#${string}` }}
         />
       )}
-      {fill < 1 && <FlexWidget style={{ flex: 1 - fill, height: "match_parent" }} />}
+      {filled < WEIGHT_SCALE && <FlexWidget style={{ flex: WEIGHT_SCALE - filled, height: "match_parent" }} />}
     </FlexWidget>
   );
 }

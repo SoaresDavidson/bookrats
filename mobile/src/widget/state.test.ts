@@ -54,12 +54,15 @@ describe("toWidgetState", () => {
   });
 
   test("network with cache is stale", () => {
-    const s = toWidgetState({ kind: "network" }, full, now);
+    const s = toWidgetState({ kind: "network", reason: "x" }, full, now);
     expect(s).toMatchObject({ kind: "data", title: "Dune", stale: true });
   });
 
   test("network without cache", () => {
-    expect(toWidgetState({ kind: "network" }, null, now)).toEqual({ kind: "message", text: "Sem conexão" });
+    expect(toWidgetState({ kind: "network", reason: "HTTP 502" }, null, now)).toEqual({
+      kind: "message",
+      text: "Sem conexão (HTTP 502)",
+    });
   });
 
   test("unconfigured", () => {
