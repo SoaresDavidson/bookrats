@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AuthError, getSessions, getSummary, type SessionOut, type Summary } from "./api";
+import { AuthError, getSessions, getSummary, type Reader, type SessionOut, type Summary } from "./api";
 import { Cover } from "./Cover";
 import { ago, pct, sessionText } from "./format";
 
@@ -9,6 +9,60 @@ interface Props {
   token: string;
   onGoManage?: () => void;
   onAuthError?: () => void;
+}
+
+function points(s: { from: number; to: number }): string {
+  const a = Math.round(s.from * 100);
+  const b = Math.round(s.to * 100);
+  const d = b - a;
+  const n = Math.abs(d);
+  return `${d > 0 ? "+" : d < 0 ? "-" : ""}${n} ${n === 1 ? "ponto" : "pontos"} (${a}% → ${b}%)`;
+}
+
+function lastLine(r: Reader): string {
+  if (!r.last_session) return "Sem sessões ainda";
+  return `Última sessão ${ago(r.updated_at)} · ${points(r.last_session)}`;
+}
+
+function lead(readers: Reader[]): string {
+  const [a, b] = readers;
+  if (!a || !b || a.percentage === null || b.percentage === null) return "";
+  const d = Math.round(a.percentage * 100) - Math.round(b.percentage * 100);
+  if (d === 0) return "Empatados";
+  const n = Math.abs(d);
+  return `${d > 0 ? a.name : b.name} à frente por ${n} ${n === 1 ? "ponto" : "pontos"}`;
+}
+
+function HistoryList({ name, color, sessions }: { name: string; color: string; sessions: SessionOut[] }) {
+  const [all, setAll] = useState(false);
+  const shown = all ? sessions : sessions.slice(0, 5);
+  return (
+    <details className="history">
+      <summary>
+        <span className="dot" style={{ ["--c" as string]: color }} />Histórico de {name}
+        <svg className="chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      </summary>
+      {sessions.length === 0 ? (
+        <p className="muted">Sem sessões ainda.</p>
+      ) : (
+        <>
+          <ul className="list">
+            {shown.map((s) => (
+              <li key={s.started_at}>
+                <span>{sessionText(s)}</span>
+                <span className="muted">{ago(s.ended_at)}</span>
+              </li>
+            ))}
+          </ul>
+          {sessions.length > 5 && (
+            <button className="link" type="button" onClick={() => setAll((v) => !v)}>
+              {all ? "Ver menos" : "Ver todas"}
+            </button>
+          )}
+        </>
+      )}
+    </details>
+  );
 }
 
 export function Dashboard({ token, onAuthError, onGoManage }: Props) {
@@ -74,64 +128,44 @@ export function Dashboard({ token, onAuthError, onGoManage }: Props) {
   return (
     <section className="stack">
       {error && <p className="alert" role="alert">Desatualizado: não foi possível atualizar agora.</p>}
-      <div className="hero card">
-        <Cover url={reading.cover_url} title={reading.title} />
-        <div className="hero-text">
-          <h2 className="title">{reading.title}</h2>
-          {reading.author && <p className="muted">{reading.author}</p>}
+      <div className="card hero-card">
+        <div className="hero">
+          <Cover url={reading.cover_url} title={reading.title} />
+          <div className="hero-text">
+            <h2 className="title">{reading.title}</h2>
+            {reading.author && <p className="muted">{reading.author}</p>}
+          </div>
         </div>
-      </div>
-      <div className="card stack">
-        <div className="names">
-          {readers.map((r, i) => (
-            <span key={r.name} className="name">
-              <span className="dot" style={{ ["--c" as string]: COLORS[i % 2] }} />{r.name} {pct(r.percentage)}
-            </span>
-          ))}
-        </div>
-        <div className="track">
+        <div className="readers">
           {readers.map((r, i) => {
             const v = r.percentage === null ? 0 : Math.round(r.percentage * 100);
             return (
-              <div
-                key={r.name}
-                className="fill"
-                role="progressbar"
-                aria-label={r.name}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={v}
-                data-reader={r.name}
-                style={{ width: `${v}%`, background: COLORS[i % 2], zIndex: 101 - v, ["--c" as string]: COLORS[i % 2] }}
-              />
+              <div key={r.name} className="reader">
+                <div className="reader-top">
+                  <span className="name"><span className="dot" style={{ ["--c" as string]: COLORS[i % 2] }} />{r.name}</span>
+                  <span className="pct">{pct(r.percentage)}</span>
+                </div>
+                <div className="bar">
+                  <div
+                    className="bar-fill"
+                    role="progressbar"
+                    aria-label={r.name}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={v}
+                    data-reader={r.name}
+                    style={{ width: `${v}%`, background: COLORS[i % 2] }}
+                  />
+                </div>
+                <p className="muted">{lastLine(r)}</p>
+              </div>
             );
           })}
-        </div>
-        <div className="names">
-          {readers.map((r) => (
-            <div key={r.name} className="meta">
-              <div>{sessionText(r.last_session) || "sem dados"}</div>
-              <div className="muted">{ago(r.updated_at)}</div>
-            </div>
-          ))}
+          {lead(readers) && <p className="lead">{lead(readers)}</p>}
         </div>
       </div>
       {readers.map((r, i) => (
-        <div key={r.name} className="plain">
-          <h3 className="sub"><span className="dot" style={{ ["--c" as string]: COLORS[i % 2] }} />Histórico de {r.name}</h3>
-          {(history[r.name] ?? []).length === 0 ? (
-            <p className="muted">Sem sessões ainda.</p>
-          ) : (
-            <ul className="list">
-              {history[r.name].map((s) => (
-                <li key={s.started_at}>
-                  <span>{sessionText(s)}</span>
-                  <span className="muted">{ago(s.ended_at)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <HistoryList key={r.name} name={r.name} color={COLORS[i % 2]} sessions={history[r.name] ?? []} />
       ))}
     </section>
   );

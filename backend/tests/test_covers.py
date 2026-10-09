@@ -19,7 +19,7 @@ def test_hit_uses_first_doc_with_cover_and_params():
 
     def handler(req):
         seen.append(req)
-        return httpx.Response(200, json={"docs": [{"title": "Dune"}, {"title": "Dune", "cover_i": 12345}]})
+        return httpx.Response(200, json={"docs": [{"title": "Duna"}, {"title": "Duna", "cover_i": 12345}]})
 
     assert _run(handler) == URL
     p = seen[0].url.params
@@ -49,3 +49,25 @@ def test_connect_error():
     def handler(req):
         raise httpx.ConnectError("down")
     assert _run(handler) is None
+
+
+def test_prefers_exact_title_over_earlier_prefix_match():
+    docs = [{"title": "Imperador-Deus de Duna", "cover_i": 1},
+            {"title": "Duna", "cover_i": 12345}]
+    assert _run(lambda r: httpx.Response(200, json={"docs": docs})) == URL
+
+
+def test_exact_match_ignores_accents_case_punctuation():
+    docs = [{"title": "Outro livro", "cover_i": 1}, {"title": "DÚNA!", "cover_i": 12345}]
+    assert _run(lambda r: httpx.Response(200, json={"docs": docs})) == URL
+
+
+def test_prefix_match_when_no_exact():
+    docs = [{"title": "Imperador-Deus de Duna", "cover_i": 1},
+            {"title": "Duna: edicao nova", "cover_i": 12345}]
+    assert _run(lambda r: httpx.Response(200, json={"docs": docs})) == URL
+
+
+def test_no_exact_or_prefix_match_returns_none():
+    docs = [{"title": "Imperador-Deus de Duna", "cover_i": 1}, {"title": "Dune", "cover_i": 2}]
+    assert _run(lambda r: httpx.Response(200, json={"docs": docs})) is None

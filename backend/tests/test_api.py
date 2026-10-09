@@ -157,7 +157,7 @@ def _mock_http(client, handler):
 
 
 def _found(req):
-    return httpx.Response(200, json={"docs": [{"cover_i": 12345}]})
+    return httpx.Response(200, json={"docs": [{"title": "Duna", "cover_i": 12345}]})
 
 
 def _cover(client):

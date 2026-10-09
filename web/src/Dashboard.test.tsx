@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeSummary } from "./fixtures";
 
@@ -65,28 +65,56 @@ describe("Dashboard", () => {
   });
 });
 
-describe("Dashboard bar stacking", () => {
-  const order = (a: number, b: number) => {
+describe("Dashboard per-reader bars", () => {
+  const set = (a: number | null, b: number | null) => {
     const s = makeSummary();
     s.readers[0].percentage = a;
     s.readers[1].percentage = b;
     vi.mocked(api.getSummary).mockResolvedValue(s);
   };
-  const z = (name: string) =>
-    Number(document.querySelector<HTMLElement>(`[data-reader="${name}"]`)!.style.zIndex);
+  const w = (name: string) =>
+    document.querySelector<HTMLElement>(`[data-reader="${name}"]`)!.style.width;
 
-  it("keeps the shorter fill on top when the first reader leads", async () => {
-    order(0.6, 0.4);
+  it("gives each reader its own bar with its own width", async () => {
+    set(0.62, 0.58);
     render(<Dashboard token="tok" />);
     await screen.findByText(/Duna/);
-    expect(z("Colega")).toBeGreaterThan(z("Davi"));
+    expect(w("Davi")).toBe("62%");
+    expect(w("Colega")).toBe("58%");
+    expect(screen.getByText("Davi à frente por 4 pontos")).toBeTruthy();
   });
 
-  it("keeps the shorter fill on top when the second reader leads", async () => {
-    order(0.4, 0.6);
+  it("says Empatados when equal", async () => {
+    set(0.5, 0.5);
+    render(<Dashboard token="tok" />);
+    expect(await screen.findByText("Empatados")).toBeTruthy();
+  });
+
+  it("formats a negative last session with a plain hyphen", async () => {
+    const s = makeSummary();
+    s.readers[0].last_session = { from: 0.5, to: 0.47, started_at: s.readers[0].updated_at!, ended_at: s.readers[0].updated_at! };
+    vi.mocked(api.getSummary).mockResolvedValue(s);
+    render(<Dashboard token="tok" />);
+    expect(await screen.findByText(/-3 pontos \(50% → 47%\)/)).toBeTruthy();
+  });
+
+  it("shows Sem sessões ainda without a session", async () => {
     render(<Dashboard token="tok" />);
     await screen.findByText(/Duna/);
-    expect(z("Davi")).toBeGreaterThan(z("Colega"));
+    expect(screen.getAllByText("Sem sessões ainda").length).toBeGreaterThan(0);
+  });
+
+  it("history is a collapsed details with latest 5 and Ver todas", async () => {
+    const mk = (i: number) => ({ from: i / 100, to: (i + 1) / 100, started_at: `2026-01-0${i + 1}T00:00:00Z`, ended_at: `2026-01-0${i + 1}T01:00:00Z` });
+    vi.mocked(api.getSessions).mockResolvedValue([0, 1, 2, 3, 4, 5, 6].map(mk));
+    render(<Dashboard token="tok" />);
+    await screen.findByText(/Duna/);
+    await screen.findAllByText("Ver todas");
+    const d = document.querySelector("details.history") as HTMLDetailsElement;
+    expect(d.open).toBe(false);
+    expect(d.querySelectorAll("li").length).toBe(5);
+    fireEvent.click(within(d).getByText("Ver todas"));
+    expect(d.querySelectorAll("li").length).toBe(7);
   });
 });
 
