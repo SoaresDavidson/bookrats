@@ -1,4 +1,4 @@
-import { useEffect, useState, useId } from "react";
+import { useEffect, useRef, useState, useId } from "react";
 import { AuthError, getSessions, getSummary, type Reader, type SessionOut, type Summary } from "./api";
 import { Cover } from "./Cover";
 import { ago, pct, sessionText } from "./format";
@@ -21,7 +21,19 @@ function shouldAnimate(): boolean {
 
 function ReaderBar({ r, i, animate }: { r: Reader; i: number; animate: boolean }) {
   const v = r.percentage === null ? 0 : Math.round(r.percentage * 100);
-  const shown = useCountUp(v, { animate, delay: i * 120, duration: 800 });
+  const { value: shown, animating } = useCountUp(v, { animate, delay: i * 120, duration: 800 });
+  const [advanced, setAdvanced] = useState(false);
+  const prev = useRef(v);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => {
+    if (v > prev.current) {
+      setAdvanced(true);
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setAdvanced(false), 1600);
+    }
+    prev.current = v;
+  }, [v]);
+  useEffect(() => () => clearTimeout(timer.current), []);
   const text = shown === v ? pct(r.percentage) : `${Math.round(shown)}%`;
   return (
     <div className="reader">
@@ -31,7 +43,7 @@ function ReaderBar({ r, i, animate }: { r: Reader; i: number; animate: boolean }
       </div>
       <div className="bar">
         <div
-          className={`bar-fill${shown !== v ? " is-animating" : ""}`}
+          className={`bar-fill${animating ? " is-animating" : ""}${advanced ? " is-advanced" : ""}`}
           role="progressbar"
           aria-label={r.name}
           aria-valuemin={0}
