@@ -159,3 +159,65 @@ def claim_color(conn, user_id, color_id) -> bool:
     except BaseException:
         conn.rollback()
         raise
+
+
+def activate_reading(conn, reading_id) -> None:
+    if conn.execute("SELECT 1 FROM readings WHERE id=?", (reading_id,)).fetchone() is None:
+        raise KeyError(reading_id)
+    try:
+        conn.execute("UPDATE readings SET active=0")
+        conn.execute("UPDATE readings SET active=1 WHERE id=?", (reading_id,))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+
+
+def update_reading(conn, reading_id, **fields) -> None:
+    allowed = {"title", "author", "goodreads_book_id", "cover_url"}
+    fields = {k: v for k, v in fields.items() if k in allowed}
+    if conn.execute("SELECT 1 FROM readings WHERE id=?", (reading_id,)).fetchone() is None:
+        raise KeyError(reading_id)
+    try:
+        if fields:
+            cols = ", ".join(f"{k}=?" for k in fields)
+            conn.execute(f"UPDATE readings SET {cols} WHERE id=?", (*fields.values(), reading_id))
+        gid = fields.get("goodreads_book_id")
+        if gid:
+            conn.execute("UPDATE documents SET reading_id=? WHERE hash=?", (reading_id, "gr:" + str(gid)))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+
+
+FINISHED = 0.99
+
+
+def list_readings(conn) -> list[dict]:
+    users = list_users(conn)
+    out = []
+    for r in conn.execute("SELECT * FROM readings"):
+        readers = []
+        for u in users:
+            snaps = snapshots_for(conn, u.id, r["id"])
+            fin = next((s.ts for s in snaps if s.percentage >= FINISHED), None)
+            readers.append({
+                "name": u.name,
+                "percentage": snaps[-1].percentage if snaps else None,
+                "updated_at": snaps[-1].ts if snaps else None,
+                "started_at": snaps[0].ts if snaps else None,
+                "finished_at": fin,
+            })
+        with_data = [x for x in readers if x["started_at"] is not None]
+        if r["active"]:
+            status = "lendo"
+        elif with_data and all(x["finished_at"] is not None for x in with_data):
+            status = "lido"
+        else:
+            status = "pausado"
+        latest = max((x["updated_at"] for x in readers if x["updated_at"] is not None), default=None)
+        out.append({"row": r, "readers": readers, "status": status,
+                    "sort": (bool(r["active"]), latest if latest is not None else r["created_at"], r["created_at"])})
+    out.sort(key=lambda x: x["sort"], reverse=True)
+    return out

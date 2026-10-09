@@ -138,14 +138,78 @@ async def post_reading(body: ReadingIn, _: store.User = Depends(current_user),
     return {"id": store.create_reading(conn, body.title, body.author, body.goodreads_book_id, cover)}
 
 
+class ReadingPatch(BaseModel):
+    title: str | None = None
+    author: str | None = None
+    goodreads_book_id: str | None = None
+    cover_url: str | None = None
+
+    _v = field_validator("cover_url")(_clean_cover_url)
+
+    @field_validator("title")
+    @classmethod
+    def _title(cls, v):
+        if v is not None:
+            v = v.strip()
+            if not v or len(v) > 200:
+                raise ValueError("title must be 1-200 chars")
+        return v
+
+
 @router.patch("/readings/{reading_id}", status_code=204)
-def patch_reading(reading_id: int, body: CoverIn, _: store.User = Depends(current_user),
+def patch_reading(reading_id: int, body: ReadingPatch, _: store.User = Depends(current_user),
                   conn: sqlite3.Connection = Depends(get_conn)):
+    fields = {k: getattr(body, k) for k in body.model_fields_set}
+    if fields.get("title") is None:
+        fields.pop("title", None)
     try:
-        store.set_cover(conn, reading_id, body.cover_url)
+        store.update_reading(conn, reading_id, **fields)
     except KeyError:
         raise HTTPException(404, "unknown reading")
     return Response(status_code=204)
+
+
+@router.get("/readings")
+def list_readings(_: store.User = Depends(current_user), conn: sqlite3.Connection = Depends(get_conn)):
+    def ts(v):
+        return _iso(v) if v is not None else None
+
+    return [{
+        "id": x["row"]["id"], "title": x["row"]["title"], "author": x["row"]["author"],
+        "cover_url": x["row"]["cover_url"], "goodreads_book_id": x["row"]["goodreads_book_id"],
+        "active": bool(x["row"]["active"]), "created_at": _iso(x["row"]["created_at"]),
+        "status": x["status"],
+        "readers": [{"name": r["name"], "percentage": r["percentage"], "updated_at": ts(r["updated_at"]),
+                     "started_at": ts(r["started_at"]), "finished_at": ts(r["finished_at"])}
+                    for r in x["readers"]],
+    } for x in store.list_readings(conn)]
+
+
+@router.post("/readings/{reading_id}/activate", status_code=204)
+def activate(reading_id: int, _: store.User = Depends(current_user),
+             conn: sqlite3.Connection = Depends(get_conn)):
+    try:
+        store.activate_reading(conn, reading_id)
+    except KeyError:
+        raise HTTPException(404, "unknown reading")
+    return Response(status_code=204)
+
+
+@router.post("/documents/{hash}/start", status_code=201)
+async def start_document(hash: str, _: store.User = Depends(current_user),
+                         conn: sqlite3.Connection = Depends(get_conn),
+                         http: httpx.AsyncClient = Depends(get_http)):
+    doc = conn.execute("SELECT * FROM documents WHERE hash=?", (hash,)).fetchone()
+    if doc is None:
+        raise HTTPException(404, "unknown document")
+    title = (doc["title"] or "").strip()
+    if not title:
+        raise HTTPException(422, "document has no title")
+    cover = await find_cover(http, title, doc["authors"])
+    gid = hash[3:] if hash.startswith("gr:") and len(hash) > 3 else None
+    rid = store.create_reading(conn, title, doc["authors"], gid, cover)
+    store.link_document(conn, hash, rid)
+    return {"id": rid}
 
 
 @router.get("/documents/unlinked")

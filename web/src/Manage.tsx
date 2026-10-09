@@ -10,6 +10,7 @@ import {
   getUnlinked,
   linkDocument,
   setCover,
+  startFromDocument,
   postProgress,
   type Summary,
   type UnlinkedDocument,
@@ -228,6 +229,12 @@ export function Manage({ token, onAuthError }: Props) {
                     {d.last_device ?? "dispositivo desconhecido"} · {new Date(d.first_seen * 1000).toLocaleDateString("pt-BR")}
                   </div>
                 </div>
+                <div className="doc-actions">
+                {d.title && (
+                  <button className="btn primary" onClick={() => void run(() => startFromDocument(token, d.hash), "Leitura iniciada.")}>
+                    Começar a ler este
+                  </button>
+                )}
                 <button
                   className="btn"
                   disabled={readingId === undefined}
@@ -235,6 +242,7 @@ export function Manage({ token, onAuthError }: Props) {
                 >
                   É este livro
                 </button>
+                </div>
               </li>
             ))}
           </ul>

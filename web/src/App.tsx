@@ -4,6 +4,7 @@ import "./logout.css";
 import { SignOut } from "@phosphor-icons/react";
 import { Dashboard } from "./Dashboard";
 import { Manage } from "./Manage";
+import { Shelf } from "./Shelf";
 
 const KEY = "bookrats.token";
 
@@ -18,7 +19,7 @@ function readToken(): string {
 export default function App() {
   const [token, setToken] = useState(readToken);
   const [draft, setDraft] = useState("");
-  const [tab, setTab] = useState<"progress" | "manage">("progress");
+  const [tab, setTab] = useState<"progress" | "shelf" | "manage">("progress");
 
   const logout = useCallback(() => {
     try {
@@ -64,11 +65,14 @@ export default function App() {
         <p className="brand">Bookrats</p>
         <nav className="tabs">
           <button className={tab === "progress" ? "tab on" : "tab"} onClick={() => setTab("progress")}>Progresso</button>
+          <button className={tab === "shelf" ? "tab on" : "tab"} onClick={() => setTab("shelf")}>Estante</button>
           <button className={tab === "manage" ? "tab on" : "tab"} onClick={() => setTab("manage")}>Gerenciar</button>
         </nav>
       </header>
       {tab === "progress" ? (
         <Dashboard token={token} onAuthError={logout} onGoManage={() => setTab("manage")} />
+      ) : tab === "shelf" ? (
+        <Shelf token={token} onAuthError={logout} />
       ) : (
         <Manage token={token} onAuthError={logout} />
       )}

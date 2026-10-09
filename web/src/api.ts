@@ -92,3 +92,37 @@ export const getPalette = (token: string) => request<ColorOption[]>(token, "/api
 
 export const setColor = (token: string, colorId: string) =>
   request<void>(token, "/api/me/color", { method: "PUT", body: JSON.stringify({ color: colorId }) });
+
+export interface ReadingReader {
+  name: string;
+  percentage: number | null;
+  updated_at: string | null;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
+export interface ReadingListItem {
+  id: number;
+  title: string;
+  author: string | null;
+  cover_url: string | null;
+  goodreads_book_id: string | null;
+  active: boolean;
+  status: "lendo" | "lido" | "pausado";
+  created_at: string;
+  readers: ReadingReader[];
+}
+
+export const listReadings = (token: string) => request<ReadingListItem[]>(token, "/api/readings");
+
+export const activateReading = (token: string, id: number) =>
+  request<void>(token, `/api/readings/${id}/activate`, { method: "POST" });
+
+export const updateReading = (
+  token: string,
+  id: number,
+  fields: { title?: string; author?: string | null; goodreads_book_id?: string | null; cover_url?: string | null },
+) => request<void>(token, `/api/readings/${id}`, { method: "PATCH", body: JSON.stringify(fields) });
+
+export const startFromDocument = (token: string, hash: string) =>
+  request<{ id: number }>(token, `/api/documents/${encodeURIComponent(hash)}/start`, post({}));
