@@ -1,5 +1,7 @@
 import { useCallback, useState } from "react";
 import "./App.css";
+import "./logout.css";
+import { SignOut } from "@phosphor-icons/react";
 import { Dashboard } from "./Dashboard";
 import { Manage } from "./Manage";
 
@@ -69,7 +71,7 @@ export default function App() {
       ) : (
         <Manage token={token} onAuthError={logout} />
       )}
-      <button className="link" onClick={logout}>Sair</button>
+      <button className="logout" onClick={logout}><SignOut size={18} weight="regular" aria-hidden="true" />Sair</button>
     </main>
   );
 }

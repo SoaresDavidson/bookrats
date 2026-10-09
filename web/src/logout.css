@@ -1,0 +1,11 @@
+.logout {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin: 32px auto 0; min-height: 44px; padding: 0 20px;
+  background: transparent; color: var(--muted);
+  border: 1px solid var(--track); border-radius: var(--r-control);
+  font: inherit; cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.logout:hover { color: var(--ink); border-color: var(--ink); }
+.logout:active { transform: scale(0.98); }
+@media (prefers-reduced-motion: reduce) { .logout { transition: none; } .logout:active { transform: none; } }
