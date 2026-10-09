@@ -1,4 +1,3 @@
-import { expect, test } from "vitest";
 import { ago, pct, sessionText } from "./format";
 
 test("pct", () => { expect(pct(0.414)).toBe("41%"); expect(pct(null)).toBe("sem dados"); });

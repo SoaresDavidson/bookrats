@@ -6,9 +6,9 @@ Handoff for the next session. Product spec: `docs/superpowers/specs/2026-10-08-b
 
 | Part | Path | Stack | Tests |
 |---|---|---|---|
-| Backend | `backend/` | Python 3.12, FastAPI, SQLite (WAL), uv | `cd backend && uv run pytest -q` (161) |
-| Web (PWA) | `web/` | React 19, Vite, TS, Tailwind v4 (`src/styles/`), Vitest | `cd web && npx vitest run && npx tsc -b && npm run build` (93) |
-| Android widget app | `mobile/` | Expo SDK 57, react-native-android-widget, expo-secure-store | `cd mobile && npx vitest run && npx tsc --noEmit` (18) |
+| Backend | `backend/` | Python 3.12, FastAPI, SQLite (WAL), uv | `cd backend && uv run pytest -q` (170) |
+| Web (PWA) | `web/` | React 19, Vite, TS, Tailwind v4 (`src/styles/`), Vitest | `cd web && npx vitest run && npx tsc -b && npm run build` (97) |
+| Android widget app | `mobile/` | Expo SDK 57, react-native-android-widget, expo-secure-store, safe-area-context; Jest (jest-expo) + React Native Testing Library | `cd mobile && npm test && npx tsc --noEmit` (26) |
 | iPhone widget | `widgets/scriptable/bookrats.js` | Scriptable (iOS only) | `node --check widgets/scriptable/bookrats.js` |
 | Deploy | `backend/Dockerfile` (multi-stage, context = repo root), `deploy/docker-compose.yml` (+ cloudflared), `.dockerignore` | Docker | `docker build -f backend/Dockerfile -t bookrats .` |
 

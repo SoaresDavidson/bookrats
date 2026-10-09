@@ -1,7 +1,8 @@
 import React, { memo, useCallback, useEffect, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { requestWidgetUpdate } from "react-native-android-widget";
 import { fetchSummary } from "./src/api";
 import { BookratsWidget } from "./src/widget/BookratsWidget";
@@ -104,44 +105,46 @@ export default function App() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <View style={styles.card}>
-            <Text style={styles.title} accessibilityRole="header">Bookrats</Text>
-            <Text style={styles.label}>Endereço do servidor</Text>
-            <TextInput
-              style={styles.input}
-              value={url}
-              onChangeText={setUrl}
-              placeholder="https://bookrats.exemplo.com"
-              accessibilityLabel="Endereço do servidor"
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="url"
-              textContentType="URL"
-              returnKeyType="next"
-            />
-            <Text style={styles.label}>Token</Text>
-            <TextInput
-              style={styles.input}
-              value={token}
-              onChangeText={setToken}
-              accessibilityLabel="Token"
-              autoCapitalize="none"
-              autoCorrect={false}
-              secureTextEntry
-              returnKeyType="done"
-            />
-            <Button label="Salvar" onPress={save} primary disabled={busy} />
-            <Button label="Testar" onPress={test} disabled={busy} />
-            <Button label="Atualizar widget" onPress={refresh} disabled={busy} />
-            {msg ? <Text style={styles.msg} accessibilityLiveRegion="polite">{msg}</Text> : null}
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="dark" />
+        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+            <View style={styles.card}>
+              <Text style={styles.title} accessibilityRole="header">Bookrats</Text>
+              <Text style={styles.label}>Endereço do servidor</Text>
+              <TextInput
+                style={styles.input}
+                value={url}
+                onChangeText={setUrl}
+                placeholder="https://bookrats.exemplo.com"
+                accessibilityLabel="Endereço do servidor"
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+                textContentType="URL"
+                returnKeyType="next"
+              />
+              <Text style={styles.label}>Token</Text>
+              <TextInput
+                style={styles.input}
+                value={token}
+                onChangeText={setToken}
+                accessibilityLabel="Token"
+                autoCapitalize="none"
+                autoCorrect={false}
+                secureTextEntry
+                returnKeyType="done"
+              />
+              <Button label="Salvar" onPress={save} primary disabled={busy} />
+              <Button label="Testar" onPress={test} disabled={busy} />
+              <Button label="Atualizar widget" onPress={refresh} disabled={busy} />
+              {msg ? <Text style={styles.msg} accessibilityLiveRegion="polite">{msg}</Text> : null}
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 

@@ -1,4 +1,3 @@
-import { describe, expect, test } from "vitest";
 import type { Summary } from "../api";
 import { READER_COLORS, toWidgetState } from "./state";
 
