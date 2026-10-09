@@ -200,3 +200,7 @@ Tests: backend — defaults when unset, set/get roundtrip, unknown id 422, confl
 - After switching, the Dashboard shows the new active reading (widgets follow automatically through /api/summary).
 
 **Tests:** backend — list order and per-reader pct; activate switches the single active; PATCH partial updates, validation, goodreads relink; start from titled kosync doc and from gr: doc; 422 without title; 404s; auth. Web — list renders, Retomar calls activateReading and refreshes, Editar submits PATCH with only changed fields, "Começar a ler este" visible only for titled documents and calls startFromDocument.
+
+**Task 7 amendment (user 2026-10-09: "quero um histórico, quero me lembrar dos livros que li com meu colega"):**
+- GET /api/readings per reader adds `started_at` (first snapshot) and `finished_at` (first snapshot with percentage ≥ 0.99), both ISO or null; reading gains `status`: "lendo" | "lido" | "pausado".
+- The list UI moves from a Manage card to a new tab "Estante" (tabs: Progresso, Estante, Gerenciar): `Shelf({token})` cover grid with status labels; detail dialog with per-reader start/finish dates (dd/mm/aaaa), "Leu em N dias", "<nome> terminou primeiro", "Retomar" (non-active) and "Editar".
