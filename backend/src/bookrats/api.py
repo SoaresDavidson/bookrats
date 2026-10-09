@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, field_validator
 from bookrats import store
 from bookrats.covers import find_cover
 from bookrats.deps import get_conn, get_http
-from bookrats.palette import PALETTE, effective_color
+from bookrats.palette import PALETTE, effective_color, is_hex, resolve
 from bookrats.sessions import Session, group_sessions
 
 router = APIRouter()
@@ -73,8 +73,8 @@ class ColorIn(BaseModel):
     color: str
 
 
-def _color(cid: str) -> dict:
-    light, dark = PALETTE[cid]
+def _color(value: str) -> dict:
+    cid, light, dark = resolve(value)
     return {"id": cid, "light": light, "dark": dark}
 
 
@@ -242,8 +242,9 @@ def palette(_: store.User = Depends(current_user)):
 @router.put("/me/color", status_code=204)
 def put_color(body: ColorIn, user: store.User = Depends(current_user),
               conn: sqlite3.Connection = Depends(get_conn)):
-    if body.color not in PALETTE:
+    color = body.color.lower() if is_hex(body.color) else body.color
+    if color not in PALETTE and not is_hex(color):
         raise HTTPException(422, "unknown color")
-    if not store.claim_color(conn, user.id, body.color):
+    if not store.claim_color(conn, user.id, color):
         raise HTTPException(409, "cor em uso")
     return Response(status_code=204)

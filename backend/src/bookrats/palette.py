@@ -17,3 +17,51 @@ DEFAULT_ORDER = ["azul", "laranja"]
 
 def effective_color(user, index: int) -> str:
     return user.color or DEFAULT_ORDER[index % len(DEFAULT_ORDER)]
+
+
+import colorsys
+import re
+
+LIGHT_TRACK, DARK_TRACK = "#e4e4e7", "#313137"
+_HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
+
+
+def is_hex(v: str) -> bool:
+    return bool(_HEX.match(v))
+
+
+def _lum(h: str) -> float:
+    c = [int(h[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+    c = [x / 12.92 if x <= 0.03928 else ((x + 0.055) / 1.055) ** 2.4 for x in c]
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+
+
+def contrast(a: str, b: str) -> float:
+    la, lb = sorted((_lum(a), _lum(b)), reverse=True)
+    return (la + 0.05) / (lb + 0.05)
+
+
+def _adjust(hex_: str, track: str, direction: int) -> str:
+    if contrast(hex_, track) >= 3:
+        return hex_
+    r, g, b = (int(hex_[i:i + 2], 16) / 255 for i in (1, 3, 5))
+    h, l, s = colorsys.rgb_to_hls(r, g, b)
+    while 0 < l < 1:
+        l = min(1.0, max(0.0, l + direction * 0.01))
+        out = "#%02x%02x%02x" % tuple(round(x * 255) for x in colorsys.hls_to_rgb(h, l, s))
+        if contrast(out, track) >= 3:
+            return out
+    return out
+
+
+def derive(hex_: str) -> tuple[str, str]:
+    hex_ = hex_.lower()
+    return _adjust(hex_, LIGHT_TRACK, -1), _adjust(hex_, DARK_TRACK, +1)
+
+
+def resolve(value: str) -> tuple[str, str, str]:
+    """Stored color value (palette id or #hex) -> (id, light, dark)."""
+    if value in PALETTE:
+        return (value, *PALETTE[value])
+    light, dark = derive(value)
+    return ("custom", light, dark)

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Cover } from "./Cover";
 import {
   AuthError,
@@ -15,6 +15,10 @@ import {
   type Summary,
   type UnlinkedDocument,
 } from "./api";
+
+function cvars(c?: { light: string; dark: string }): React.CSSProperties | undefined {
+  return c && { ["--c-light" as string]: c.light, ["--c-dark" as string]: c.dark, ["--mark" as string]: mark(c.light), ["--mark-dark" as string]: mark(c.dark) };
+}
 
 function mark(hex: string): string {
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
@@ -69,8 +73,19 @@ export function Manage({ token, onAuthError }: Props) {
     getPalette(token).then(setPalette).catch(guard);
   }, [token, guard]);
 
+  const [open, setOpen] = useState(false);
+  const mineRef = useRef<HTMLButtonElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const colorRef = useRef<HTMLInputElement>(null);
+
+  const close = useCallback(() => {
+    setOpen(false);
+    mineRef.current?.focus();
+  }, []);
+
   const pick = async (id: string) => {
     setColorErr("");
+    close();
     try {
       await setColor(token, id);
       await refresh();
@@ -78,10 +93,29 @@ export function Manage({ token, onAuthError }: Props) {
       if (e instanceof Error && (e as { status?: number }).status === 409) {
         setColorErr("Essa cor já está em uso");
         await refresh();
-      }
-      else guard(e);
+      } else guard(e);
     }
   };
+  const pickRef = useRef(pick);
+  pickRef.current = pick;
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
+    const onDown = (e: PointerEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const input = colorRef.current;
+    const onChange = () => input && void pickRef.current(input.value);
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onDown);
+    input?.addEventListener("change", onChange);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onDown);
+      input?.removeEventListener("change", onChange);
+    };
+  }, [open, close]);
 
   const run = async (fn: () => Promise<unknown>, ok: string) => {
     try {
@@ -145,31 +179,62 @@ export function Manage({ token, onAuthError }: Props) {
         <button className="btn primary" type="submit">Salvar progresso</button>
       </form>
 
-      <fieldset className="card swatches" aria-describedby={colorErr ? "color-err" : undefined}>
-        <legend className="sub">Cor da minha barra</legend>
-        <div className="swatch-grid">
-          {palette.map((c) => {
-            const taken = other?.color.id === c.id;
-            return (
-              <label key={c.id} className="swatch" style={{ ["--c-light" as string]: c.light, ["--c-dark" as string]: c.dark, ["--mark" as string]: mark(c.light), ["--mark-dark" as string]: mark(c.dark) }}>
-                <input
-                  type="radio"
-                  name="bar-color"
-                  value={c.id}
-                  checked={mine?.color.id === c.id}
-                  disabled={taken}
-                  onChange={() => void pick(c.id)}
-                />
-                <span>
-                  {LABELS[c.id] ?? c.id}
-                  {taken && <span className="xs"> em uso por {other!.name}</span>}
-                </span>
-              </label>
-            );
-          })}
+      <section className="card stack">
+        <h2 className="sub">Cores</h2>
+        <div className="circles">
+          <div className="circle-item" ref={wrapRef}>
+            <button
+              ref={mineRef}
+              type="button"
+              className="circle"
+              style={cvars(mine?.color)}
+              aria-label="Mudar minha cor"
+              aria-haspopup="dialog"
+              aria-expanded={open}
+              onClick={() => setOpen((v) => !v)}
+            />
+            <span className="circle-name">{mine?.name ?? "Você"}</span>
+            {open && (
+              <div className="popover" role="dialog" aria-label="Escolher cor">
+                {palette.map((c) => {
+                  const taken = !!other && other.color.light.toLowerCase() === c.light.toLowerCase();
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className={taken ? "pick taken" : "pick"}
+                      aria-label={LABELS[c.id] ?? c.id}
+                      aria-pressed={mine?.color.id === c.id}
+                      disabled={taken}
+                      title={taken ? `Em uso por ${other!.name}` : undefined}
+                      onClick={() => void pick(c.id)}
+                    >
+                      <span className="pick-dot" style={cvars(c)} />
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  className="pick custom"
+                  aria-label="Cor personalizada"
+                  aria-pressed={mine?.color.id === "custom"}
+                  onClick={() => colorRef.current?.click()}
+                >
+                  <span className="pick-dot" style={mine?.color.id === "custom" ? cvars(mine.color) : undefined} />
+                </button>
+                <input ref={colorRef} className="sr-only" type="color" aria-label="Escolher cor personalizada" tabIndex={-1} defaultValue={mine?.color.light ?? "#2f6feb"} />
+              </div>
+            )}
+          </div>
+          {other && (
+            <div className="circle-item">
+              <span className="circle" style={cvars(other.color)} role="img" aria-label={`Cor de ${other.name}`} />
+              <span className="circle-name">{other.name}</span>
+            </div>
+          )}
         </div>
         {colorErr && <p id="color-err" className="field-error" role="alert">{colorErr}</p>}
-      </fieldset>
+      </section>
 
       <form className="card stack" onSubmit={create}>
         <h2 className="sub">Nova leitura</h2>
