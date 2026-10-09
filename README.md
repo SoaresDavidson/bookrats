@@ -36,7 +36,7 @@ On the server, `deploy/bookrats …` runs the same CLI inside the running contai
    ./bookrats add-user --name Colega --goodreads-id 123456
    ./bookrats new-reading --title "Duna" --author "Frank Herbert" --goodreads-book-id 44767458
    ```
-   (Run from `deploy/`, as in step 2.) Each `add-user` prints an `api_token` for the widgets and web app. A user created without `--goodreads-id` (manual progress only) can be linked later with `./bookrats set-goodreads --name Colega --goodreads-id 123456`.
+   (Run from `deploy/`, as in step 2.) Each `add-user` prints an `api_token` for the widgets and web app. A user created without `--goodreads-id` (manual progress only) can be linked later with `./bookrats set-goodreads --name Colega --goodreads-id 123456`. To replace a leaked or lost token, run `./bookrats rotate-token --name Colega` (or `deploy/bookrats rotate-token --name …` from anywhere); it prints the new `api_token` and the old one stops working immediately.
 
 ## Configure readers
 

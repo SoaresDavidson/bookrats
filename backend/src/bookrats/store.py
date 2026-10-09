@@ -63,6 +63,13 @@ def set_goodreads_id(conn, name, goodreads_user_id) -> None:
         raise KeyError(name)
 
 
+def set_api_token(conn, name, api_token) -> None:
+    cur = conn.execute("UPDATE users SET api_token=? WHERE name=?", (api_token, name))
+    conn.commit()
+    if cur.rowcount == 0:
+        raise KeyError(name)
+
+
 def create_reading(conn, title, author=None, goodreads_book_id=None, cover_url=None) -> int:
     try:
         conn.execute("UPDATE readings SET active=0")

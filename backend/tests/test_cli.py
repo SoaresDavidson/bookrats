@@ -83,3 +83,41 @@ def test_set_goodreads_unknown_user_fails_cleanly(monkeypatch, tmp_path, capsys)
     _setup(monkeypatch, tmp_path)
     assert main(["set-goodreads", "--name", "Ninguem", "--goodreads-id", "1"]) != 0
     assert "Ninguem" in capsys.readouterr().err
+
+
+def test_rotate_token_replaces_token(monkeypatch, tmp_path, capsys):
+    path = _setup(monkeypatch, tmp_path)
+    assert main(["add-user", "--name", "Colega"]) == 0
+    conn = db.connect(path)
+    old = store.list_users(conn)[0].api_token
+    capsys.readouterr()
+    assert main(["rotate-token", "--name", "Colega"]) == 0
+    new = capsys.readouterr().out.strip().removeprefix("api_token: ")
+    assert new != old and len(new) >= 32
+    assert store.user_by_token(conn, old) is None
+    assert store.user_by_token(conn, new).name == "Colega"
+
+
+def test_rotate_token_old_rejected_new_accepted_by_api(monkeypatch, tmp_path, capsys):
+    from fastapi.testclient import TestClient
+
+    from bookrats.main import create_app
+
+    path = _setup(monkeypatch, tmp_path)
+    assert main(["add-user", "--name", "Colega"]) == 0
+    old = store.list_users(db.connect(path))[0].api_token
+    capsys.readouterr()
+    with TestClient(create_app(str(path), start_poller=False)) as c:
+        assert c.get("/api/summary", headers={"Authorization": f"Bearer {old}"}).status_code == 200
+        assert main(["rotate-token", "--name", "Colega"]) == 0
+        new = capsys.readouterr().out.strip().removeprefix("api_token: ")
+        assert c.get("/api/summary", headers={"Authorization": f"Bearer {old}"}).status_code == 401
+        assert c.get("/api/summary", headers={"Authorization": f"Bearer {new}"}).status_code == 200
+
+
+def test_rotate_token_unknown_user_fails_cleanly(monkeypatch, tmp_path, capsys):
+    _setup(monkeypatch, tmp_path)
+    assert main(["rotate-token", "--name", "Ninguem"]) == 1
+    cap = capsys.readouterr()
+    assert cap.err.strip() == "error: no user named 'Ninguem'"
+    assert cap.out == ""
