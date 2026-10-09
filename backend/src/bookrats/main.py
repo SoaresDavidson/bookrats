@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 
-from bookrats import kosync
+from bookrats import api, kosync
 from bookrats.config import Settings
 from bookrats.goodreads import poll_forever
 
@@ -34,4 +34,5 @@ def create_app(db_path: str, start_poller: bool = True) -> FastAPI:
         return kosync.error_response(exc.status, exc.code, exc.message)
 
     app.include_router(kosync.router)
+    app.include_router(api.router, prefix="/api")
     return app
