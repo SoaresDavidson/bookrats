@@ -40,6 +40,12 @@
         }
       ],
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "db10ab75-f01e-496b-b7ad-2c42556a3f9e"
+      }
+    },
+    "owner": "davidson05s-team"
   }
 }
