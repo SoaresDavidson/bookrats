@@ -1,7 +1,7 @@
 import sqlite3
-from urllib.parse import urlsplit
 import time
 from datetime import UTC, datetime
+from urllib.parse import urlsplit
 
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Response

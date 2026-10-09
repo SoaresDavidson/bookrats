@@ -124,6 +124,7 @@ export function Dashboard({ token, onAuthError, onGoManage }: Props) {
   if (!summary.reading)
     return (
       <section className="card empty-state">
+        <h1 className="sr-only">Leitura atual</h1>
         <p className="empty">Nenhuma leitura ativa</p>
         <p className="muted">Crie uma leitura para começar a comparar o progresso de vocês.</p>
         {onGoManage && <button className="btn primary" onClick={onGoManage}>Ir para Gerenciar</button>}

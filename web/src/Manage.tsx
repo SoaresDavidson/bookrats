@@ -100,6 +100,7 @@ export function Manage({ token, onAuthError }: Props) {
 
   return (
     <div className="stack">
+      <h1 className="sr-only">Gerenciar leitura</h1>
       {msg && <p className={msg.startsWith("Algo") ? "toast error" : "toast"} role="status">{msg}</p>}
       <form className="card stack" onSubmit={saveProgress}>
         <h2 className="sub">Atualizar meu progresso</h2>

@@ -33,6 +33,7 @@ export default function App() {
     return (
       <main className="shell">
         <p className="brand">Bookrats</p>
+        <h1 className="sr-only">Entrar no Bookrats</h1>
         <form
           className="card stack"
           onSubmit={(e) => {

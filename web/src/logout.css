@@ -3,7 +3,7 @@
   margin: 32px auto 0; min-height: 44px; padding: 0 20px;
   background: transparent; color: var(--muted);
   border: 1px solid var(--track); border-radius: var(--r-control);
-  font: inherit; cursor: pointer;
+  font-family: inherit; font-size: var(--t-sm); font-weight: 500; cursor: pointer;
   transition: color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
 .logout:hover { color: var(--ink); border-color: var(--ink); }
