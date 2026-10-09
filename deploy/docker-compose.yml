@@ -20,6 +20,8 @@ services:
       dockerfile: backend/Dockerfile
     # Share the tailscale container's network so Funnel proxies to 127.0.0.1:8000.
     network_mode: service:tailscale
+    # Listen only on loopback: Funnel is the sole way in (no plain HTTP on the tailnet IP).
+    command: ["uvicorn", "bookrats.asgi:app", "--host", "127.0.0.1", "--port", "8000", "--proxy-headers"]
     environment:
       BOOKRATS_DB: /data/bookrats.db
     volumes:
