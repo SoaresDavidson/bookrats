@@ -17,8 +17,8 @@ import * as api from "./api";
 import { Manage } from "./Manage";
 
 const docs: UnlinkedDocument[] = [
-  { hash: "abcdef1234567890", title: null, authors: null, last_device: "kindle", first_seen: "2026-01-01T00:00:00Z" },
-  { hash: "gr:99", title: "Messias de Duna", authors: null, last_device: "goodreads", first_seen: "2026-01-01T00:00:00Z" },
+  { hash: "abcdef1234567890", title: null, authors: null, last_device: "kindle", first_seen: 1760000000 },
+  { hash: "gr:99", title: "Messias de Duna", authors: null, last_device: "goodreads", first_seen: 1760000000 },
 ];
 
 beforeEach(() => {
