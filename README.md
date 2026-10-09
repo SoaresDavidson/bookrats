@@ -29,7 +29,7 @@ On the server, `deploy/bookrats …` runs the same CLI inside the running contai
    ```bash
    cd deploy && docker compose up -d --build
    ```
-   The `tailscale` container joins the tailnet as `bookrats` and Funnel serves `https://bookrats.<tailnet>.ts.net` (proxying to the app on port 8000 via `deploy/tailscale/serve.json`). Find the exact URL in the admin console's Machines list, then check `https://bookrats.<tailnet>.ts.net/healthcheck`. The first HTTPS request can take a few seconds while the certificate is issued.
+   The `tailscale` container joins the tailnet as `bookrats` and Funnel serves `https://bookrats.<tailnet>.ts.net` (proxying to the app on port 8000 via `deploy/tailscale/serve.json`). Find the exact URL in the admin console's Machines list, then check `https://bookrats.<tailnet>.ts.net/healthcheck`. The first HTTPS request can take a few seconds while the certificate is issued. The app shares the `tailscale` container's network: after restarting `tailscale`, also recreate the app (`docker compose up -d --force-recreate`), otherwise Funnel returns 502.
 3. Seed users and the shared reading:
    ```bash
    ./bookrats add-user --name Davi --kosync-user davi --kosync-password <password>
