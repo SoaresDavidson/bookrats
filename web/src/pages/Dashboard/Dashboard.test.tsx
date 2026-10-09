@@ -124,7 +124,7 @@ describe("Dashboard per-reader bars", () => {
     expect(wrap.hasAttribute("inert")).toBe(false);
     expect(panel.classList.contains("open")).toBe(true);
     // The Tailwind visibility utility must never be a marker class (it hid the open panel).
-    expect(panel.classList.contains(["col", "lapse"].join(""))).toBe(false);
+    expect(panel.classList.contains("collapse")).toBe(false);
     expect(panel.classList.contains("history-panel")).toBe(true);
     const more = panel.querySelector(".history-more") as HTMLElement;
     expect(more.hasAttribute("inert")).toBe(true);
