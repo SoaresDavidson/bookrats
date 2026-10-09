@@ -70,3 +70,15 @@ describe("toWidgetState", () => {
     });
   });
 });
+
+describe("reader color", () => {
+  test("uses color.dark when present, fallback otherwise", () => {
+    const sm = summary([
+      reader("ana", 0.4, { color: { id: "verde", light: "#2B8A3E", dark: "#51CF66" } }),
+      reader("bia", 0.5),
+    ]);
+    const s = toWidgetState({ kind: "ok", summary: sm }, null, now);
+    if (s.kind !== "data") throw new Error();
+    expect(s.readers.map((r) => r.color)).toEqual(["#51CF66", READER_COLORS[1]]);
+  });
+});

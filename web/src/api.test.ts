@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
-  AuthError, createReading, getSessions, getSummary, getUnlinked, linkDocument, postProgress, setCover,
+  AuthError, HttpError, createReading, getPalette, getSessions, getSummary, getUnlinked, linkDocument, postProgress, setColor, setCover,
 } from "./api";
 
 const fetchMock = vi.fn();
@@ -68,4 +68,26 @@ test("setCover patches the reading and tolerates 204", async () => {
   expect(url).toBe("/api/readings/3");
   expect(init.method).toBe("PATCH");
   expect(init.body).toBe('{"cover_url":"u"}');
+});
+
+test("getPalette gets /api/palette", async () => {
+  fetchMock.mockResolvedValue(json([{ id: "azul", light: "#2F6FEB", dark: "#6F9CF5" }]));
+  await getPalette("tok");
+  expect(fetchMock.mock.calls[0][0]).toBe("/api/palette");
+});
+
+test("setColor puts the color id", async () => {
+  fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+  await expect(setColor("tok", "verde")).resolves.toBeUndefined();
+  const [url, init] = fetchMock.mock.calls[0];
+  expect(url).toBe("/api/me/color");
+  expect(init.method).toBe("PUT");
+  expect(init.body).toBe('{"color":"verde"}');
+});
+
+test("setColor 409 rejects with HttpError status 409", async () => {
+  fetchMock.mockResolvedValue(new Response('{"detail":"cor em uso"}', { status: 409 }));
+  const e = await setColor("tok", "azul").catch((x) => x);
+  expect(e).toBeInstanceOf(HttpError);
+  expect(e.status).toBe(409);
 });

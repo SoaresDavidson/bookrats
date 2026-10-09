@@ -96,3 +96,25 @@ def test_connect_adds_cover_url_column_to_old_db(tmp_path):
     cols = [r[1] for r in c.execute("pragma table_info(readings)")]
     c.close()
     assert "cover_url" in cols
+
+
+def test_connect_adds_users_color_column_to_old_db(tmp_path):
+    import sqlite3
+
+    from bookrats import db
+
+    path = str(tmp_path / "old2.db")
+    raw = sqlite3.connect(path)
+    raw.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE,"
+                " kosync_username TEXT, kosync_key TEXT, goodreads_user_id TEXT, api_token TEXT NOT NULL UNIQUE)")
+    raw.commit()
+    raw.close()
+    c = db.connect(path)
+    cols = [r[1] for r in c.execute("pragma table_info(users)")]
+    c.close()
+    assert "color" in cols
+
+
+def test_set_color_roundtrip(conn, davi):
+    store.set_color(conn, davi.id, "verde")
+    assert conn.execute("select color from users where id=?", (davi.id,)).fetchone()[0] == "verde"

@@ -223,3 +223,37 @@ def test_cover_url_empty_string_becomes_null(client, conn, davi):
     store.set_cover(conn, rid, "https://x/y.jpg")
     assert client.patch(f"/api/readings/{rid}", headers=AUTH, json={"cover_url": ""}).status_code == 204
     assert _cover(client) is None
+
+
+def _colors(client):
+    j = client.get("/api/summary", headers=AUTH).json()
+    return {r["name"]: r["color"] for r in j["readers"]}
+
+
+def test_summary_reader_color_defaults(client, davi, colega):
+    c = _colors(client)
+    assert c["Davi"] == {"id": "azul", "light": "#2F6FEB", "dark": "#6F9CF5"}
+    assert c["Colega"]["id"] == "laranja"
+
+
+def test_put_color_roundtrip(client, davi, colega):
+    assert client.put("/api/me/color", headers=AUTH, json={"color": "verde"}).status_code == 204
+    assert _colors(client)["Davi"] == {"id": "verde", "light": "#2B8A3E", "dark": "#51CF66"}
+
+
+def test_put_color_unknown_422(client, davi, colega):
+    assert client.put("/api/me/color", headers=AUTH, json={"color": "neon"}).status_code == 422
+
+
+def test_put_color_conflict_409(client, davi, colega):
+    r = client.put("/api/me/color", headers=AUTH_C, json={"color": "azul"})
+    assert r.status_code == 409 and r.json() == {"detail": "cor em uso"}
+
+
+def test_put_color_own_current_ok(client, davi, colega):
+    assert client.put("/api/me/color", headers=AUTH, json={"color": "azul"}).status_code == 204
+    assert client.put("/api/me/color", headers=AUTH, json={"color": "azul"}).status_code == 204
+
+
+def test_put_color_requires_token(client, davi):
+    assert client.put("/api/me/color", json={"color": "verde"}).status_code == 401

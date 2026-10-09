@@ -134,3 +134,27 @@ describe("Dashboard cover", () => {
     expect(screen.getByTestId("cover-placeholder").textContent).toContain("D");
   });
 });
+
+describe("Dashboard reader colors", () => {
+  it("sets --c-light/--c-dark per reader", async () => {
+    render(<Dashboard token="tok" />);
+    await screen.findByText(/Duna/);
+    const d = document.querySelector('[data-reader="Davi"]') as HTMLElement;
+    const c = document.querySelector('[data-reader="Colega"]') as HTMLElement;
+    expect(d.style.getPropertyValue("--c-light")).toBe("#2F6FEB");
+    expect(d.style.getPropertyValue("--c-dark")).toBe("#6F9CF5");
+    expect(c.style.getPropertyValue("--c-light")).toBe("#E8590C");
+    expect(c.style.getPropertyValue("--c-dark")).toBe("#FF8A4C");
+  });
+
+  it("uses verde values", async () => {
+    const s = makeSummary();
+    s.readers[0].color = { id: "verde", light: "#2B8A3E", dark: "#51CF66" };
+    vi.mocked(api.getSummary).mockResolvedValue(s);
+    render(<Dashboard token="tok" />);
+    await screen.findByText(/Duna/);
+    const d = document.querySelector('[data-reader="Davi"]') as HTMLElement;
+    expect(d.style.getPropertyValue("--c-light")).toBe("#2B8A3E");
+    expect(d.style.getPropertyValue("--c-dark")).toBe("#51CF66");
+  });
+});

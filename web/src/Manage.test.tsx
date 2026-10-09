@@ -12,6 +12,8 @@ vi.mock("./api", async (orig) => ({
   getUnlinked: vi.fn(),
   linkDocument: vi.fn(),
   setCover: vi.fn(),
+  getPalette: vi.fn(),
+  setColor: vi.fn(),
 }));
 
 import * as api from "./api";
@@ -22,6 +24,13 @@ const docs: UnlinkedDocument[] = [
   { hash: "gr:99", title: "Messias de Duna", authors: null, last_device: "goodreads", first_seen: 1760000000 },
 ];
 
+const PALETTE = [
+  ["azul", "#2F6FEB", "#6F9CF5"], ["laranja", "#E8590C", "#FF8A4C"], ["verde", "#2B8A3E", "#51CF66"],
+  ["roxo", "#7048E8", "#9775FA"], ["rosa", "#D6336C", "#F06595"], ["ciano", "#0C8599", "#3BC9DB"],
+  ["ambar", "#B76E00", "#FCC419"], ["grafite", "#495057", "#ADB5BD"],
+].map(([id, light, dark]) => ({ id, light, dark }));
+const LABELS = ["Azul", "Laranja", "Verde", "Roxo", "Rosa", "Ciano", "Âmbar", "Grafite"];
+
 beforeEach(() => {
   vi.mocked(api.getSummary).mockReset().mockResolvedValue(makeSummary());
   vi.mocked(api.getUnlinked).mockReset().mockResolvedValue(docs);
@@ -29,6 +38,8 @@ beforeEach(() => {
   vi.mocked(api.createReading).mockReset().mockResolvedValue({});
   vi.mocked(api.linkDocument).mockReset().mockResolvedValue(undefined);
   vi.mocked(api.setCover).mockReset().mockResolvedValue(undefined);
+  vi.mocked(api.getPalette).mockReset().mockResolvedValue(PALETTE);
+  vi.mocked(api.setColor).mockReset().mockResolvedValue(undefined);
 });
 
 describe("Manage", () => {
@@ -119,5 +130,37 @@ describe("Manage", () => {
     await screen.findByText(/Messias de Duna/);
     const b = screen.getByRole("button", { name: "Salvar capa" }) as HTMLButtonElement;
     expect(b.disabled).toBe(true);
+  });
+
+  describe("bar color", () => {
+    it("shows 8 radios, mine checked, other's disabled with description", async () => {
+      render(<Manage token="tok" />);
+      await screen.findByText("Cor da minha barra");
+      const radios = await screen.findAllByRole("radio");
+      expect(radios.map((r) => (r as HTMLInputElement).labels?.[0]?.textContent?.trim() ?? r.getAttribute("aria-label"))
+        .map((t) => LABELS.find((l) => t?.startsWith(l)))).toEqual(LABELS);
+      expect(screen.getByRole("radio", { name: /^Azul/ })).toHaveProperty("checked", true);
+      const lar = screen.getByRole("radio", { name: /^Laranja/ }) as HTMLInputElement;
+      expect(lar.disabled).toBe(true);
+      const text = (lar.labels?.[0]?.textContent ?? "") + (lar.getAttribute("aria-label") ?? "") +
+        (lar.getAttribute("aria-describedby") ? document.getElementById(lar.getAttribute("aria-describedby")!)?.textContent : "");
+      expect(text).toContain("em uso por Colega");
+    });
+
+    it("selecting Verde calls setColor", async () => {
+      const user = userEvent.setup();
+      render(<Manage token="tok" />);
+      await user.click(await screen.findByRole("radio", { name: /^Verde/ }));
+      expect(api.setColor).toHaveBeenCalledWith("tok", "verde");
+    });
+
+    it("409 shows inline error", async () => {
+      const user = userEvent.setup();
+      const err = Object.assign(new Error("HTTP 409"), { status: 409 });
+      vi.mocked(api.setColor).mockRejectedValue(err);
+      render(<Manage token="tok" />);
+      await user.click(await screen.findByRole("radio", { name: /^Verde/ }));
+      expect(await screen.findByText("Essa cor já está em uso")).toBeTruthy();
+    });
   });
 });
