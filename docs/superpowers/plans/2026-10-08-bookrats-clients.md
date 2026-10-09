@@ -214,3 +214,26 @@ Tests: backend — defaults when unset, set/get roundtrip, unknown id 422, confl
 **Backend:** `PUT /api/me/color` accepts a palette id OR a hex `#rrggbb` (case-insensitive, stored lowercase); 422 otherwise. Summary color for a custom hex: `{"id": "custom", "light": "#rrggbb", "dark": <derived>}` where dark = the hex lightened in HSL steps until contrast ≥ 3:1 against the dark track `#313137` (unchanged if already ≥ 3:1); light likewise darkened until ≥ 3:1 against the light track `#e4e4e7`. Conflict (409 "cor em uso") only when the effective light hex equals the other user's effective light hex (palette ids resolve to their light hex). `GET /api/palette` unchanged.
 
 **Web:** Manage card "Cores": two 48px circles with name below (yours first, labelled "Você"/your name), your circle is a button with aria-haspopup="dialog" and aria-expanded; popover anchored below it with a caret, one row of the 8 preset swatches (36px, the other friend's current color disabled with a diagonal strike and title "Em uso por <nome>"), the selected one with a check, and a last "+" swatch that triggers the native color input; choosing applies immediately (PUT) and closes; Esc/click outside closes; focus returns to your circle. No text labels per swatch (aria-label only). 409 → small inline message under the circles "Essa cor já está em uso".
+
+---
+
+### Task 9: React folder structure + Tailwind v4 migration
+
+**Decision (user 2026-10-09):** organize web/src in the usual React layout and migrate styling to Tailwind v4 with a `styles/` folder holding all Tailwind configuration. Behaviour-preserving refactor: the existing test suite is the safety net; class names asserted by tests (`is-animating`, `is-advanced`, `is-custom-active`, `.sr-only`) and data-testids stay.
+
+**Layout:**
+```
+web/src/
+  main.tsx, App.tsx
+  api/client.ts, api/types.ts            (from api.ts)
+  lib/format.ts
+  hooks/useCountUp.ts
+  components/<Name>/<Name>.tsx + .test.tsx   (Cover, ProgressBar, HistoryPanel, ColorPicker, Tabs, LogoutButton, Dialog…)
+  pages/Dashboard/, pages/Shelf/, pages/Manage/  (page + its tests)
+  styles/tailwind.css   (@import "tailwindcss"; imports below; entry imported once in main.tsx)
+  styles/theme.css      (@theme: colors incl. light/dark tokens, reader palette vars, font family Geist, type scale --text-*, radii, shadows, easing, durations)
+  styles/base.css       (@layer base: html/body, scrollbar-gutter, focus-visible ring, reduced-motion defaults)
+  styles/animations.css (@layer components/utilities + @keyframes: shimmer, spinner, collapse grid-rows, glow/sweep, magnification with :has, popover fade)
+  test/setup.ts, test/fixtures.ts
+```
+**Rules:** Tailwind v4 via `@tailwindcss/vite`; no tailwind.config.js (CSS-first config in styles/theme.css); dark mode via the default `prefers-color-scheme` variant; reader colors through CSS variables (`--c-light/--c-dark`) used as `bg-(--c)`-style arbitrary values; components use utilities, complex selectors stay in animations.css; delete the old index.css/App.css/logout.css/shelf-*.css after migration; no visual change (verified by before/after screenshots at 390×844 and 1280×800 in light and dark for Progresso, Estante, Gerenciar, popover open, dialog open).
