@@ -8,9 +8,9 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from pydantic import BaseModel, Field, field_validator
 
 from bookrats import store
-from bookrats.palette import PALETTE, effective_color
 from bookrats.covers import find_cover
 from bookrats.deps import get_conn, get_http
+from bookrats.palette import PALETTE, effective_color
 from bookrats.sessions import Session, group_sessions
 
 router = APIRouter()
@@ -177,8 +177,6 @@ def put_color(body: ColorIn, user: store.User = Depends(current_user),
               conn: sqlite3.Connection = Depends(get_conn)):
     if body.color not in PALETTE:
         raise HTTPException(422, "unknown color")
-    for i, u in enumerate(store.list_users(conn)):
-        if u.id != user.id and effective_color(u, i) == body.color:
-            raise HTTPException(409, "cor em uso")
-    store.set_color(conn, user.id, body.color)
+    if not store.claim_color(conn, user.id, body.color):
+        raise HTTPException(409, "cor em uso")
     return Response(status_code=204)

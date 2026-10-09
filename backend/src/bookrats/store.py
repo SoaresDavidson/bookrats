@@ -139,3 +139,23 @@ def latest_kosync(conn, user_id, document) -> sqlite3.Row | None:
 def set_color(conn, user_id, color_id) -> None:
     conn.execute("UPDATE users SET color=? WHERE id=?", (color_id, user_id))
     conn.commit()
+
+
+def claim_color(conn, user_id, color_id) -> bool:
+    """Atomically set the user's color unless the other reader already has it."""
+    from bookrats.palette import effective_color
+
+    if conn.in_transaction:
+        conn.commit()
+    conn.execute("BEGIN IMMEDIATE")
+    try:
+        for i, u in enumerate(list_users(conn)):
+            if u.id != user_id and effective_color(u, i) == color_id:
+                conn.rollback()
+                return False
+        conn.execute("UPDATE users SET color=? WHERE id=?", (color_id, user_id))
+        conn.commit()
+        return True
+    except BaseException:
+        conn.rollback()
+        raise
