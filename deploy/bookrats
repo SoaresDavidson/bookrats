@@ -1,0 +1,9 @@
+#!/bin/sh
+# Run the bookrats CLI inside the running container, from any directory.
+#   deploy/bookrats add-user --name Colega
+# Symlinks work too: ln -s "$PWD/deploy/bookrats" ~/.local/bin/bookrats
+set -eu
+dir=$(dirname "$(readlink -f "$0")")
+tty=""
+[ -t 0 ] || tty="-T"
+exec docker compose -f "$dir/docker-compose.yml" exec $tty bookrats bookrats "$@"

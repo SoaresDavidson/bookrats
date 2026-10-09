@@ -37,7 +37,7 @@ uv run uvicorn bookrats.asgi:app --port 8000   # open http://localhost:8000/app/
 ```
 
 ## Not done yet (needs the user / a device)
-1. Deploy on the homelab with Tailscale Funnel (see README "Deploy"): auth key → `deploy/.env` `TS_AUTHKEY`, `docker compose -f deploy/docker-compose.yml up -d --build`, create users with `docker compose exec bookrats bookrats add-user …`. Public URL: `https://bookrats.<tailnet>.ts.net`. Registration from KOReader is disabled by design; use Login.
+1. Deploy on the homelab with Tailscale Funnel (see README "Deploy"): auth key → `deploy/.env` `TS_AUTHKEY`, `docker compose -f deploy/docker-compose.yml up -d --build`, create users with `deploy/bookrats add-user …` (wrapper around `docker compose exec`). Public URL: `https://bookrats.<tailnet>.ts.net`. Registration from KOReader is disabled by design; use Login.
 2. Configure readers: KOReader custom sync server; CrossPoint Settings → System → KOReader Sync (URL, document matching **Binary** on both devices, server type **Other**; CrossPoint sync is manual).
 3. Colleague: public Goodreads profile, progress updates in %; replace `backend/tests/fixtures/goodreads_updates.xml` (partly synthesized %) with his real feed and re-check the regexes.
 4. iPhone: install Scriptable, paste `widgets/scriptable/bookrats.js`, set `BASE` and `TOKEN` (see `widgets/scriptable/README.md`); untested on device.
