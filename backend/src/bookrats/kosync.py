@@ -32,7 +32,7 @@ def _text(v) -> str | None:
 class Progress(BaseModel):
     model_config = ConfigDict(extra="ignore")
     document: str
-    progress: str
+    progress: str | int | float
     percentage: float = Field(ge=0, le=1, strict=True)
     device: str
     device_id: str
@@ -72,7 +72,7 @@ async def put_progress(request: Request, user=Depends(auth_user),
         return error_response(400, 2003, "Invalid request")
     ts = int(time.time())
     store.add_snapshot(conn, user.id, "kosync", p.percentage, ts, document=p.document,
-                       progress=p.progress, device=p.device, device_id=p.device_id,
+                       progress=str(p.progress), device=p.device, device_id=p.device_id,
                        title=p.meta("title"), authors=p.meta("authors"))
     return {"document": p.document, "timestamp": ts}
 

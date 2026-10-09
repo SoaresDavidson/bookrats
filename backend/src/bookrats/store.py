@@ -59,6 +59,9 @@ def create_reading(conn, title, author=None, goodreads_book_id=None) -> int:
             "INSERT INTO readings (title, author, goodreads_book_id, active, created_at) VALUES (?,?,?,1,?)",
             (title, author, goodreads_book_id, int(time.time())),
         )
+        if goodreads_book_id is not None:
+            conn.execute("UPDATE documents SET reading_id=? WHERE hash=?",
+                         (cur.lastrowid, "gr:" + str(goodreads_book_id)))
         conn.commit()
     except Exception:
         conn.rollback()
@@ -112,8 +115,8 @@ def unlinked_documents(conn) -> list[sqlite3.Row]:
 def snapshots_for(conn, user_id, reading_id) -> list[Snapshot]:
     rows = conn.execute(
         "SELECT s.user_id, s.percentage, s.ts, s.source, s.device, s.document FROM snapshots s "
-        "WHERE s.user_id=? AND (s.reading_id=? OR (s.source='kosync' AND s.document IN "
-        "(SELECT hash FROM documents WHERE reading_id=?))) ORDER BY s.ts, s.id",
+        "WHERE s.user_id=? AND (s.reading_id=? OR s.document IN "
+        "(SELECT hash FROM documents WHERE reading_id=?)) ORDER BY s.ts, s.id",
         (user_id, reading_id, reading_id),
     )
     return [Snapshot(**dict(r)) for r in rows]
