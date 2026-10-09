@@ -137,3 +137,24 @@ test("ago", () => {
 - [ ] **Step 5: Build: `npx expo prebuild -p android && cd mobile/android && ./gradlew assembleRelease` (debug keystore acceptable for two users). Install APK, configure, add widget.**
 - [ ] **Step 6: Verify: widget shows both readers; tap refreshes; mobile data off → cached values + "desatualizado".**
 - [ ] **Step 7: Commit `feat(widgets): android widget app`.**
+
+---
+
+### Task 5: Book covers
+
+**Files:**
+- Modify: `backend/src/bookrats/db.py` (readings.cover_url TEXT, added by guarded ALTER for existing DBs), `backend/src/bookrats/store.py`, `backend/src/bookrats/api.py`, `backend/src/bookrats/cli.py` (`--cover-url`)
+- Create: `backend/src/bookrats/covers.py`, `backend/tests/test_covers.py`
+- Modify: `web/src/api.ts`, `web/src/Dashboard.tsx`, `web/src/Manage.tsx`, CSS; `widgets/scriptable/bookrats.js`
+
+**Interfaces:**
+- `covers.OPENLIBRARY_SEARCH = "https://openlibrary.org/search.json"`; `async covers.find_cover(client: httpx.AsyncClient, title: str, author: str | None) -> str | None` — GET search.json?title=&author=&limit=5&fields=cover_i,title; first doc with `cover_i` → `https://covers.openlibrary.org/b/id/{cover_i}-L.jpg`; any httpx error, timeout (5 s) or no match → None.
+- `store.create_reading(..., cover_url=None)`; `store.set_cover(conn, reading_id, cover_url) -> None` (KeyError if unknown).
+- `POST /api/readings` body adds optional `cover_url`; when absent, the route awaits `find_cover` (client from `app.state.http`, created in lifespan; tests inject a MockTransport client).
+- `PATCH /api/readings/{id}` body `{"cover_url": str | null}` → 204; 404 unknown.
+- `/api/summary` → `reading.cover_url: string | null`.
+- Web: Dashboard hero shows the cover (2:3 aspect, 16px radius, tinted shadow, `loading="eager"`, alt = title) beside title/author on ≥480px and above them on narrow screens; no cover → a typographic placeholder tile with the title initials in the first reader's blue (no image). Manage: field "URL da capa (opcional)" in "Nova leitura", plus "Trocar capa" on the active reading → PATCH.
+- Scriptable: medium/large show the cover at left (loaded with `Request.loadImage`, cached to FileManager by URL; failure → no image).
+- Android widget: cover deferred.
+
+Tests: backend — find_cover hit/miss/HTTP error with MockTransport; POST without cover_url stores resolved URL; POST with cover_url skips lookup; PATCH 204/404; summary includes cover_url. Web — Dashboard renders img with alt=title when cover_url present, placeholder when null; Manage PATCH call.
