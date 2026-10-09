@@ -6,12 +6,22 @@ const BASE = "https://bookrats.<domain>";
 const TOKEN = "";
 
 const COLORS = ["#2F6FEB", "#D9480F"];
+const GOLD = Color.dynamic(new Color("#946A00"), new Color("#F5C542"));
 const REFRESH_MIN = 15;
 const CACHE_FILE = "bookrats.json";
 
 // --- helpers start
 function pct(p) {
   return p === null || p === undefined ? "sem dados" : `${Math.round(p * 100)}%`;
+}
+
+// Name of the reader strictly ahead in whole points, or null on a tie / missing data.
+function leader(readers) {
+  const scored = readers.filter((r) => r.percentage !== null).map((r) => ({ name: r.name, v: Math.round(r.percentage * 100) }));
+  if (scored.length < 2) return null;
+  const top = Math.max(...scored.map((r) => r.v));
+  const best = scored.filter((r) => r.v === top);
+  return best.length === 1 ? best[0].name : null;
 }
 
 function sessionText(s) {
@@ -180,6 +190,7 @@ function buildWidget(summary, stale, error, cover) {
     body.addSpacer(6);
 
     const barW = small ? 120 : cover ? 190 : 260;
+    const top = leader(summary.readers);
     summary.readers.slice(0, 2).forEach((r, i) => {
       const rc = r.color;
       const color = rc ? (Device.isUsingDarkAppearance() ? rc.dark : rc.light) : COLORS[i] || COLORS[0];
@@ -189,7 +200,7 @@ function buildWidget(summary, stale, error, cover) {
       img.imageSize = new Size(barW, 8);
       img.resizable = true;
       row.addSpacer(2);
-      let line = `${r.name} ${pct(r.percentage)}`;
+      let line = ` ${pct(r.percentage)}`;
       if (!small) {
         const parts = [];
         const s = sessionText(r.last_session);
@@ -197,7 +208,14 @@ function buildWidget(summary, stale, error, cover) {
         if (r.updated_at) parts.push(ago(r.updated_at));
         if (parts.length) line += ` · ${parts.join(" · ")}`;
       }
-      const t = row.addText(line);
+      const isTop = r.name === top;
+      const textRow = row.addStack();
+      textRow.layoutHorizontally();
+      const n = textRow.addText(isTop ? `👑 ${r.name}` : r.name);
+      n.font = isTop ? Font.boldSystemFont(small ? 11 : 12) : Font.systemFont(small ? 11 : 12);
+      n.textColor = isTop ? GOLD : textColor;
+      n.lineLimit = 1;
+      const t = textRow.addText(line);
       t.font = Font.systemFont(small ? 11 : 12);
       t.textColor = textColor;
       t.lineLimit = 1;

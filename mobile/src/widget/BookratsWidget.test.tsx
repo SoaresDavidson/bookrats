@@ -9,7 +9,7 @@ test("data state builds a native widget tree", () => {
     title: "Duna",
     author: "Frank Herbert",
     stale: true,
-    readers: [{ name: "ana", color: "#2F6FEB", pct: "41%", fill: 0.414, session: "34% → 41%", ago: "há 5 min" }],
+    readers: [{ name: "ana", color: "#2F6FEB", pct: "41%", fill: 0.414, session: "34% → 41%", ago: "há 5 min", leader: false }],
   };
   expect(() => buildWidgetTree(<BookratsWidget state={state} />)).not.toThrow();
 });

@@ -24,7 +24,17 @@ function lastLine(r: Reader) {
   );
 }
 
-export function ReaderBar({ r, i, animate }: { r: Reader; i: number; animate: boolean }) {
+function Crown() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4.5 mr-1.5 -mt-0.5 inline-block align-middle fill-gold-crown" role="img">
+      <title>Na liderança</title>
+      <path d="M3 8.5 7.5 12 12 5l4.5 7L21 8.5 19.2 18H4.8z" />
+      <rect x="4.8" y="19.2" width="14.4" height="2" rx="1" />
+    </svg>
+  );
+}
+
+export function ReaderBar({ r, i, animate, leader = false }: { r: Reader; i: number; animate: boolean; leader?: boolean }) {
   const v = r.percentage === null ? 0 : Math.round(r.percentage * 100);
   const { value: shown, animating } = useCountUp(v, { animate, delay: i * 120, duration: 800 });
   const [advanced, setAdvanced] = useState(false);
@@ -70,8 +80,9 @@ export function ReaderBar({ r, i, animate }: { r: Reader; i: number; animate: bo
   return (
     <div className="flex flex-col gap-1.5">
       <div className={ui.readerTop}>
-        <span className={ui.name}>
+        <span className={leader ? `${ui.name} text-gold` : ui.name} data-leader={leader || undefined}>
           <span className={ui.dot} style={readerVars(r, i)} />
+          {leader && <Crown />}
           {r.name}
         </span>
         <span className={ui.pct} data-testid={`pct-${r.name}`}>

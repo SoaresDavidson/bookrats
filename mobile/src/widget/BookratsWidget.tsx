@@ -8,6 +8,7 @@ const BG = "#18181B";
 const TRACK = "#3F3F46";
 const FG = "#FAFAFA";
 const MUTED = "#A1A1AA";
+const GOLD = "#F5C542";
 
 // The native side reads flex weights with getInt, so fractions truncate to 0; scale to integers.
 const WEIGHT_SCALE = 1000;
@@ -34,10 +35,10 @@ function Row({ r }: { r: ReaderRow }) {
     <FlexWidget style={{ width: "match_parent", flexDirection: "column", marginTop: 6 }}>
       <FlexWidget style={{ width: "match_parent", flexDirection: "row", justifyContent: "space-between" }}>
         <TextWidget
-          text={r.name}
+          text={r.leader ? `👑 ${r.name}` : r.name}
           maxLines={1}
           truncate="END"
-          style={{ fontSize: 13, fontWeight: "bold", color: r.color as `#${string}` }}
+          style={{ fontSize: 13, fontWeight: "bold", color: r.leader ? GOLD : (r.color as `#${string}`) }}
         />
         <TextWidget text={r.pct} style={{ fontSize: 13, fontWeight: "bold", color: FG }} />
       </FlexWidget>

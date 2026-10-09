@@ -5,6 +5,7 @@ import { Cover } from "../../components/Cover/Cover";
 import { HistoryPanel } from "../../components/HistoryPanel/HistoryPanel";
 import { ReaderBar } from "../../components/ProgressBar/ReaderBar";
 import { DashboardSkeleton } from "../../components/Skeleton/Skeleton";
+import { leader } from "../../lib/format";
 import { readerVars } from "../../lib/readerVars";
 import { ui } from "../../lib/ui";
 
@@ -121,6 +122,7 @@ export function Dashboard({ token, onAuthError, onGoManage }: Props) {
     );
 
   const { reading, readers } = summary;
+  const top = leader(readers);
   return (
     <section className={ui.stack}>
       {error && (
@@ -138,7 +140,7 @@ export function Dashboard({ token, onAuthError, onGoManage }: Props) {
         </div>
         <div className="flex flex-col gap-4">
           {readers.map((r, i) => (
-            <ReaderBar key={r.name} r={r} i={i} animate={animate} />
+            <ReaderBar key={r.name} r={r} i={i} animate={animate} leader={r.name === top} />
           ))}
           {lead(readers) && <p className={ui.lead}>{lead(readers)}</p>}
         </div>

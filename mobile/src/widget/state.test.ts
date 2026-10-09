@@ -28,6 +28,7 @@ describe("toWidgetState", () => {
     expect(s.readers.map((r) => r.name)).toEqual(["ana", "bia"]);
     expect(s.readers.map((r) => r.color)).toEqual(["#2F6FEB", "#D9480F"]);
     expect(s.readers[0]).toMatchObject({ pct: "41%", fill: 0.41, session: "34% → 41%", ago: "há 5 min" });
+    expect(s.readers.map((r) => r.leader)).toEqual([false, true]);
   });
 
   test("no reading", () => {

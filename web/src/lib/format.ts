@@ -17,3 +17,12 @@ export function ago(iso: string | null, now: Date = new Date()): string {
   const d = Math.floor(h / 24);
   return d === 1 ? "há 1 dia" : `há ${d} dias`;
 }
+
+/** Name of the reader strictly ahead (whole percentage points), or null on a tie or with fewer than two readers with data. */
+export function leader(readers: { name: string; percentage: number | null }[]): string | null {
+  const scored = readers.filter((r) => r.percentage !== null).map((r) => ({ name: r.name, v: Math.round((r.percentage ?? 0) * 100) }));
+  if (scored.length < 2) return null;
+  const top = Math.max(...scored.map((r) => r.v));
+  const best = scored.filter((r) => r.v === top);
+  return best.length === 1 ? best[0].name : null;
+}

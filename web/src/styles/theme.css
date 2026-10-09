@@ -13,6 +13,9 @@
   --track: #e4e4e8;
   --accent-text: #2f6feb;
   --danger: #b42318;
+  /* Leader's name (4.7:1 on card) and crown (3.2:1, non-text). */
+  --gold: #946a00;
+  --gold-crown: #b8860b;
   --shelf-shadow: 0 8px 18px -8px rgb(47 111 235 / 0.3), 0 1px 4px rgb(24 24 27 / 0.1);
   --swatch-shadow: inset 0 0 0 1px rgb(24 24 27 / 0.2);
 }
@@ -27,6 +30,8 @@
     --track: #313137;
     --accent-text: #6f9cf5;
     --danger: #ff8a80;
+    --gold: #f5c542;
+    --gold-crown: #f5c542;
     --shelf-shadow: 0 8px 18px -8px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(255 255 255 / 0.06);
     --swatch-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.25);
   }
@@ -103,6 +108,8 @@
   --color-track: var(--track);
   --color-accent-text: var(--accent-text);
   --color-danger: var(--danger);
+  --color-gold: var(--gold);
+  --color-gold-crown: var(--gold-crown);
   --color-danger-tint: color-mix(in srgb, var(--danger) 14%, var(--card));
   --shadow-shelf: var(--shelf-shadow);
   --shadow-swatch: var(--swatch-shadow);

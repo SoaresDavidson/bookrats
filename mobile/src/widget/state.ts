@@ -1,5 +1,5 @@
 import type { Outcome, Summary } from "../api";
-import { ago, pct, sessionText } from "../format";
+import { ago, leader, pct, sessionText } from "../format";
 
 export const READER_COLORS = ["#2F6FEB", "#D9480F"];
 
@@ -10,6 +10,7 @@ export interface ReaderRow {
   fill: number;
   session: string;
   ago: string;
+  leader: boolean;
 }
 
 export type WidgetState =
@@ -18,6 +19,7 @@ export type WidgetState =
 
 function fromSummary(s: Summary, stale: boolean, now: Date): WidgetState {
   if (!s.reading) return { kind: "message", text: "Nenhuma leitura ativa" };
+  const top = leader(s.readers);
   return {
     kind: "data",
     title: s.reading.title,
@@ -30,6 +32,7 @@ function fromSummary(s: Summary, stale: boolean, now: Date): WidgetState {
       fill: r.percentage === null ? 0 : Math.min(1, Math.max(0, r.percentage)),
       session: sessionText(r.last_session),
       ago: ago(r.updated_at, now),
+      leader: r.name === top,
     })),
   };
 }

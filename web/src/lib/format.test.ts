@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { ago, pct, sessionText } from "./format";
+import { ago, leader, pct, sessionText } from "./format";
 
 test("pct", () => {
   expect(pct(0.414)).toBe("41%");
@@ -20,4 +20,13 @@ test("ago edge cases", () => {
   expect(ago("not-a-date", now)).toBe("sem dados");
   expect(ago("2026-10-08T11:01:00Z", now)).toBe("há 59 min");
   expect(ago("2026-10-08T12:30:00Z", now)).toBe("há 0 min");
+});
+
+test("leader", () => {
+  const r = (name: string, percentage: number | null) => ({ name, percentage });
+  expect(leader([r("Davi", 0.42), r("Ana", 0.38)])).toBe("Davi");
+  expect(leader([r("Davi", 0.3), r("Ana", 0.5)])).toBe("Ana");
+  expect(leader([r("Davi", 0.421), r("Ana", 0.419)])).toBeNull();
+  expect(leader([r("Davi", 0.4), r("Ana", null)])).toBeNull();
+  expect(leader([r("Davi", 0.4)])).toBeNull();
 });

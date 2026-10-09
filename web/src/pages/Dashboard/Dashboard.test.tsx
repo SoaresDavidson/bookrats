@@ -87,10 +87,19 @@ describe("Dashboard per-reader bars", () => {
     expect(screen.getByText("Davi à frente por 4 pontos")).toBeTruthy();
   });
 
+  it("crowns only the reader ahead", async () => {
+    set(0.3, 0.58);
+    render(<Dashboard token="tok" />);
+    await screen.findByText(/Duna/);
+    expect(screen.getAllByTitle("Na liderança")).toHaveLength(1);
+    expect(document.querySelector("[data-leader]")?.textContent).toContain("Colega");
+  });
+
   it("says Empatados when equal", async () => {
     set(0.5, 0.5);
     render(<Dashboard token="tok" />);
     expect(await screen.findByText("Empatados")).toBeTruthy();
+    expect(screen.queryByTitle("Na liderança")).toBeNull();
   });
 
   it("formats a negative last session with a plain hyphen", async () => {
