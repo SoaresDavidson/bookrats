@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Bookrats",
+    "slug": "bookrats",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,13 +16,29 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "dev.bookrats.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "react-native-android-widget",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Bookrats",
+              "label": "Bookrats",
+              "description": "Progresso de leitura",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "updatePeriodMillis": 1800000,
+              "resizeMode": "horizontal|vertical"
+            }
+          ]
+        }
+      ],
       "expo-secure-store"
     ]
   }

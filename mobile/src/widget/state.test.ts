@@ -12,7 +12,8 @@ const reader = (name: string, percentage: number | null, extra: object = {}) => 
   name,
   percentage,
   last_session: percentage === null ? null : { from: 0.34, to: percentage },
-  last_read_at: "2026-10-08T11:55:00Z",
+  updated_at: percentage === null ? null : "2026-10-08T11:55:00Z",
+  source: percentage === null ? null : "kosync",
   ...extra,
 });
 
