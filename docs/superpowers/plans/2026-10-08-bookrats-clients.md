@@ -89,14 +89,14 @@ test("ago", () => {
 
 **Files:**
 - Create: `web/src/App.tsx`, `web/src/Dashboard.tsx`, `web/src/Manage.tsx`, `web/public/manifest.webmanifest`, icons
-- Modify: `backend/src/bookrats/main.py` (mount `StaticFiles(directory=<web/dist>, html=True)` at `/app` when the directory exists), `backend/Dockerfile` (multi-stage: node build of `web/` copied into image)
+- Modify: `backend/src/bookrats/main.py` (mount `StaticFiles(directory=<web/dist>, html=True)` at `/app` when the directory exists), `backend/Dockerfile` (multi-stage: node build of `web/` copied into image) and `deploy/docker-compose.yml` (build context must become the repo root, `dockerfile: backend/Dockerfile`, since `web/` is outside `backend/`)
 
 **Interfaces:**
 - Consumes: Task 1 functions.
 
 - [ ] **Step 1: `App.tsx`: if no token in localStorage, show input "Cole seu token" and save; on `AuthError` clear it. Two tabs: Progresso, Gerenciar.**
 - [ ] **Step 2: `Dashboard.tsx`: book title; one bar track with two markers/fills (one per reader, colors from Global Constraints, label `name pct`); under each reader `sessionText(last_session)` + `ago(updated_at)`; history list from `getSessions` for each reader. Poll summary every 60 s while visible.**
-- [ ] **Step 3: `Manage.tsx`: slider/number 0–100 → `postProgress(p/100)`; form new reading (title, author, goodreads book id); list unlinked documents (title if present else short hash, last device, first seen) with button "É este livro" → `linkDocument(hash, reading.id)`.**
+- [ ] **Step 3: `Manage.tsx`: slider/number 0–100 → `postProgress(p/100)`; form new reading (title, author, goodreads book id); list unlinked documents (title if present else short hash, last device, first seen) — includes Goodreads editions as `gr:<book_id>` with last device "goodreads" with button "É este livro" → `linkDocument(hash, reading.id)`.**
 - [ ] **Step 4: Manifest: `name: "Bookrats"`, `start_url: "/app/"`, `display: "standalone"`, theme color `#2F6FEB`.**
 - [ ] **Step 5: Verify: `npm run build`, run backend, open `http://localhost:8000/app/` with a seeded token; create reading, link a KOReader document, post manual progress for the colleague token; dashboard shows both bars and session texts. On iPhone Safari "Adicionar à Tela de Início" opens standalone.**
 - [ ] **Step 6: Commit `feat(web): dashboard and management screens served at /app`.**
