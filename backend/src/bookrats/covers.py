@@ -40,7 +40,7 @@ async def _openlibrary(client: httpx.AsyncClient, title: str, author: str | None
 
 
 async def _google(client: httpx.AsyncClient, title: str, author: str | None) -> str | None:
-    q = f"intitle:{title}" + (f" inauthor:{author}" if author else "")
+    q = f'intitle:"{title}"' + (f' inauthor:"{author}"' if author else "")
     params = {"q": q, "maxResults": "5", "printType": "books"}
     try:
         r = await client.get(GOOGLE_VOLUMES, params=params, timeout=5.0)

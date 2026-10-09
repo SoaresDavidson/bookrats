@@ -16,7 +16,7 @@ Handoff for the next session. Product spec: `docs/superpowers/specs/2026-10-08-b
 - kosync server API for KOReader and CrossPoint (`/users/auth`, `PUT/GET /syncs/progress`, `/healthcheck`); sign-up disabled; every sync stored as a snapshot; CrossPoint metadata (title/authors) stored.
 - Goodreads updates RSS poller (15 min) for the colleague; progress items become document `gr:<book_id>`.
 - `/api/*` (bearer token per user): summary (reading + cover + per-reader pct, last session, color), sessions, manual progress, readings list/activate/patch, start reading from a document, link documents, palette, `PUT /api/me/color` (palette id or custom hex with contrast-safe variants).
-- Covers via Open Library search (exact/prefix title match, never guesses); manual URL fallback.
+- Covers via Open Library, then Google Books (exact/prefix title match, never guesses); manual URL fallback.
 - CLI: `bookrats add-user --name … --kosync-user … --kosync-password …` / `--goodreads-id …` (prints the API token), `bookrats new-reading --title … --author … --goodreads-book-id … --cover-url …`.
 - Env: `BOOKRATS_DB`, `BOOKRATS_GOODREADS_POLL_SECONDS`, `BOOKRATS_WEB_DIST`. Web served at `/app`.
 
