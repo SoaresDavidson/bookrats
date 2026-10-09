@@ -1,0 +1,26 @@
+services:
+  bookrats:
+    build:
+      context: ../backend
+    environment:
+      BOOKRATS_DB: /data/bookrats.db
+    volumes:
+      - bookrats-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthcheck')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
+    depends_on:
+      - bookrats
+    restart: unless-stopped
+
+volumes:
+  bookrats-data:
