@@ -2,6 +2,49 @@ import { useEffect, useState, useId } from "react";
 import { AuthError, getSessions, getSummary, type Reader, type SessionOut, type Summary } from "./api";
 import { Cover } from "./Cover";
 import { ago, pct, sessionText } from "./format";
+import { useCountUp } from "./useCountUp";
+
+const KEY = "bookrats.barsAnimated";
+
+function shouldAnimate(): boolean {
+  try {
+    if (sessionStorage.getItem(KEY)) return false;
+  } catch {
+    return false;
+  }
+  try {
+    return !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return true;
+  }
+}
+
+function ReaderBar({ r, i, animate }: { r: Reader; i: number; animate: boolean }) {
+  const v = r.percentage === null ? 0 : Math.round(r.percentage * 100);
+  const shown = useCountUp(v, { animate, delay: i * 120, duration: 800 });
+  const text = shown === v ? pct(r.percentage) : `${Math.round(shown)}%`;
+  return (
+    <div className="reader">
+      <div className="reader-top">
+        <span className="name"><span className="dot" style={vars(r, i)} />{r.name}</span>
+        <span className="pct" data-testid={`pct-${r.name}`}>{text}</span>
+      </div>
+      <div className="bar">
+        <div
+          className="bar-fill"
+          role="progressbar"
+          aria-label={r.name}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={v}
+          data-reader={r.name}
+          style={{ transform: `scaleX(${shown / 100})`, transformOrigin: "left", ...vars(r, i) }}
+        />
+      </div>
+      <p className="muted">{lastLine(r)}</p>
+    </div>
+  );
+}
 
 const FALLBACK = [
   { id: "azul", light: "#2F6FEB", dark: "#6F9CF5" },
@@ -93,6 +136,7 @@ function HistoryList({ name, style, sessions }: { name: string; style: React.CSS
 export function Dashboard({ token, onAuthError, onGoManage }: Props) {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState(false);
+  const [animate] = useState(shouldAnimate);
   const [history, setHistory] = useState<Record<string, SessionOut[]>>({});
 
   useEffect(() => {
@@ -122,6 +166,16 @@ export function Dashboard({ token, onAuthError, onGoManage }: Props) {
       document.removeEventListener("visibilitychange", tick);
     };
   }, [token, onAuthError]);
+
+  const loaded = !!summary?.reading;
+  useEffect(() => {
+    if (!loaded) return;
+    try {
+      sessionStorage.setItem(KEY, "1");
+    } catch {
+      /* ignore */
+    }
+  }, [loaded]);
 
   const names = summary?.reading ? summary.readers.map((r) => r.name).join("\n") : "";
   useEffect(() => {
@@ -163,30 +217,7 @@ export function Dashboard({ token, onAuthError, onGoManage }: Props) {
           </div>
         </div>
         <div className="readers">
-          {readers.map((r, i) => {
-            const v = r.percentage === null ? 0 : Math.round(r.percentage * 100);
-            return (
-              <div key={r.name} className="reader">
-                <div className="reader-top">
-                  <span className="name"><span className="dot" style={vars(r, i)} />{r.name}</span>
-                  <span className="pct">{pct(r.percentage)}</span>
-                </div>
-                <div className="bar">
-                  <div
-                    className="bar-fill"
-                    role="progressbar"
-                    aria-label={r.name}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={v}
-                    data-reader={r.name}
-                    style={{ width: `${v}%`, ...vars(r, i) }}
-                  />
-                </div>
-                <p className="muted">{lastLine(r)}</p>
-              </div>
-            );
-          })}
+          {readers.map((r, i) => <ReaderBar key={r.name} r={r} i={i} animate={animate} />)}
           {lead(readers) && <p className="lead">{lead(readers)}</p>}
         </div>
       </div>

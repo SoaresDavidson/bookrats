@@ -73,14 +73,15 @@ describe("Dashboard per-reader bars", () => {
     vi.mocked(api.getSummary).mockResolvedValue(s);
   };
   const w = (name: string) =>
-    document.querySelector<HTMLElement>(`[data-reader="${name}"]`)!.style.width;
+    document.querySelector<HTMLElement>(`[data-reader="${name}"]`)!.style.transform;
 
   it("gives each reader its own bar with its own width", async () => {
+    sessionStorage.setItem("bookrats.barsAnimated", "1");
     set(0.62, 0.58);
     render(<Dashboard token="tok" />);
     await screen.findByText(/Duna/);
-    expect(w("Davi")).toBe("62%");
-    expect(w("Colega")).toBe("58%");
+    expect(w("Davi")).toBe("scaleX(0.62)");
+    expect(w("Colega")).toBe("scaleX(0.58)");
     expect(screen.getByText("Davi à frente por 4 pontos")).toBeTruthy();
   });
 
