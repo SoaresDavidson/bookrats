@@ -1,0 +1,63 @@
+import pytest
+
+from bookrats import store
+
+
+def test_add_snapshot_rejects_out_of_range(conn, davi):
+    with pytest.raises(ValueError):
+        store.add_snapshot(conn, davi.id, "manual", 1.2, 100)
+
+
+def test_external_id_dedupes(conn, colega):
+    assert store.add_snapshot(conn, colega.id, "goodreads", 0.3, 100, external_id="g1") is True
+    assert store.add_snapshot(conn, colega.id, "goodreads", 0.3, 100, external_id="g1") is False
+
+
+def test_linking_is_retroactive(conn, davi):
+    r = store.create_reading(conn, "Duna")
+    store.add_snapshot(conn, davi.id, "kosync", 0.1, 100, document="h1")
+    assert store.snapshots_for(conn, davi.id, r) == []
+    with pytest.raises(KeyError):
+        store.link_document(conn, "unknown", r)
+    store.link_document(conn, "h1", r)
+    assert [s.percentage for s in store.snapshots_for(conn, davi.id, r)] == [0.1]
+
+
+def test_create_reading_deactivates_previous(conn):
+    store.create_reading(conn, "A"); b = store.create_reading(conn, "B")
+    assert store.active_reading(conn)["id"] == b
+
+
+def test_user_by_kosync(conn, davi):
+    assert store.user_by_kosync(conn, "davi", "md5x").id == davi.id
+    assert store.user_by_kosync(conn, "davi", "wrong") is None
+
+
+def test_user_by_token(conn, davi):
+    assert store.user_by_token(conn, "t-davi").name == "Davi"
+    assert store.user_by_token(conn, "nope") is None
+
+
+def test_list_users_ordered_by_id(conn, davi, colega):
+    assert [u.name for u in store.list_users(conn)] == ["Davi", "Colega"]
+
+
+def test_unlinked_documents(conn, davi):
+    r = store.create_reading(conn, "Duna")
+    store.add_snapshot(conn, davi.id, "kosync", 0.1, 100, document="h1")
+    assert [d["hash"] for d in store.unlinked_documents(conn)] == ["h1"]
+    store.link_document(conn, "h1", r)
+    assert store.unlinked_documents(conn) == []
+
+
+def test_latest_kosync_returns_newest(conn, davi):
+    store.add_snapshot(conn, davi.id, "kosync", 0.5, 200, document="h1")
+    store.add_snapshot(conn, davi.id, "kosync", 0.2, 100, document="h1")
+    assert store.latest_kosync(conn, davi.id, "h1")["percentage"] == 0.5
+    assert store.latest_kosync(conn, davi.id, "other") is None
+
+
+def test_add_snapshot_stores_title_and_authors(conn, davi):
+    store.add_snapshot(conn, davi.id, "kosync", 0.1, 100, document="h1", title="Duna", authors="Herbert")
+    row = conn.execute("SELECT title, authors FROM documents WHERE hash='h1'").fetchone()
+    assert (row["title"], row["authors"]) == ("Duna", "Herbert")
