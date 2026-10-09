@@ -11,6 +11,8 @@ cd backend
 uv sync
 uv run pytest
 BOOKRATS_DB=./bookrats.db uv run uvicorn bookrats.asgi:app --reload
+# serve the web app at /app/ (after `npm run build` in web/):
+BOOKRATS_WEB_DIST=../web/dist BOOKRATS_DB=./bookrats.db uv run uvicorn bookrats.asgi:app --reload
 ```
 
 CLI: `uv run bookrats --help`.

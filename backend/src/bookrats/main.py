@@ -1,8 +1,12 @@
 import asyncio
 import contextlib
+import os
+from pathlib import Path
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from bookrats import api, kosync
 from bookrats.config import Settings
@@ -35,4 +39,13 @@ def create_app(db_path: str, start_poller: bool = True) -> FastAPI:
 
     app.include_router(kosync.router)
     app.include_router(api.router, prefix="/api")
+
+    web_dist = Path(os.environ.get("BOOKRATS_WEB_DIST", "/app/web/dist"))
+    if web_dist.is_dir():
+        app.mount("/app", StaticFiles(directory=web_dist, html=True), name="web")
+
+        @app.get("/", include_in_schema=False)
+        async def _root():
+            return RedirectResponse("/app/", status_code=307)
+
     return app
