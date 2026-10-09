@@ -142,6 +142,31 @@ describe("Manage", () => {
     expect(api.setCover).toHaveBeenCalledWith("tok", 1, "https://x/new.jpg");
   });
 
+  it("Salvar capa with an empty field never clears the current cover", async () => {
+    render(<Manage token="tok" />);
+    await screen.findByText(/Messias de Duna/);
+    expect((screen.getByRole("button", { name: "Salvar capa" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(api.setCover).not.toHaveBeenCalled();
+  });
+
+  it("Remover capa clears the cover explicitly", async () => {
+    vi.mocked(api.getSummary).mockResolvedValue({
+      ...makeSummary(),
+      reading: { ...makeSummary().reading!, cover_url: "https://x/old.jpg" },
+    });
+    const user = userEvent.setup();
+    render(<Manage token="tok" />);
+    await user.click(await screen.findByRole("button", { name: "Remover capa" }));
+    expect(api.setCover).toHaveBeenCalledWith("tok", 1, null);
+    expect(await screen.findByText("Capa removida.")).toBeTruthy();
+  });
+
+  it("Remover capa is absent when there is no cover", async () => {
+    render(<Manage token="tok" />);
+    await screen.findByText(/Messias de Duna/);
+    expect(screen.queryByRole("button", { name: "Remover capa" })).toBeNull();
+  });
+
   it("disables save cover without an active reading", async () => {
     vi.mocked(api.getSummary).mockResolvedValue({ ...makeSummary(), reading: null });
     render(<Manage token="tok" />);
@@ -291,6 +316,7 @@ describe("Manage", () => {
     render(<Manage token="tok" />);
     fireEvent.change(await screen.findByLabelText("Título"), { target: { value: "X" } });
     fireEvent.change(screen.getByLabelText("Meu progresso (%)"), { target: { value: "10" } });
+    fireEvent.change(screen.getByLabelText("Nova URL da capa"), { target: { value: "https://x/c.jpg" } });
     await vi.waitFor(() =>
       expect((screen.getByRole("button", { name: "Salvar capa" }) as HTMLButtonElement).disabled).toBe(false),
     );

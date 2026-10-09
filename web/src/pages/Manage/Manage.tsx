@@ -236,11 +236,12 @@ export function Manage({ token, onAuthError }: Props) {
         onSubmit={(e) => {
           e.preventDefault();
           const u = newCover.trim();
+          if (!u) return;
           setCoverErr("");
           void run(
             "cover",
             async () => {
-              await setCover(token, readingId!, u === "" ? null : u);
+              await setCover(token, readingId!, u);
               setNewCover("");
             },
             "Capa salva.",
@@ -268,10 +269,20 @@ export function Manage({ token, onAuthError }: Props) {
         <button
           className={`${ui.btn} ${ui.btnDefault}`}
           type="submit"
-          disabled={readingId === undefined || isPending("cover")}
+          disabled={readingId === undefined || isPending("cover") || !newCover.trim()}
         >
           Salvar capa
         </button>
+        {summary?.reading?.cover_url && (
+          <button
+            className={`${ui.btn} ${ui.btnDefault}`}
+            type="button"
+            disabled={isPending("cover")}
+            onClick={() => void run("cover", () => setCover(token, readingId!, null), "Capa removida.")}
+          >
+            Remover capa
+          </button>
+        )}
         <button
           className={`${ui.btn} ${ui.btnDefault}`}
           type="button"
