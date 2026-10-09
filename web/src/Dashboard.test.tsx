@@ -104,17 +104,31 @@ describe("Dashboard per-reader bars", () => {
     expect(screen.getAllByText("Sem sessões ainda").length).toBeGreaterThan(0);
   });
 
-  it("history is a collapsed details with latest 5 and Ver todas", async () => {
+  it("history is an animated collapsed panel with latest 5 and Ver todas", async () => {
     const mk = (i: number) => ({ from: i / 100, to: (i + 1) / 100, started_at: `2026-01-0${i + 1}T00:00:00Z`, ended_at: `2026-01-0${i + 1}T01:00:00Z` });
     vi.mocked(api.getSessions).mockResolvedValue([0, 1, 2, 3, 4, 5, 6].map(mk));
     render(<Dashboard token="tok" />);
     await screen.findByText(/Duna/);
     await screen.findAllByText("Ver todas");
-    const d = document.querySelector("details.history") as HTMLDetailsElement;
-    expect(d.open).toBe(false);
-    expect(d.querySelectorAll("li").length).toBe(5);
-    fireEvent.click(within(d).getByText("Ver todas"));
-    expect(d.querySelectorAll("li").length).toBe(7);
+    const btn = screen.getAllByRole("button", { name: /Histórico de/ })[0];
+    expect(btn.getAttribute("aria-expanded")).toBe("false");
+    const panel = document.getElementById(btn.getAttribute("aria-controls")!) as HTMLElement;
+    expect(panel.getAttribute("role")).toBe("region");
+    expect(panel.getAttribute("aria-labelledby")).toBe(btn.id);
+    const wrap = panel.firstElementChild as HTMLElement;
+    expect(wrap.hasAttribute("inert")).toBe(true);
+    expect(panel.querySelectorAll("li").length).toBe(7);
+    fireEvent.click(btn);
+    expect(btn.getAttribute("aria-expanded")).toBe("true");
+    expect(wrap.hasAttribute("inert")).toBe(false);
+    expect(panel.classList.contains("open")).toBe(true);
+    const more = panel.querySelector(".more") as HTMLElement;
+    expect(more.hasAttribute("inert")).toBe(true);
+    fireEvent.click(within(panel).getByText("Ver todas"));
+    expect(more.hasAttribute("inert")).toBe(false);
+    expect(within(panel).getByText("Ver menos")).toBeTruthy();
+    fireEvent.click(btn);
+    expect(btn.getAttribute("aria-expanded")).toBe("false");
   });
 });
 
