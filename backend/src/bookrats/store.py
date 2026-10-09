@@ -82,7 +82,7 @@ def add_snapshot(conn, user_id, source, percentage, ts, *, document=None, readin
         if document is not None:
             conn.execute(
                 "INSERT INTO documents (hash, first_seen, last_device, title, authors) VALUES (?,?,?,?,?) "
-                "ON CONFLICT(hash) DO UPDATE SET last_device=excluded.last_device, "
+                "ON CONFLICT(hash) DO UPDATE SET last_device=COALESCE(excluded.last_device, last_device), "
                 "title=COALESCE(excluded.title, title), authors=COALESCE(excluded.authors, authors)",
                 (document, ts, device, title, authors),
             )
