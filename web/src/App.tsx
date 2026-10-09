@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { ui } from "./lib/ui";
 import { LogoutButton } from "./components/LogoutButton/LogoutButton";
 import { Tabs, type Tab } from "./components/Tabs/Tabs";
 import { Dashboard } from "./pages/Dashboard/Dashboard";
@@ -31,11 +32,11 @@ export default function App() {
 
   if (!token) {
     return (
-      <main className="shell">
-        <p className="brand">Bookrats</p>
+      <main className="w-full min-w-0 max-w-120 mx-auto px-4 pt-5 pb-12 flex flex-col gap-5">
+        <p className="text-md font-bold tracking-tight">Bookrats</p>
         <h1 className="sr-only">Entrar no Bookrats</h1>
         <form
-          className="card stack"
+          className={`${ui.card} ${ui.stack}`}
           onSubmit={(e) => {
             e.preventDefault();
             const t = draft.trim();
@@ -48,20 +49,20 @@ export default function App() {
             setToken(t);
           }}
         >
-          <label className="field">
+          <label className={ui.field}>
             <span>Cole seu token</span>
-            <input type="password" autoComplete="off" value={draft} onChange={(e) => setDraft(e.target.value)} />
+            <input className={ui.input} type="password" autoComplete="off" value={draft} onChange={(e) => setDraft(e.target.value)} />
           </label>
-          <button className="btn primary" type="submit">Entrar</button>
+          <button className={`${ui.btn} ${ui.btnPrimary}`} type="submit">Entrar</button>
         </form>
       </main>
     );
   }
 
   return (
-    <main className="shell">
-      <header className="top">
-        <p className="brand">Bookrats</p>
+    <main className="w-full min-w-0 max-w-120 mx-auto px-4 pt-5 pb-12 flex flex-col gap-5">
+      <header className="flex flex-wrap items-center justify-between gap-3 pt-[env(safe-area-inset-top)]">
+        <p className="text-md font-bold tracking-tight">Bookrats</p>
         <Tabs tab={tab} onChange={setTab} />
       </header>
       {tab === "progress" ? (

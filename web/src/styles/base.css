@@ -1,0 +1,19 @@
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+  html {
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+  body {
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.45;
+  }
+  :is(button, input):focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}

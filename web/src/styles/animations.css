@@ -1,0 +1,103 @@
+/* Keyframes and the selectors utilities cannot express cleanly. Timings are the original ones. */
+
+@keyframes skeleton-pulse { 50% { opacity: 0.5; } }
+@keyframes shelf-shimmer { to { transform: translateX(100%); } }
+@keyframes shelf-spin { to { transform: rotate(360deg); } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(-4px); } }
+@keyframes bar-sweep { to { transform: translateX(100%); } }
+@keyframes bar-glow {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c-light, var(--color-accent)) 0%, transparent); }
+  30% { box-shadow: 0 0 12px 2px color-mix(in srgb, var(--c-light, var(--color-accent)) 60%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c-light, var(--color-accent)) 0%, transparent); }
+}
+@media (prefers-color-scheme: dark) {
+  @keyframes bar-glow {
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c-dark, var(--color-accent)) 0%, transparent); }
+    30% { box-shadow: 0 0 12px 2px color-mix(in srgb, var(--c-dark, var(--color-accent)) 60%, transparent); }
+    100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c-dark, var(--color-accent)) 0%, transparent); }
+  }
+}
+
+/* Progress bar: no transition while counting up; glow + sweep on advance. */
+.bar-fill.is-animating { transition: none; }
+.bar-fill.is-advanced { animation: bar-glow var(--duration-glow) ease-out; }
+.bar-fill.is-advanced::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.55) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: bar-sweep var(--duration-sweep) ease-out forwards;
+}
+
+/* Collapse: animates grid rows. Open state is toggled by the .open class. */
+.collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows var(--duration-collapse) var(--ease-collapse), opacity var(--duration-fade);
+}
+.collapse.open { grid-template-rows: 1fr; opacity: 1; }
+.collapse.more { opacity: 1; }
+
+/* Shimmer on loading placeholders. */
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.35) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: shelf-shimmer 1.4s ease-in-out infinite;
+}
+@media (prefers-color-scheme: dark) {
+  .shimmer::after { background: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.08) 50%, transparent 70%); }
+}
+
+/* Cover fade-in once the image has loaded. */
+.cover.fade { opacity: 0; transition: opacity var(--duration-fade) ease; }
+.shelf-item .cover.fade {
+  transition: opacity var(--duration-fade) ease, transform var(--duration-lift) var(--ease-lift), box-shadow var(--duration-lift) ease;
+}
+.cover.fade.loaded { opacity: 1; }
+
+/* Shelf magnification: only direct siblings of the hovered cover get a small lift (1.03).
+   When the grid wraps, a sibling can sit on another row; that is accepted (tiny, subtle). */
+@media (hover: hover) and (pointer: fine) {
+  .shelf { overflow: visible; padding-top: 12px; }
+  .shelf li:hover, .shelf li:focus-within { position: relative; z-index: 1; }
+  .shelf-item:hover .cover,
+  .shelf-item:focus-visible .cover { box-shadow: var(--shelf-shadow), 0 10px 18px -10px rgb(24 24 27 / 0.3); }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .shelf-item .cover {
+    transform-origin: 50% 100%;
+    will-change: transform;
+    transition: transform var(--duration-lift) var(--ease-lift), box-shadow var(--duration-lift) ease;
+    transition-delay: 40ms;
+  }
+  .shelf-item:hover .cover,
+  .shelf-item:focus-visible .cover {
+    transition-delay: 0ms;
+    transform: scale(1.08);
+    box-shadow: var(--shelf-shadow), 0 14px 24px -10px rgb(24 24 27 / 0.35);
+  }
+  .shelf li:hover + li .cover,
+  .shelf li:has(> .shelf-item:focus-visible) + li .cover,
+  .shelf li:has(+ li:hover) > .shelf-item .cover,
+  .shelf li:has(+ li > .shelf-item:focus-visible) > .shelf-item .cover { transform: scale(1.03); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapse { transition: none; }
+  .bar-fill.is-advanced, .bar-fill.is-advanced::after { animation: none; }
+  .bar-fill.is-advanced {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-light, var(--color-accent)) 55%, transparent);
+    filter: saturate(1.4);
+  }
+  .bar-fill.is-advanced::after { display: none; }
+  .shimmer::after { animation: none; display: none; }
+  .cover.fade, .shelf-item .cover.fade { transition: opacity var(--duration-fade) ease, box-shadow var(--duration-lift) ease; }
+}
+@media (prefers-reduced-motion: reduce) and (prefers-color-scheme: dark) {
+  .bar-fill.is-advanced { box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-dark, var(--color-accent)) 55%, transparent); }
+}

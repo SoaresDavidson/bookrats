@@ -3,6 +3,7 @@ import { AuthError, HttpError, createReading, getPalette, getSummary, getUnlinke
 import type { ColorOption, Summary, UnlinkedDocument } from "../../api/types";
 import { ColorPicker } from "../../components/ColorPicker/ColorPicker";
 import { Cover } from "../../components/Cover/Cover";
+import { ui } from "../../lib/ui";
 
 interface Props {
   token: string;
@@ -123,49 +124,49 @@ export function Manage({ token, onAuthError }: Props) {
   const other = summary?.readers.find((r) => r.name !== summary.me);
 
   return (
-    <div className="stack">
+    <div className={ui.stack}>
       <h1 className="sr-only">Gerenciar leitura</h1>
-      {msg && <p className={msg.startsWith("Algo") ? "toast error" : "toast"} role="status">{msg}</p>}
-      <form className="card stack" onSubmit={saveProgress}>
-        <h2 className="sub">Atualizar meu progresso</h2>
-        <label className="field">
+      {msg && <p className={msg.startsWith("Algo") ? ui.toastError : ui.toast} role="status">{msg}</p>}
+      <form className={`${ui.card} ${ui.stack}`} onSubmit={saveProgress}>
+        <h2 className={ui.sub}>Atualizar meu progresso</h2>
+        <label className={ui.field}>
           <span>Meu progresso (%)</span>
-          <input type="number" inputMode="numeric" min={0} max={100} value={value} aria-invalid={!!progErr} onChange={(e) => setValue(e.target.value)} />
-          {progErr && <span className="field-error">{progErr}</span>}
+          <input className={ui.input} type="number" inputMode="numeric" min={0} max={100} value={value} aria-invalid={!!progErr} onChange={(e) => setValue(e.target.value)} />
+          {progErr && <span className={ui.fieldError}>{progErr}</span>}
         </label>
-        <button className="btn primary" type="submit" disabled={isPending("progress")}>Salvar progresso</button>
+        <button className={`${ui.btn} ${ui.btnPrimary}`} type="submit" disabled={isPending("progress")}>Salvar progresso</button>
       </form>
 
-      <section className="card stack">
-        <h2 className="sub">Cores</h2>
+      <section className={`${ui.card} ${ui.stack}`}>
+        <h2 className={ui.sub}>Cores</h2>
         <ColorPicker token={token} mine={mine} other={other} palette={palette} refresh={refresh} guard={guard} />
       </section>
 
-      <form className="card stack" onSubmit={create}>
-        <h2 className="sub">Nova leitura</h2>
-        <label className="field">
+      <form className={`${ui.card} ${ui.stack}`} onSubmit={create}>
+        <h2 className={ui.sub}>Nova leitura</h2>
+        <label className={ui.field}>
           <span>Título</span>
-          <input value={title} aria-invalid={!!titleErr} onChange={(e) => setTitle(e.target.value)} />
-          {titleErr && <span className="field-error">{titleErr}</span>}
+          <input className={ui.input} value={title} aria-invalid={!!titleErr} onChange={(e) => setTitle(e.target.value)} />
+          {titleErr && <span className={ui.fieldError}>{titleErr}</span>}
         </label>
-        <label className="field">
+        <label className={ui.field}>
           <span>Autor</span>
-          <input value={author} onChange={(e) => setAuthor(e.target.value)} />
+          <input className={ui.input} value={author} onChange={(e) => setAuthor(e.target.value)} />
         </label>
-        <label className="field">
+        <label className={ui.field}>
           <span>ID do livro no Goodreads</span>
-          <input inputMode="numeric" value={grId} onChange={(e) => setGrId(e.target.value)} />
+          <input className={ui.input} inputMode="numeric" value={grId} onChange={(e) => setGrId(e.target.value)} />
         </label>
-        <label className="field">
+        <label className={ui.field}>
           <span>URL da capa (opcional)</span>
-          <input type="url" inputMode="url" value={coverUrl} aria-invalid={!!createCoverErr} onChange={(e) => setCoverUrl(e.target.value)} />
-          {createCoverErr && <span className="field-error">{createCoverErr}</span>}
+          <input className={ui.input} type="url" inputMode="url" value={coverUrl} aria-invalid={!!createCoverErr} onChange={(e) => setCoverUrl(e.target.value)} />
+          {createCoverErr && <span className={ui.fieldError}>{createCoverErr}</span>}
         </label>
-        <button className="btn primary" type="submit" disabled={isPending("create")}>Criar leitura</button>
+        <button className={`${ui.btn} ${ui.btnPrimary}`} type="submit" disabled={isPending("create")}>Criar leitura</button>
       </form>
 
       <form
-        className="card stack"
+        className={`${ui.card} ${ui.stack}`}
         onSubmit={(e) => {
           e.preventDefault();
           const u = newCover.trim();
@@ -184,40 +185,40 @@ export function Manage({ token, onAuthError }: Props) {
           );
         }}
       >
-        <h2 className="sub">Capa</h2>
+        <h2 className={ui.sub}>Capa</h2>
         {summary?.reading && (
           <Cover url={summary.reading.cover_url} title={summary.reading.title} small />
         )}
-        <label className="field">
+        <label className={ui.field}>
           <span>Nova URL da capa</span>
-          <input type="url" inputMode="url" value={newCover} aria-invalid={!!coverErr} onChange={(e) => setNewCover(e.target.value)} />
-          {coverErr && <span className="field-error">{coverErr}</span>}
+          <input className={ui.input} type="url" inputMode="url" value={newCover} aria-invalid={!!coverErr} onChange={(e) => setNewCover(e.target.value)} />
+          {coverErr && <span className={ui.fieldError}>{coverErr}</span>}
         </label>
-        <button className="btn" type="submit" disabled={readingId === undefined || isPending("cover")}>Salvar capa</button>
+        <button className={`${ui.btn} ${ui.btnDefault}`} type="submit" disabled={readingId === undefined || isPending("cover")}>Salvar capa</button>
       </form>
 
-      <section className="card">
-        <h2 className="sub">Documentos sem leitura</h2>
+      <section className={ui.card}>
+        <h2 className={ui.sub}>Documentos sem leitura</h2>
         {docs.length === 0 ? (
-          <p className="muted">Nenhum documento pendente.</p>
+          <p className={ui.muted}>Nenhum documento pendente.</p>
         ) : (
-          <ul className="list">
+          <ul>
             {docs.map((d) => (
-              <li key={d.hash} className="doc">
+              <li key={d.hash} className={`${ui.listItem} flex-wrap`}>
                 <div>
-                  <div className="doc-title">{d.title ?? d.hash.slice(0, 8)}</div>
-                  <div className="muted xs">
+                  <div className="text-md font-semibold wrap-anywhere">{d.title ?? d.hash.slice(0, 8)}</div>
+                  <div className={ui.mutedXs}>
                     {d.last_device ?? "dispositivo desconhecido"} · {new Date(d.first_seen * 1000).toLocaleDateString("pt-BR")}
                   </div>
                 </div>
-                <div className="doc-actions">
+                <div className="flex flex-wrap gap-2 justify-end">
                 {d.title && (
-                  <button className="btn primary" disabled={isPending(`start:${d.hash}`)} onClick={() => void run(`start:${d.hash}`, () => startFromDocument(token, d.hash), "Leitura iniciada.")}>
+                  <button className={`${ui.btn} ${ui.btnPrimary}`} disabled={isPending(`start:${d.hash}`)} onClick={() => void run(`start:${d.hash}`, () => startFromDocument(token, d.hash), "Leitura iniciada.")}>
                     Começar a ler este
                   </button>
                 )}
                 <button
-                  className="btn"
+                  className={`${ui.btn} ${ui.btnDefault}`}
                   disabled={readingId === undefined || isPending(`link:${d.hash}`)}
                   onClick={() => void run(`link:${d.hash}`, () => linkDocument(token, d.hash, readingId!), "Documento vinculado.")}
                 >

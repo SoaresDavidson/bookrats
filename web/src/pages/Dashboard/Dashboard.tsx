@@ -4,7 +4,8 @@ import type { Reader, SessionOut, Summary } from "../../api/types";
 import { Cover } from "../../components/Cover/Cover";
 import { HistoryPanel } from "../../components/HistoryPanel/HistoryPanel";
 import { ReaderBar } from "../../components/ProgressBar/ReaderBar";
-import { Skeleton } from "../../components/Skeleton/Skeleton";
+import { DashboardSkeleton } from "../../components/Skeleton/Skeleton";
+import { ui } from "../../lib/ui";
 import { readerVars } from "../../lib/readerVars";
 
 interface Props {
@@ -97,32 +98,32 @@ export function Dashboard({ token, onAuthError, onGoManage }: Props) {
     };
   }, [token, names, onAuthError]);
 
-  if (!summary) return error ? <p className="alert" role="alert">Não foi possível carregar o progresso. Verifique sua conexão; vamos tentar de novo em 1 minuto.</p> : <div className="stack" aria-busy="true" aria-label="Carregando"><Skeleton className="skel t" /><Skeleton className="skel c" /><Skeleton className="skel b" /></div>;
+  if (!summary) return error ? <p className={ui.toastError} role="alert">Não foi possível carregar o progresso. Verifique sua conexão; vamos tentar de novo em 1 minuto.</p> : <DashboardSkeleton />;
   if (!summary.reading)
     return (
-      <section className="card empty-state">
+      <section className={`${ui.cardBox} ${ui.emptyState}`}>
         <h1 className="sr-only">Leitura atual</h1>
-        <p className="empty">Nenhuma leitura ativa</p>
-        <p className="muted">Crie uma leitura para começar a comparar o progresso de vocês.</p>
-        {onGoManage && <button className="btn primary" onClick={onGoManage}>Ir para Gerenciar</button>}
+        <p className={ui.empty}>Nenhuma leitura ativa</p>
+        <p className={ui.muted}>Crie uma leitura para começar a comparar o progresso de vocês.</p>
+        {onGoManage && <button className={`${ui.btn} ${ui.btnPrimary} mt-2`} onClick={onGoManage}>Ir para Gerenciar</button>}
       </section>
     );
 
   const { reading, readers } = summary;
   return (
-    <section className="stack">
-      {error && <p className="alert" role="alert">Desatualizado: não foi possível atualizar agora.</p>}
-      <div className="card hero-card">
-        <div className="hero">
+    <section className={ui.stack}>
+      {error && <p className={ui.toastError} role="alert">Desatualizado: não foi possível atualizar agora.</p>}
+      <div className={`${ui.cardBox} p-5 flex flex-col gap-5`}>
+        <div className={ui.hero}>
           <Cover url={reading.cover_url} title={reading.title} />
-          <div className="hero-text">
-            <h1 className="title">{reading.title}</h1>
-            {reading.author && <p className="muted">{reading.author}</p>}
+          <div className={ui.heroText}>
+            <h1 className={`${ui.title} wrap-anywhere`}>{reading.title}</h1>
+            {reading.author && <p className={ui.muted}>{reading.author}</p>}
           </div>
         </div>
-        <div className="readers">
+        <div className="flex flex-col gap-4">
           {readers.map((r, i) => <ReaderBar key={r.name} r={r} i={i} animate={animate} />)}
-          {lead(readers) && <p className="lead">{lead(readers)}</p>}
+          {lead(readers) && <p className={ui.lead}>{lead(readers)}</p>}
         </div>
       </div>
       {readers.map((r, i) => (

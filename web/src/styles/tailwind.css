@@ -1,0 +1,5 @@
+@import "@fontsource-variable/geist";
+@import "tailwindcss";
+@import "./theme.css";
+@import "./base.css";
+@import "./animations.css";

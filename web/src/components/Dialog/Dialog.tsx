@@ -50,8 +50,8 @@ export function Dialog({ labelledBy, onClose, children, ref: outer }: Props) {
   }, [onClose]);
 
   return (
-    <div className="scrim" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={setRef} className="sheet card stack" role="dialog" aria-modal="true" aria-labelledby={labelledBy} tabIndex={-1}>
+    <div className="fixed inset-0 z-10 bg-scrim flex items-end justify-center min-[520px]:items-center" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div ref={setRef} className="w-full max-w-120 max-h-[90dvh] overflow-y-auto overscroll-contain bg-surface border border-line p-4 flex flex-col gap-3.5 rounded-card rounded-b-none min-[520px]:rounded-card focus:outline-none" role="dialog" aria-modal="true" aria-labelledby={labelledBy} tabIndex={-1}>
         {children}
       </div>
     </div>

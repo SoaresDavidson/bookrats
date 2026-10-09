@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Reader } from "../../api/types";
 import { useCountUp } from "../../hooks/useCountUp";
 import { ago, pct } from "../../lib/format";
+import { ui } from "../../lib/ui";
 import { readerVars } from "../../lib/readerVars";
 
 function points(s: { from: number; to: number }): string {
@@ -16,9 +17,9 @@ function lastLine(r: Reader) {
   if (!r.last_session) return "Sem sessões ainda";
   return (
     <>
-      <span className="nowrap">Última sessão {ago(r.updated_at)}</span>
+      <span className="whitespace-nowrap">Última sessão {ago(r.updated_at)}</span>
       {" · "}
-      <span className="nowrap">{points(r.last_session)}</span>
+      <span className="whitespace-nowrap">{points(r.last_session)}</span>
     </>
   );
 }
@@ -67,14 +68,14 @@ export function ReaderBar({ r, i, animate }: { r: Reader; i: number; animate: bo
   );
   const text = shown === v ? pct(r.percentage) : `${Math.round(shown)}%`;
   return (
-    <div className="reader">
-      <div className="reader-top">
-        <span className="name"><span className="dot" style={readerVars(r, i)} />{r.name}</span>
-        <span className="pct" data-testid={`pct-${r.name}`}>{text}</span>
+    <div className="flex flex-col gap-1.5">
+      <div className={ui.readerTop}>
+        <span className={ui.name}><span className={ui.dot} style={readerVars(r, i)} />{r.name}</span>
+        <span className={ui.pct} data-testid={`pct-${r.name}`}>{text}</span>
       </div>
-      <div className="bar">
+      <div className="h-1.5 rounded-full bg-track">
         <div
-          className={`bar-fill${animating ? " is-animating" : ""}${advanced ? " is-advanced" : ""}`}
+          className={`bar-fill relative overflow-hidden h-full w-full origin-left rounded-full transition-transform duration-600 ease-soft motion-reduce:transition-none bg-(--c-light) dark:bg-(--c-dark)${animating ? " is-animating" : ""}${advanced ? " is-advanced" : ""}`}
           role="progressbar"
           aria-label={r.name}
           aria-valuemin={0}
@@ -84,7 +85,7 @@ export function ReaderBar({ r, i, animate }: { r: Reader; i: number; animate: bo
           style={{ transform: `scaleX(${shown / 100})`, transformOrigin: "left", ...readerVars(r, i) }}
         />
       </div>
-      <p className="muted">{lastLine(r)}</p>
+      <p className={ui.muted}>{lastLine(r)}</p>
     </div>
   );
 }
