@@ -13,6 +13,16 @@
   --on-accent: #f8f8fa;
   --danger: #b42318;
   --r-card: 16px;
+  /* Type scale: ratio 1.25 on 16px. Only these five steps are used.
+     xl book title (700) | lg reader pct (600) | md names, card titles, buttons, inputs (>=16px, no iOS zoom)
+     | sm author, session line, labels, tabs, history (500-600) | xs muted timestamps and device lines. */
+  --t-xl: 1.6rem;
+  --t-lg: 1.25rem;
+  --t-md: 1rem;
+  --t-sm: 0.9rem;
+  --t-xs: 0.8rem;
+  --muted-strong: #3f3f46;
+  --accent-text: #2f6feb;
   --r-control: 12px;
   color-scheme: light dark;
   font-family: "Geist Variable", system-ui, sans-serif;
@@ -26,6 +36,8 @@
     --line: #313137;
     --track: #313137;
     --danger: #ff8a80;
+    --muted-strong: #c4c4cc;
+    --accent-text: #6f9cf5;
   }
 }
 * { box-sizing: border-box; }

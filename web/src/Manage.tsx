@@ -102,7 +102,7 @@ export function Manage({ token, onAuthError }: Props) {
     <div className="stack">
       {msg && <p className={msg.startsWith("Algo") ? "toast error" : "toast"} role="status">{msg}</p>}
       <form className="card stack" onSubmit={saveProgress}>
-        <h3 className="sub">Atualizar meu progresso</h3>
+        <h2 className="sub">Atualizar meu progresso</h2>
         <label className="field">
           <span>Meu progresso (%)</span>
           <input type="number" inputMode="numeric" min={0} max={100} value={value} aria-invalid={!!progErr} onChange={(e) => setValue(e.target.value)} />
@@ -112,7 +112,7 @@ export function Manage({ token, onAuthError }: Props) {
       </form>
 
       <form className="card stack" onSubmit={create}>
-        <h3 className="sub">Nova leitura</h3>
+        <h2 className="sub">Nova leitura</h2>
         <label className="field">
           <span>Título</span>
           <input value={title} aria-invalid={!!titleErr} onChange={(e) => setTitle(e.target.value)} />
@@ -144,7 +144,7 @@ export function Manage({ token, onAuthError }: Props) {
           }, "Capa salva.");
         }}
       >
-        <h3 className="sub">Capa</h3>
+        <h2 className="sub">Capa</h2>
         {summary?.reading && (
           <Cover url={summary.reading.cover_url} title={summary.reading.title} small />
         )}
@@ -156,7 +156,7 @@ export function Manage({ token, onAuthError }: Props) {
       </form>
 
       <section className="card">
-        <h3 className="sub">Documentos sem leitura</h3>
+        <h2 className="sub">Documentos sem leitura</h2>
         {docs.length === 0 ? (
           <p className="muted">Nenhum documento pendente.</p>
         ) : (
@@ -165,7 +165,7 @@ export function Manage({ token, onAuthError }: Props) {
               <li key={d.hash} className="doc">
                 <div>
                   <div className="doc-title">{d.title ?? d.hash.slice(0, 8)}</div>
-                  <div className="muted">
+                  <div className="muted xs">
                     {d.last_device ?? "dispositivo desconhecido"} · {new Date(d.first_seen * 1000).toLocaleDateString("pt-BR")}
                   </div>
                 </div>

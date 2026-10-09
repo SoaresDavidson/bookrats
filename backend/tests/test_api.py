@@ -198,7 +198,7 @@ def test_patch_cover_set_and_clear(client, conn, davi):
 
 
 def test_patch_cover_unknown_404(client, davi):
-    assert client.patch("/api/readings/999", headers=AUTH, json={"cover_url": "u"}).status_code == 404
+    assert client.patch("/api/readings/999", headers=AUTH, json={"cover_url": "https://x/u.jpg"}).status_code == 404
 
 
 def test_patch_cover_requires_token(client, conn, davi):
@@ -209,3 +209,17 @@ def test_patch_cover_requires_token(client, conn, davi):
 def test_summary_without_reading_ok(client, davi):
     r = client.get("/api/summary", headers=AUTH)
     assert r.status_code == 200 and r.json()["reading"] is None
+
+
+@pytest.mark.parametrize("bad", ["javascript:alert(1)", "data:text/html,x", "ftp://x/y.jpg", "x" * 2050])
+def test_cover_url_rejected(client, conn, davi, bad):
+    rid = store.create_reading(conn, "Duna")
+    assert client.patch(f"/api/readings/{rid}", headers=AUTH, json={"cover_url": bad}).status_code == 422
+    assert client.post("/api/readings", headers=AUTH, json={"title": "T", "cover_url": bad}).status_code == 422
+
+
+def test_cover_url_empty_string_becomes_null(client, conn, davi):
+    rid = store.create_reading(conn, "Duna")
+    store.set_cover(conn, rid, "https://x/y.jpg")
+    assert client.patch(f"/api/readings/{rid}", headers=AUTH, json={"cover_url": ""}).status_code == 204
+    assert _cover(client) is None

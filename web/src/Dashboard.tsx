@@ -19,9 +19,15 @@ function points(s: { from: number; to: number }): string {
   return `${d > 0 ? "+" : d < 0 ? "-" : ""}${n} ${n === 1 ? "ponto" : "pontos"} (${a}% → ${b}%)`;
 }
 
-function lastLine(r: Reader): string {
+function lastLine(r: Reader) {
   if (!r.last_session) return "Sem sessões ainda";
-  return `Última sessão ${ago(r.updated_at)} · ${points(r.last_session)}`;
+  return (
+    <>
+      <span className="nowrap">Última sessão {ago(r.updated_at)}</span>
+      {" · "}
+      <span className="nowrap">{points(r.last_session)}</span>
+    </>
+  );
 }
 
 function lead(readers: Reader[]): string {
@@ -50,7 +56,7 @@ function HistoryList({ name, color, sessions }: { name: string; color: string; s
             {shown.map((s) => (
               <li key={s.started_at}>
                 <span>{sessionText(s)}</span>
-                <span className="muted">{ago(s.ended_at)}</span>
+                <span className="muted xs">{ago(s.ended_at)}</span>
               </li>
             ))}
           </ul>
@@ -132,7 +138,7 @@ export function Dashboard({ token, onAuthError, onGoManage }: Props) {
         <div className="hero">
           <Cover url={reading.cover_url} title={reading.title} />
           <div className="hero-text">
-            <h2 className="title">{reading.title}</h2>
+            <h1 className="title">{reading.title}</h1>
             {reading.author && <p className="muted">{reading.author}</p>}
           </div>
         </div>

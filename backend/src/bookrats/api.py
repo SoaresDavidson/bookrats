@@ -1,10 +1,11 @@
 import sqlite3
+from urllib.parse import urlsplit
 import time
 from datetime import UTC, datetime
 
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from bookrats import store
 from bookrats.covers import find_cover
@@ -39,15 +40,32 @@ class ProgressIn(BaseModel):
     percentage: float = Field(ge=0, le=1, strict=True)
 
 
+def _clean_cover_url(v: str | None) -> str | None:
+    if v is None:
+        return None
+    v = v.strip()
+    if v == "":
+        return None
+    if len(v) > 2048:
+        raise ValueError("cover_url too long")
+    if urlsplit(v).scheme.lower() not in ("http", "https"):
+        raise ValueError("cover_url must be http or https")
+    return v
+
+
 class ReadingIn(BaseModel):
     title: str
     author: str | None = None
     goodreads_book_id: str | None = None
     cover_url: str | None = None
 
+    _v = field_validator("cover_url")(_clean_cover_url)
+
 
 class CoverIn(BaseModel):
     cover_url: str | None
+
+    _v = field_validator("cover_url")(_clean_cover_url)
 
 
 class LinkIn(BaseModel):

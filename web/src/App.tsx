@@ -30,7 +30,7 @@ export default function App() {
   if (!token) {
     return (
       <main className="shell">
-        <h1 className="brand">Bookrats</h1>
+        <p className="brand">Bookrats</p>
         <form
           className="card stack"
           onSubmit={(e) => {
@@ -58,7 +58,7 @@ export default function App() {
   return (
     <main className="shell">
       <header className="top">
-        <h1 className="brand">Bookrats</h1>
+        <p className="brand">Bookrats</p>
         <nav className="tabs">
           <button className={tab === "progress" ? "tab on" : "tab"} onClick={() => setTab("progress")}>Progresso</button>
           <button className={tab === "manage" ? "tab on" : "tab"} onClick={() => setTab("manage")}>Gerenciar</button>
