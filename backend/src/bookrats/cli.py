@@ -20,6 +20,7 @@ def _parser() -> argparse.ArgumentParser:
     r.add_argument("--title", required=True)
     r.add_argument("--author")
     r.add_argument("--goodreads-book-id")
+    r.add_argument("--cover-url")
     return p
 
 
@@ -41,7 +42,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"user '{args.name}' created")
         print(f"api_token: {token}")
         return 0
-    rid = store.create_reading(conn, args.title, args.author, args.goodreads_book_id)
+    rid = store.create_reading(conn, args.title, args.author, args.goodreads_book_id, args.cover_url)
     print(f"reading {rid} created: {args.title}")
     return 0
 

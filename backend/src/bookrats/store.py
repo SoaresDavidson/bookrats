@@ -52,12 +52,12 @@ def list_users(conn) -> list[User]:
     return [_user(r) for r in conn.execute(f"SELECT {_USER_COLS} FROM users ORDER BY id")]
 
 
-def create_reading(conn, title, author=None, goodreads_book_id=None) -> int:
+def create_reading(conn, title, author=None, goodreads_book_id=None, cover_url=None) -> int:
     try:
         conn.execute("UPDATE readings SET active=0")
         cur = conn.execute(
-            "INSERT INTO readings (title, author, goodreads_book_id, active, created_at) VALUES (?,?,?,1,?)",
-            (title, author, goodreads_book_id, int(time.time())),
+            "INSERT INTO readings (title, author, goodreads_book_id, active, created_at, cover_url) VALUES (?,?,?,1,?,?)",
+            (title, author, goodreads_book_id, int(time.time()), cover_url),
         )
         if goodreads_book_id is not None:
             conn.execute("UPDATE documents SET reading_id=? WHERE hash=?",
@@ -67,6 +67,13 @@ def create_reading(conn, title, author=None, goodreads_book_id=None) -> int:
         conn.rollback()
         raise
     return cur.lastrowid
+
+
+def set_cover(conn, reading_id, cover_url) -> None:
+    cur = conn.execute("UPDATE readings SET cover_url=? WHERE id=?", (cover_url, reading_id))
+    conn.commit()
+    if cur.rowcount == 0:
+        raise KeyError(reading_id)
 
 
 def active_reading(conn) -> sqlite3.Row | None:

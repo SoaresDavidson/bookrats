@@ -21,7 +21,7 @@ export interface Reader {
 }
 
 export interface Summary {
-  reading: { id: number; title: string; author: string | null } | null;
+  reading: { id: number; title: string; author: string | null; cover_url: string | null } | null;
   me: string;
   readers: Reader[];
 }
@@ -57,7 +57,7 @@ export const postProgress = (token: string, percentage: number) =>
 
 export const createReading = (
   token: string,
-  body: { title: string; author?: string; goodreads_book_id?: string },
+  body: { title: string; author?: string; goodreads_book_id?: string; cover_url?: string },
 ) => request<unknown>(token, "/api/readings", post(body));
 
 export const getUnlinked = (token: string) =>
@@ -65,3 +65,9 @@ export const getUnlinked = (token: string) =>
 
 export const linkDocument = (token: string, hash: string, readingId: number) =>
   request<void>(token, `/api/documents/${encodeURIComponent(hash)}/link`, post({ reading_id: readingId }));
+
+export const setCover = (token: string, readingId: number, coverUrl: string | null) =>
+  request<void>(token, `/api/readings/${readingId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ cover_url: coverUrl }),
+  });

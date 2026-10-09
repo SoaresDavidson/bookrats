@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Cover } from "./Cover";
 import {
   AuthError,
   createReading,
   getSummary,
   getUnlinked,
   linkDocument,
+  setCover,
   postProgress,
   type Summary,
   type UnlinkedDocument,
@@ -22,6 +24,8 @@ export function Manage({ token, onAuthError }: Props) {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [grId, setGrId] = useState("");
+  const [coverUrl, setCoverUrl] = useState("");
+  const [newCover, setNewCover] = useState("");
   const [msg, setMsg] = useState("");
   const [progErr, setProgErr] = useState("");
   const [titleErr, setTitleErr] = useState("");
@@ -79,14 +83,16 @@ export function Manage({ token, onAuthError }: Props) {
       return;
     }
     setTitleErr("");
-    const body: { title: string; author?: string; goodreads_book_id?: string } = { title: t };
+    const body: { title: string; author?: string; goodreads_book_id?: string; cover_url?: string } = { title: t };
     if (author.trim()) body.author = author.trim();
     if (grId.trim()) body.goodreads_book_id = grId.trim();
+    if (coverUrl.trim()) body.cover_url = coverUrl.trim();
     void run(async () => {
       await createReading(token, body);
       setTitle("");
       setAuthor("");
       setGrId("");
+      setCoverUrl("");
     }, "Leitura criada.");
   };
 
@@ -120,7 +126,33 @@ export function Manage({ token, onAuthError }: Props) {
           <span>ID do livro no Goodreads</span>
           <input inputMode="numeric" value={grId} onChange={(e) => setGrId(e.target.value)} />
         </label>
+        <label className="field">
+          <span>URL da capa (opcional)</span>
+          <input type="url" inputMode="url" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} />
+        </label>
         <button className="btn primary" type="submit">Criar leitura</button>
+      </form>
+
+      <form
+        className="card stack"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const u = newCover.trim();
+          void run(async () => {
+            await setCover(token, readingId!, u === "" ? null : u);
+            setNewCover("");
+          }, "Capa salva.");
+        }}
+      >
+        <h3 className="sub">Capa</h3>
+        {summary?.reading && (
+          <Cover url={summary.reading.cover_url} title={summary.reading.title} small />
+        )}
+        <label className="field">
+          <span>Nova URL da capa</span>
+          <input type="url" inputMode="url" value={newCover} onChange={(e) => setNewCover(e.target.value)} />
+        </label>
+        <button className="btn" type="submit" disabled={readingId === undefined}>Salvar capa</button>
       </form>
 
       <section className="card">

@@ -54,3 +54,19 @@
 .empty-state { text-align: center; padding: 32px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .empty-state .btn { margin-top: 8px; }
 @media (prefers-reduced-motion: reduce) { .skel { animation: none; } .btn, .tab { transition: none; } .btn:active:not(:disabled), .tab:active { transform: none; } }
+
+/* Cover: 2:3 art, card radius, shadow tinted to the accent (never pure black). */
+.hero { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }
+.hero-text { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.hero .title { overflow-wrap: anywhere; }
+.cover { flex: none; display: block; width: 112px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: var(--r-card); background: var(--track); box-shadow: 0 10px 24px -8px rgb(47 111 235 / 0.35), 0 2px 6px rgb(24 24 27 / 0.12); }
+.cover.small { width: 64px; border-radius: var(--r-control); box-shadow: 0 4px 10px -4px rgb(47 111 235 / 0.3); }
+.cover.placeholder { display: flex; align-items: center; justify-content: center; background: var(--track); color: #2f6feb; font-weight: 600; font-size: 2.25rem; letter-spacing: -0.02em; user-select: none; }
+.cover.small.placeholder { font-size: 1.3rem; }
+@media (min-width: 480px) {
+  .hero { flex-direction: row; align-items: center; }
+  .cover { width: 140px; }
+  .cover.small { width: 64px; }
+  .cover.placeholder { font-size: 2.75rem; }
+  .cover.small.placeholder { font-size: 1.3rem; }
+}

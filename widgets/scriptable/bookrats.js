@@ -79,6 +79,30 @@ async function loadSummary() {
   return { summary: null, stale: false, error: "offline" };
 }
 
+function urlHash(url) {
+  let h = 5381;
+  for (let i = 0; i < url.length; i++) h = ((h * 33) ^ url.charCodeAt(i)) >>> 0;
+  return h.toString(16);
+}
+
+// Returns an Image for the cover URL (cached on disk) or null on any failure.
+async function loadCover(url) {
+  if (!url) return null;
+  try {
+    const fm = FileManager.local();
+    const path = fm.joinPath(fm.documentsDirectory(), "bookrats-cover-" + urlHash(url) + ".img");
+    if (fm.fileExists(path)) return fm.readImage(path);
+    const img = await new Request(url).loadImage();
+    if (!img) return null;
+    try {
+      fm.writeImage(path, img);
+    } catch (e) {}
+    return img;
+  } catch (e) {
+    return null;
+  }
+}
+
 function barImage(p, color, width, height) {
   const ctx = new DrawContext();
   ctx.size = new Size(width, height);
@@ -109,7 +133,7 @@ function message(widget, text) {
   t.minimumScaleFactor = 0.7;
 }
 
-function buildWidget(summary, stale, error) {
+function buildWidget(summary, stale, error, cover) {
   const widget = new ListWidget();
   widget.backgroundColor = Color.dynamic(new Color("#FFFFFF"), new Color("#1C1C1E"));
   widget.url = BASE + "/app/";
@@ -128,16 +152,28 @@ function buildWidget(summary, stale, error) {
   if (!summary.reading) {
     message(widget, "Nenhuma leitura ativa");
   } else {
-    const title = widget.addText(summary.reading.title || "");
+    let body = widget;
+    if (!small && cover) {
+      const outer = widget.addStack();
+      outer.layoutHorizontally();
+      outer.centerAlignContent();
+      const ci = outer.addImage(cover);
+      ci.imageSize = new Size(60, 90);
+      ci.cornerRadius = 6;
+      outer.addSpacer(12);
+      body = outer.addStack();
+      body.layoutVertically();
+    }
+    const title = body.addText(summary.reading.title || "");
     title.font = Font.semiboldSystemFont(small ? 13 : 15);
     title.textColor = textColor;
     title.lineLimit = 1;
-    widget.addSpacer(6);
+    body.addSpacer(6);
 
-    const barW = small ? 120 : 260;
+    const barW = small ? 120 : (cover ? 190 : 260);
     summary.readers.slice(0, 2).forEach(function (r, i) {
       const color = COLORS[i] || COLORS[0];
-      const row = widget.addStack();
+      const row = body.addStack();
       row.layoutVertically();
       const img = row.addImage(barImage(r.percentage, color, barW, 8));
       img.imageSize = new Size(barW, 8);
@@ -156,7 +192,7 @@ function buildWidget(summary, stale, error) {
       t.textColor = color;
       t.lineLimit = 1;
       t.minimumScaleFactor = 0.8;
-      widget.addSpacer(5);
+      body.addSpacer(5);
     });
   }
 
@@ -171,7 +207,10 @@ function buildWidget(summary, stale, error) {
 
 async function main() {
   const res = await loadSummary();
-  const widget = buildWidget(res.summary, res.stale, res.error);
+  const family = config.widgetFamily || "medium";
+  const cover = res.summary && res.summary.reading && family !== "small"
+    ? await loadCover(res.summary.reading.cover_url) : null;
+  const widget = buildWidget(res.summary, res.stale, res.error, cover);
   if (config.runsInWidget) {
     Script.setWidget(widget);
   } else {

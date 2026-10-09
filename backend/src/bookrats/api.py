@@ -2,11 +2,13 @@ import sqlite3
 import time
 from datetime import UTC, datetime
 
+import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from bookrats import store
-from bookrats.deps import get_conn
+from bookrats.covers import find_cover
+from bookrats.deps import get_conn, get_http
 from bookrats.sessions import Session, group_sessions
 
 router = APIRouter()
@@ -41,6 +43,11 @@ class ReadingIn(BaseModel):
     title: str
     author: str | None = None
     goodreads_book_id: str | None = None
+    cover_url: str | None = None
+
+
+class CoverIn(BaseModel):
+    cover_url: str | None
 
 
 class LinkIn(BaseModel):
@@ -62,7 +69,8 @@ def summary(user: store.User = Depends(current_user), conn: sqlite3.Connection =
             "last_session": _session(group_sessions(snaps)[-1]) if snaps else None,
         })
     return {
-        "reading": {"id": reading["id"], "title": reading["title"], "author": reading["author"]} if reading else None,
+        "reading": {"id": reading["id"], "title": reading["title"], "author": reading["author"],
+                    "cover_url": reading["cover_url"]} if reading else None,
         "me": user.name,
         "readers": readers,
     }
@@ -92,9 +100,23 @@ def post_progress(body: ProgressIn, user: store.User = Depends(current_user),
 
 
 @router.post("/readings", status_code=201)
-def post_reading(body: ReadingIn, _: store.User = Depends(current_user),
-                 conn: sqlite3.Connection = Depends(get_conn)):
-    return {"id": store.create_reading(conn, body.title, body.author, body.goodreads_book_id)}
+async def post_reading(body: ReadingIn, _: store.User = Depends(current_user),
+                       conn: sqlite3.Connection = Depends(get_conn),
+                       http: httpx.AsyncClient = Depends(get_http)):
+    cover = body.cover_url
+    if cover is None:
+        cover = await find_cover(http, body.title, body.author)
+    return {"id": store.create_reading(conn, body.title, body.author, body.goodreads_book_id, cover)}
+
+
+@router.patch("/readings/{reading_id}", status_code=204)
+def patch_reading(reading_id: int, body: CoverIn, _: store.User = Depends(current_user),
+                  conn: sqlite3.Connection = Depends(get_conn)):
+    try:
+        store.set_cover(conn, reading_id, body.cover_url)
+    except KeyError:
+        raise HTTPException(404, "unknown reading")
+    return Response(status_code=204)
 
 
 @router.get("/documents/unlinked")

@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS snapshots (
 
 def init_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
+    cols = [r[1] for r in conn.execute("pragma table_info(readings)")]
+    if "cover_url" not in cols:
+        conn.execute("ALTER TABLE readings ADD COLUMN cover_url TEXT")
     conn.commit()
 
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AuthError, getSessions, getSummary, type SessionOut, type Summary } from "./api";
+import { Cover } from "./Cover";
 import { ago, pct, sessionText } from "./format";
 
 export const COLORS = ["#2F6FEB", "#E8590C"];
@@ -73,9 +74,12 @@ export function Dashboard({ token, onAuthError, onGoManage }: Props) {
   return (
     <section className="stack">
       {error && <p className="alert" role="alert">Desatualizado: não foi possível atualizar agora.</p>}
-      <div>
-        <h2 className="title">{reading.title}</h2>
-        {reading.author && <p className="muted">{reading.author}</p>}
+      <div className="hero card">
+        <Cover url={reading.cover_url} title={reading.title} />
+        <div className="hero-text">
+          <h2 className="title">{reading.title}</h2>
+          {reading.author && <p className="muted">{reading.author}</p>}
+        </div>
       </div>
       <div className="card stack">
         <div className="names">

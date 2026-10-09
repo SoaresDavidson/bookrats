@@ -41,7 +41,7 @@ def test_summary_me_and_readers_order(client, davi, colega):
 
 def test_summary_reading_object(client, conn, davi, colega):
     r = store.create_reading(conn, "Duna", "Frank Herbert")
-    assert client.get("/api/summary", headers=AUTH).json()["reading"] == {"id": r, "title": "Duna", "author": "Frank Herbert"}
+    assert client.get("/api/summary", headers=AUTH).json()["reading"] == {"id": r, "title": "Duna", "author": "Frank Herbert", "cover_url": None}
 
 
 def test_summary_reader_fields(client, conn, davi, colega):

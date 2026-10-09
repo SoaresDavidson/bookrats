@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from bookrats import api, kosync
 from bookrats.config import Settings
+from bookrats.deps import new_http_client
 from bookrats.goodreads import poll_forever
 
 
@@ -17,6 +18,7 @@ def create_app(db_path: str, start_poller: bool = True) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         task = None
+        app.state.http = new_http_client()
         if start_poller:
             task = asyncio.create_task(
                 poll_forever(db_path, Settings.from_env().goodreads_poll_seconds)
@@ -28,6 +30,10 @@ def create_app(db_path: str, start_poller: bool = True) -> FastAPI:
                 task.cancel()
                 with contextlib.suppress(asyncio.CancelledError):
                     await task
+            http = getattr(app.state, "http", None)
+            if http is not None:
+                await http.aclose()
+                app.state.http = None
 
     app = FastAPI(title="Bookrats", lifespan=lifespan)
     app.state.db_path = db_path
