@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
   AuthError, HttpError, activateReading, listReadings, startFromDocument, updateReading, createReading, getPalette, getSessions, getSummary, getUnlinked, linkDocument, postProgress, setColor, setCover,
-} from "./api";
+} from "./client";
 
 const fetchMock = vi.fn();
 beforeEach(() => { fetchMock.mockReset(); globalThis.fetch = fetchMock as unknown as typeof fetch; });

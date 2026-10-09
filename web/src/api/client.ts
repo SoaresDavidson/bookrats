@@ -1,3 +1,5 @@
+import type { ColorOption, ReadingListItem, Summary, SessionOut, UnlinkedDocument } from "./types";
+
 export class HttpError extends Error {
   status: number;
   constructor(status: number, message = `HTTP ${status}`) {
@@ -12,43 +14,6 @@ export class AuthError extends HttpError {
     super(401, "unauthorized");
     this.name = "AuthError";
   }
-}
-
-export interface ColorOption {
-  id: string;
-  hex?: string;
-  light: string;
-  dark: string;
-}
-
-export interface SessionOut {
-  from: number;
-  to: number;
-  started_at: string;
-  ended_at: string;
-}
-
-export interface Reader {
-  name: string;
-  color: ColorOption;
-  percentage: number | null;
-  updated_at: string | null;
-  source: string | null;
-  last_session: SessionOut | null;
-}
-
-export interface Summary {
-  reading: { id: number; title: string; author: string | null; cover_url: string | null } | null;
-  me: string;
-  readers: Reader[];
-}
-
-export interface UnlinkedDocument {
-  hash: string;
-  title: string | null;
-  authors: string | null;
-  last_device: string | null;
-  first_seen: number;
 }
 
 async function request<T>(token: string, path: string, init: RequestInit = {}): Promise<T> {
@@ -93,26 +58,6 @@ export const getPalette = (token: string) => request<ColorOption[]>(token, "/api
 
 export const setColor = (token: string, colorId: string) =>
   request<void>(token, "/api/me/color", { method: "PUT", body: JSON.stringify({ color: colorId }) });
-
-export interface ReadingReader {
-  name: string;
-  percentage: number | null;
-  updated_at: string | null;
-  started_at: string | null;
-  finished_at: string | null;
-}
-
-export interface ReadingListItem {
-  id: number;
-  title: string;
-  author: string | null;
-  cover_url: string | null;
-  goodreads_book_id: string | null;
-  active: boolean;
-  status: "lendo" | "lido" | "pausado";
-  created_at: string;
-  readers: ReadingReader[];
-}
 
 export const listReadings = (token: string) => request<ReadingListItem[]>(token, "/api/readings");
 

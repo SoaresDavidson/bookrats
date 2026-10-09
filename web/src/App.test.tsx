@@ -1,10 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { makeSummary } from "./fixtures";
+import { makeSummary } from "./test/fixtures";
 
-vi.mock("./api", async (orig) => ({
-  ...(await orig<typeof import("./api")>()),
+vi.mock("./api/client", async (orig) => ({
+  ...(await orig<typeof import("./api/client")>()),
   getSummary: vi.fn(),
   getSessions: vi.fn(),
   getUnlinked: vi.fn(),
@@ -13,7 +13,7 @@ vi.mock("./api", async (orig) => ({
   linkDocument: vi.fn(),
 }));
 
-import * as api from "./api";
+import * as api from "./api/client";
 import App from "./App";
 
 const KEY = "bookrats.token";

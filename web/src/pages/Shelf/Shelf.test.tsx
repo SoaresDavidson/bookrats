@@ -1,16 +1,16 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ReadingListItem } from "./api";
+import type { ReadingListItem } from "../../api/types";
 
-vi.mock("./api", async (orig) => ({
-  ...(await orig<typeof import("./api")>()),
+vi.mock("../../api/client", async (orig) => ({
+  ...(await orig<typeof import("../../api/client")>()),
   listReadings: vi.fn(),
   activateReading: vi.fn(),
   updateReading: vi.fn(),
 }));
 
-import * as api from "./api";
+import * as api from "../../api/client";
 import { Shelf } from "./Shelf";
 
 const rd = (name: string, pct: number | null, s: string | null, f: string | null) =>

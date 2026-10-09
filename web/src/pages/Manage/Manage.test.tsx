@@ -1,11 +1,11 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { UnlinkedDocument } from "./api";
-import { makeSummary } from "./fixtures";
+import type { UnlinkedDocument } from "../../api/types";
+import { makeSummary } from "../../test/fixtures";
 
-vi.mock("./api", async (orig) => ({
-  ...(await orig<typeof import("./api")>()),
+vi.mock("../../api/client", async (orig) => ({
+  ...(await orig<typeof import("../../api/client")>()),
   getSummary: vi.fn(),
   postProgress: vi.fn(),
   createReading: vi.fn(),
@@ -17,7 +17,7 @@ vi.mock("./api", async (orig) => ({
   startFromDocument: vi.fn(),
 }));
 
-import * as api from "./api";
+import * as api from "../../api/client";
 import { Manage } from "./Manage";
 
 const docs: UnlinkedDocument[] = [

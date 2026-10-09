@@ -1,17 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { Cover } from "./Cover";
-import "./shelf-hover.css";
-import "./shelf-loading.css";
-import { pct } from "./format";
-import {
-  activateReading,
-  AuthError,
-  FALLBACK_COLORS,
-  getSummary,
-  listReadings,
-  updateReading,
-  type ReadingListItem,
-} from "./api";
+import { Cover } from "../../components/Cover/Cover";
+import { Dialog } from "../../components/Dialog/Dialog";
+import { pct } from "../../lib/format";
+import { activateReading, AuthError, FALLBACK_COLORS, getSummary, listReadings, updateReading } from "../../api/client";
+import type { ReadingListItem } from "../../api/types";
 
 const STATUS: Record<ReadingListItem["status"], string> = { lendo: "Lendo", lido: "Lido", pausado: "Pausado" };
 const fmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -135,12 +127,6 @@ function Detail({ item, token, colors, guard, onClose, onChanged }: DetailProps)
   });
   const [formErr, setFormErr] = useState("");
 
-  useEffect(() => {
-    const prev = document.activeElement as HTMLElement | null;
-    ref.current?.focus();
-    return () => prev?.focus?.();
-  }, []);
-
   const editBtn = useRef<HTMLButtonElement>(null);
   const firstRender = useRef(true);
   useEffect(() => {
@@ -151,31 +137,6 @@ function Detail({ item, token, colors, guard, onClose, onChanged }: DetailProps)
     if (editing) ref.current?.querySelector<HTMLElement>("input")?.focus();
     else editBtn.current?.focus();
   }, [editing]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onClose();
-        return;
-      }
-      if (e.key !== "Tab" || !ref.current) return;
-      const els = [...ref.current.querySelectorAll<HTMLElement>("button, input")].filter((x) => !(x as HTMLButtonElement).disabled);
-      if (!els.length) return;
-      const act = document.activeElement;
-      const first = els[0];
-      const last = els[els.length - 1];
-      if (!ref.current.contains(act) || (e.shiftKey && (act === first || act === ref.current))) {
-        e.preventDefault();
-        (e.shiftKey ? last : first).focus();
-      } else if (!e.shiftKey && act === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
 
   const resume = async () => {
     try {
@@ -225,8 +186,7 @@ function Detail({ item, token, colors, guard, onClose, onChanged }: DetailProps)
   );
 
   return (
-    <div className="scrim" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={ref} className="sheet card stack" role="dialog" aria-modal="true" aria-labelledby="shelf-dlg-title" tabIndex={-1}>
+    <Dialog ref={ref} labelledBy="shelf-dlg-title" onClose={onClose}>
         <div className="hero">
           <Cover url={item.cover_url} title={item.title} small />
           <div className="hero-text">
@@ -281,7 +241,6 @@ function Detail({ item, token, colors, guard, onClose, onChanged }: DetailProps)
             </div>
           </>
         )}
-      </div>
-    </div>
+    </Dialog>
   );
 }

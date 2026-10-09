@@ -1,4 +1,4 @@
-import type { Summary } from "./api";
+import type { Summary } from "../api/types";
 
 const iso = (msAgo: number) => new Date(Date.now() - msAgo).toISOString();
 

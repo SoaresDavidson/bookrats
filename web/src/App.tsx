@@ -1,10 +1,9 @@
 import { useCallback, useState } from "react";
-import "./App.css";
-import "./logout.css";
-import { SignOut } from "@phosphor-icons/react";
-import { Dashboard } from "./Dashboard";
-import { Manage } from "./Manage";
-import { Shelf } from "./Shelf";
+import { LogoutButton } from "./components/LogoutButton/LogoutButton";
+import { Tabs, type Tab } from "./components/Tabs/Tabs";
+import { Dashboard } from "./pages/Dashboard/Dashboard";
+import { Manage } from "./pages/Manage/Manage";
+import { Shelf } from "./pages/Shelf/Shelf";
 
 const KEY = "bookrats.token";
 
@@ -19,7 +18,7 @@ function readToken(): string {
 export default function App() {
   const [token, setToken] = useState(readToken);
   const [draft, setDraft] = useState("");
-  const [tab, setTab] = useState<"progress" | "shelf" | "manage">("progress");
+  const [tab, setTab] = useState<Tab>("progress");
 
   const logout = useCallback(() => {
     try {
@@ -63,11 +62,7 @@ export default function App() {
     <main className="shell">
       <header className="top">
         <p className="brand">Bookrats</p>
-        <nav className="tabs">
-          <button className={tab === "progress" ? "tab on" : "tab"} aria-current={tab === "progress" ? "page" : undefined} onClick={() => setTab("progress")}>Progresso</button>
-          <button className={tab === "shelf" ? "tab on" : "tab"} aria-current={tab === "shelf" ? "page" : undefined} onClick={() => setTab("shelf")}>Estante</button>
-          <button className={tab === "manage" ? "tab on" : "tab"} aria-current={tab === "manage" ? "page" : undefined} onClick={() => setTab("manage")}>Gerenciar</button>
-        </nav>
+        <Tabs tab={tab} onChange={setTab} />
       </header>
       {tab === "progress" ? (
         <Dashboard token={token} onAuthError={logout} onGoManage={() => setTab("manage")} />
@@ -76,7 +71,7 @@ export default function App() {
       ) : (
         <Manage token={token} onAuthError={logout} />
       )}
-      <button className="logout" onClick={logout}><SignOut size={18} weight="regular" aria-hidden="true" />Sair</button>
+      <LogoutButton onClick={logout} />
     </main>
   );
 }
