@@ -90,7 +90,7 @@ def test_no_author_means_no_author_filters():
     ol = [r for r in seen if r.url.host == "openlibrary.org"][0]
     g = [r for r in seen if r.url.host == "www.googleapis.com"][0]
     assert ol.url.params["q"] == "Duna"
-    assert "inauthor" not in g.url.params["q"]
+    assert g.url.params["q"] == "Duna"
 
 
 def test_openlibrary_uses_free_text_query_with_author():

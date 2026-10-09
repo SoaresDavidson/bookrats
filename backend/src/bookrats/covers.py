@@ -51,7 +51,8 @@ def _google_url(volume: dict) -> str | None:
 async def _google_volumes(
     client: httpx.AsyncClient, title: str, author: str | None, key: str | None, limit: int
 ) -> list[dict]:
-    q = f'intitle:"{title}"' + (f' inauthor:"{author}"' if author else "")
+    # Free text: intitle:/inauthor: with quotes misses translated editions (e.g. "Orgulho e Preconceito").
+    q = " ".join(x for x in (title, author) if x)
     params = {"q": q, "maxResults": str(limit), "printType": "books"}
     if key:
         params["key"] = key

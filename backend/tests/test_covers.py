@@ -106,7 +106,7 @@ def test_google_fallback_exact_match_https_no_curl_and_params():
 
     assert _run(OL_MISS, google=google) == GURL
     p = seen[0].url.params
-    assert 'intitle:"Duna"' in p["q"] and 'inauthor:"Frank Herbert"' in p["q"]
+    assert p["q"] == "Duna Frank Herbert"
     assert p["maxResults"] == "5" and p["printType"] == "books"
 
 
@@ -118,7 +118,7 @@ def test_google_no_inauthor_when_no_author():
         return _gitems("Duna")
 
     _run(OL_MISS, author=None, google=google)
-    assert "inauthor" not in seen[0].url.params["q"]
+    assert seen[0].url.params["q"] == "Duna"
 
 
 def test_google_small_thumbnail_fallback():
