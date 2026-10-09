@@ -16,6 +16,7 @@ export class AuthError extends HttpError {
 
 export interface ColorOption {
   id: string;
+  hex?: string;
   light: string;
   dark: string;
 }

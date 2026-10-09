@@ -27,7 +27,7 @@ _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 
 def is_hex(v: str) -> bool:
-    return bool(_HEX.match(v))
+    return _HEX.fullmatch(v) is not None
 
 
 def _lum(h: str) -> float:
@@ -46,12 +46,16 @@ def _adjust(hex_: str, track: str, direction: int) -> str:
         return hex_
     r, g, b = (int(hex_[i:i + 2], 16) / 255 for i in (1, 3, 5))
     h, l, s = colorsys.rgb_to_hls(r, g, b)
-    while 0 < l < 1:
-        l = min(1.0, max(0.0, l + direction * 0.01))
-        out = "#%02x%02x%02x" % tuple(round(x * 255) for x in colorsys.hls_to_rgb(h, l, s))
-        if contrast(out, track) >= 3:
+    best, best_c = hex_, contrast(hex_, track)
+    for step in range(1, 101):
+        nl = min(1.0, max(0.0, l + direction * step * 0.01))
+        out = "#%02x%02x%02x" % tuple(round(x * 255) for x in colorsys.hls_to_rgb(h, nl, s))
+        c = contrast(out, track)
+        if c >= 3:
             return out
-    return out
+        if c > best_c:
+            best, best_c = out, c
+    return best
 
 
 def derive(hex_: str) -> tuple[str, str]:

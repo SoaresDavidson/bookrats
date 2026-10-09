@@ -65,7 +65,7 @@
 .name { font-size: var(--t-md); }
 .nowrap { white-space: nowrap; }
 .bar { height: 6px; border-radius: 999px; background: var(--track); overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 999px; transition: width 0.4s ease; background: var(--c-light, var(--accent)); }
+.bar-fill { height: 100%; width: 100%; transform-origin: left; border-radius: 999px; transition: transform 0.6s ease; background: var(--c-light, var(--accent)); }
 .lead { margin: 0; font-weight: 600; font-size: var(--t-sm); }
 .history { border-top: 1px solid var(--line); padding-top: 4px; }
 .history-toggle { display: flex; align-items: center; width: 100%; min-height: 44px; padding: 0; background: none; border: 0; text-align: left; font: inherit; font-size: var(--t-sm); font-weight: 500; color: var(--muted-strong); cursor: pointer; }
@@ -135,11 +135,11 @@
 @media (max-width: 380px) { .tabs .tab { padding: 0 6px; font-size: var(--t-xs); } }
 
 .circles { display: flex; gap: 28px; align-items: flex-start; }
-.circle-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.circle-item { position: relative; width: 96px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .circle { width: 48px; height: 48px; border-radius: 50%; border: 0; padding: 0; display: block; background: var(--c-light, var(--track)); box-shadow: inset 0 0 0 1px rgb(24 24 27 / 0.2); }
 button.circle { cursor: pointer; }
 .circle-name { font-size: var(--t-sm); color: var(--muted-strong); max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.popover { position: absolute; z-index: 5; top: calc(48px + 14px); left: -8px; display: flex; flex-wrap: wrap; width: max-content; max-width: min(396px, calc(100vw - 64px)); padding: 6px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: 0 12px 28px -10px rgb(24 24 27 / 0.35); animation: pop-in 0.14s ease-out; }
+.popover { position: absolute; z-index: 5; top: calc(48px + 14px); left: calc(50% - 31px); display: flex; flex-wrap: wrap; width: max-content; max-width: min(396px, calc(100vw - 64px)); padding: 6px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: 0 12px 28px -10px rgb(24 24 27 / 0.35); animation: pop-in 0.14s ease-out; }
 .popover::before { content: ""; position: absolute; top: -7px; left: 25px; width: 12px; height: 12px; background: var(--card); border: solid var(--line); border-width: 1px 0 0 1px; transform: rotate(45deg); }
 @keyframes pop-in { from { opacity: 0; transform: translateY(-4px); } }
 .pick { position: relative; width: 44px; height: 44px; padding: 4px; border: 0; background: none; border-radius: 50%; cursor: pointer; }

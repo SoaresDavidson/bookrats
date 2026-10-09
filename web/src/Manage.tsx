@@ -101,9 +101,21 @@ export function Manage({ token, onAuthError }: Props) {
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
+    const items = () => Array.from(wrapRef.current?.querySelectorAll<HTMLButtonElement>(".popover button:not(:disabled)") ?? []);
+    const first = items().find((b) => b.getAttribute("aria-pressed") === "true") ?? items()[0];
+    first?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return close();
+      if (e.key !== "Tab") return;
+      const list = items();
+      if (!list.length) return;
+      const i = list.indexOf(document.activeElement as HTMLButtonElement);
+      const next = e.shiftKey ? (i <= 0 ? list.length - 1 : i - 1) : i === list.length - 1 ? 0 : i + 1;
+      e.preventDefault();
+      list[next].focus();
+    };
     const onDown = (e: PointerEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!wrapRef.current?.contains(e.target as Node)) close();
     };
     const input = colorRef.current;
     const onChange = () => input && void pickRef.current(input.value);
@@ -222,7 +234,7 @@ export function Manage({ token, onAuthError }: Props) {
                 >
                   <span className="pick-dot" style={mine?.color.id === "custom" ? cvars(mine.color) : undefined} />
                 </button>
-                <input ref={colorRef} className="sr-only" type="color" aria-label="Escolher cor personalizada" tabIndex={-1} defaultValue={mine?.color.light ?? "#2f6feb"} />
+                <input ref={colorRef} className="sr-only" type="color" aria-label="Escolher cor personalizada" tabIndex={-1} defaultValue={mine?.color.hex ?? mine?.color.light ?? "#2f6feb"} />
               </div>
             )}
           </div>

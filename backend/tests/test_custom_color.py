@@ -62,3 +62,22 @@ def test_custom_color_near_miss_ok(client, davi, colega):
 def test_palette_ids_still_work(client, davi, colega):
     assert client.put("/api/me/color", headers=AUTH, json={"color": "verde"}).status_code == 204
     assert _colors(client)["Davi"] == {"id": "verde", "light": "#2B8A3E", "dark": "#51CF66"}
+
+
+def test_derive_extremes():
+    from bookrats.palette import derive
+
+    for h in ("#ffffff", "#000000"):
+        light, dark = derive(h)
+        assert contrast(light, LIGHT_TRACK) >= 3 and contrast(dark, DARK_TRACK) >= 3
+
+
+@pytest.mark.parametrize("h", ["#ffffff", "#000000"])
+def test_put_extreme_colors(client, davi, colega, h):
+    assert client.put("/api/me/color", headers=AUTH, json={"color": h}).status_code == 204
+    c = _colors(client)["Davi"]
+    assert contrast(c["light"], LIGHT_TRACK) >= 3 and contrast(c["dark"], DARK_TRACK) >= 3 and c["hex"] == h
+
+
+def test_trailing_newline_422(client, davi, colega):
+    assert client.put("/api/me/color", headers=AUTH, json={"color": "#aabbcc\n"}).status_code == 422

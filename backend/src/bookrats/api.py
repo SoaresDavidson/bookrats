@@ -75,7 +75,10 @@ class ColorIn(BaseModel):
 
 def _color(value: str) -> dict:
     cid, light, dark = resolve(value)
-    return {"id": cid, "light": light, "dark": dark}
+    out = {"id": cid, "light": light, "dark": dark}
+    if cid == "custom":
+        out["hex"] = value.lower()
+    return out
 
 
 class LinkIn(BaseModel):
