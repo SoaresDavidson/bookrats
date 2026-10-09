@@ -2,10 +2,12 @@ import type { ColorOption, ReadingListItem, Summary, SessionOut, UnlinkedDocumen
 
 export class HttpError extends Error {
   status: number;
-  constructor(status: number, message = `HTTP ${status}`) {
+  detail?: unknown;
+  constructor(status: number, message = `HTTP ${status}`, detail?: unknown) {
     super(message);
     this.name = "HttpError";
     this.status = status;
+    this.detail = detail;
   }
 }
 
@@ -22,7 +24,10 @@ async function request<T>(token: string, path: string, init: RequestInit = {}): 
   if (init.body !== undefined) headers.set("Content-Type", "application/json");
   const res = await fetch(path, { ...init, headers });
   if (res.status === 401) throw new AuthError();
-  if (!res.ok) throw new HttpError(res.status);
+  if (!res.ok) {
+    const detail = await res.json().then((b) => b?.detail, () => undefined);
+    throw new HttpError(res.status, undefined, detail);
+  }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }

@@ -301,12 +301,34 @@ describe("Manage", () => {
   });
 
   it("shows a field error for a 422 on create with a cover URL", async () => {
-    vi.mocked(api.createReading).mockRejectedValue(new api.HttpError(422));
+    vi.mocked(api.createReading).mockRejectedValue(new api.HttpError(422, "x", [{ loc: ["body", "cover_url"], msg: "bad", type: "value_error" }]));
     const user = userEvent.setup();
     render(<Manage token="tok" />);
     await user.type(await screen.findByLabelText("Título"), "X");
     await user.type(screen.getByLabelText("URL da capa (opcional)"), "http://x/y.jpg");
     await user.click(screen.getByRole("button", { name: "Criar leitura" }));
     expect(await screen.findByText("URL inválida (use http ou https)")).toBeTruthy();
+  });
+
+  it("shows the generic error for a 422 on create not about cover_url", async () => {
+    vi.mocked(api.createReading).mockRejectedValue(new api.HttpError(422, "x", [{ loc: ["body", "title"], msg: "bad", type: "value_error" }]));
+    const user = userEvent.setup();
+    render(<Manage token="tok" />);
+    await user.type(await screen.findByLabelText("Título"), "X");
+    await user.type(screen.getByLabelText("URL da capa (opcional)"), "http://x/y.jpg");
+    await user.click(screen.getByRole("button", { name: "Criar leitura" }));
+    expect(await screen.findByText(/Algo deu errado/)).toBeTruthy();
+    expect(screen.queryByText("URL inválida (use http ou https)")).toBeNull();
+  });
+
+  it("shows a specific error for 409 on Começar a ler este", async () => {
+    vi.mocked(api.startFromDocument).mockRejectedValue(new api.HttpError(409, "x", "conflict"));
+    const user = userEvent.setup();
+    render(<Manage token="tok" />);
+    const row = await docRow(/Messias de Duna/);
+    await user.click(within(row).getByRole("button", { name: "Começar a ler este" }));
+    const m = await screen.findByText("Esse documento já está ligado a uma leitura.");
+    expect(m.className).toContain("danger");
+    expect(screen.queryByText(/Algo deu errado/)).toBeNull();
   });
 });

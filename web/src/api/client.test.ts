@@ -122,3 +122,16 @@ test("startFromDocument POSTs encoded hash and returns id", async () => {
   expect(url).toBe("/api/documents/gr%3A1/start");
   expect(init.method).toBe("POST");
 });
+
+test("HttpError.detail comes from a JSON body", async () => {
+  fetchMock.mockResolvedValue(json({ detail: [{ loc: ["body", "cover_url"] }] }, 422));
+  const err = await createReading("tok", { title: "x" }).catch((e) => e);
+  expect(err).toBeInstanceOf(HttpError);
+  expect((err as HttpError).detail).toEqual([{ loc: ["body", "cover_url"] }]);
+});
+
+test("HttpError.detail is undefined for a non-JSON body", async () => {
+  fetchMock.mockResolvedValue(new Response("boom", { status: 500 }));
+  const err = await getSummary("tok").catch((e) => e);
+  expect(err.detail).toBeUndefined();
+});

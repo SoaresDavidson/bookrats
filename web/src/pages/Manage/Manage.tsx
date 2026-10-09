@@ -20,6 +20,11 @@ export function Manage({ token, onAuthError }: Props) {
   const [coverUrl, setCoverUrl] = useState("");
   const [newCover, setNewCover] = useState("");
   const [msg, setMsg] = useState("");
+  const [msgErr, setMsgErr] = useState(false);
+  const notify = (text: string, err = false) => {
+    setMsg(text);
+    setMsgErr(err);
+  };
   const [progErr, setProgErr] = useState("");
   const [titleErr, setTitleErr] = useState("");
   const [palette, setPalette] = useState<ColorOption[]>([]);
@@ -27,7 +32,10 @@ export function Manage({ token, onAuthError }: Props) {
   const guard = useCallback(
     (e: unknown) => {
       if (e instanceof AuthError) onAuthError?.();
-      else setMsg("Algo deu errado. Tente de novo.");
+      else {
+        setMsg("Algo deu errado. Tente de novo.");
+        setMsgErr(true);
+      }
     },
     [onAuthError],
   );
@@ -59,16 +67,21 @@ export function Manage({ token, onAuthError }: Props) {
   const [createCoverErr, setCreateCoverErr] = useState("");
   const COVER_INVALID = "URL inválida (use http ou https)";
 
-  const run = async (key: string, fn: () => Promise<unknown>, ok: string, onInvalid?: () => boolean) => {
+  const run = async (key: string, fn: () => Promise<unknown>, ok: string, onInvalid?: (detail: unknown) => boolean, onConflict?: string) => {
     if (pendingRef.current.has(key)) return;
     pendingRef.current.add(key);
     setPending(new Set(pendingRef.current));
     try {
       await fn();
-      setMsg(ok);
+      notify(ok);
       await refresh();
     } catch (e) {
-      if (e instanceof HttpError && e.status === 422 && onInvalid?.()) return;
+      if (e instanceof HttpError && e.status === 409 && onConflict) {
+        notify(onConflict, true);
+        await refresh();
+        return;
+      }
+      if (e instanceof HttpError && e.status === 422 && onInvalid?.(e.detail)) return;
       guard(e);
     } finally {
       pendingRef.current.delete(key);
@@ -110,8 +123,8 @@ export function Manage({ token, onAuthError }: Props) {
         setCoverUrl("");
       },
       "Leitura criada.",
-      () => {
-        if (!body.cover_url) return false;
+      (detail) => {
+        if (!body.cover_url || !Array.isArray(detail) || !detail.some((i) => Array.isArray(i?.loc) && i.loc.includes("cover_url"))) return false;
         setCreateCoverErr(COVER_INVALID);
         return true;
       },
@@ -126,7 +139,7 @@ export function Manage({ token, onAuthError }: Props) {
   return (
     <div className={ui.stack}>
       <h1 className="sr-only">Gerenciar leitura</h1>
-      {msg && <p className={msg.startsWith("Algo") ? ui.toastError : ui.toast} role="status">{msg}</p>}
+      {msg && <p className={msgErr ? ui.toastError : ui.toast} role="status">{msg}</p>}
       <form className={`${ui.card} ${ui.stack}`} onSubmit={saveProgress}>
         <h2 className={ui.sub}>Atualizar meu progresso</h2>
         <label className={ui.field}>
@@ -213,7 +226,7 @@ export function Manage({ token, onAuthError }: Props) {
                 </div>
                 <div className="flex flex-wrap gap-2 justify-end">
                 {d.title && (
-                  <button className={`${ui.btn} ${ui.btnPrimary}`} disabled={isPending(`start:${d.hash}`)} onClick={() => void run(`start:${d.hash}`, () => startFromDocument(token, d.hash), "Leitura iniciada.")}>
+                  <button className={`${ui.btn} ${ui.btnPrimary}`} disabled={isPending(`start:${d.hash}`)} onClick={() => void run(`start:${d.hash}`, () => startFromDocument(token, d.hash), "Leitura iniciada.", undefined, "Esse documento já está ligado a uma leitura.")}>
                     Começar a ler este
                   </button>
                 )}
