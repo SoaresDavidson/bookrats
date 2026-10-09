@@ -75,12 +75,21 @@ def test_poll_once_attaches_active_reading_by_book_id(conn, colega):
     assert [s.percentage for s in store.snapshots_for(conn, colega.id, r)] == pytest.approx([0.24, 0.34])
 
 
-def test_poll_once_other_book_has_no_reading(conn, colega):
+def test_unmatched_goodreads_book_links_retroactively(conn, colega):
     r = store.create_reading(conn, "Other", goodreads_book_id="999")
-    assert run_poll(conn, mock_client()) == 2
-    n = conn.execute("SELECT COUNT(*) FROM snapshots WHERE user_id=?", (colega.id,)).fetchone()[0]
-    assert n == 2
+    run_poll(conn, mock_client())
     assert store.snapshots_for(conn, colega.id, r) == []
+    docs = {d["hash"]: d for d in store.unlinked_documents(conn)}
+    assert "gr:31243809" in docs
+    assert docs["gr:31243809"]["title"] == "Letters from Paris"
+    store.link_document(conn, "gr:31243809", r)
+    assert [s.percentage for s in store.snapshots_for(conn, colega.id, r)] == pytest.approx([0.24, 0.34])
+
+
+def test_reading_created_after_poll_picks_up_goodreads_history(conn, colega):
+    run_poll(conn, mock_client())
+    r = store.create_reading(conn, "Letters", goodreads_book_id="31243809")
+    assert [s.percentage for s in store.snapshots_for(conn, colega.id, r)] == pytest.approx([0.24, 0.34])
 
 
 def test_poll_once_isolates_failing_user(conn, colega):

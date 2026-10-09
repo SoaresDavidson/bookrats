@@ -90,3 +90,9 @@ def test_put_junk_metadata_is_ignored(client, conn, davi):
     b = {**_body("h4"), "metadata": "junk"}
     assert client.put("/syncs/progress", json=b, headers=H).status_code == 200
     assert conn.execute("select title from documents where hash='h4'").fetchone()[0] is None
+
+
+def test_put_numeric_progress_for_paged_documents(client, davi):
+    b = {"document": "h1", "progress": 12, "percentage": 0.1, "device": "d", "device_id": "d"}
+    assert client.put("/syncs/progress", json=b, headers=H).status_code == 200
+    assert client.get("/syncs/progress/h1", headers=H).json()["progress"] == "12"

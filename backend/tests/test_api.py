@@ -124,3 +124,16 @@ def test_missing_bearer_prefix_401(client, davi):
 
 def test_kosync_still_wired(client):
     assert client.get("/healthcheck").status_code == 200
+
+
+@pytest.mark.parametrize("method,url,body", [
+    ("get", "/api/summary", None),
+    ("get", "/api/sessions?user=Davi", None),
+    ("post", "/api/progress", {"percentage": .1}),
+    ("post", "/api/readings", {"title": "X"}),
+    ("get", "/api/documents/unlinked", None),
+    ("post", "/api/documents/h/link", {"reading_id": 1}),
+])
+def test_api_routes_require_token(client, davi, method, url, body):
+    r = client.get(url) if method == "get" else client.post(url, json=body)
+    assert r.status_code == 401

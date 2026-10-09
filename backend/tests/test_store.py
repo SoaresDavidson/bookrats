@@ -61,3 +61,16 @@ def test_add_snapshot_stores_title_and_authors(conn, davi):
     store.add_snapshot(conn, davi.id, "kosync", 0.1, 100, document="h1", title="Duna", authors="Herbert")
     row = conn.execute("SELECT title, authors FROM documents WHERE hash='h1'").fetchone()
     assert (row["title"], row["authors"]) == ("Duna", "Herbert")
+
+
+def test_connect_uses_wal_and_busy_timeout(conn):
+    assert conn.execute("pragma journal_mode").fetchone()[0] == "wal"
+    assert conn.execute("pragma busy_timeout").fetchone()[0] == 5000
+
+
+def test_snapshots_for_mixes_sources_in_ts_order(conn, colega):
+    r = store.create_reading(conn, "Duna")
+    store.add_snapshot(conn, colega.id, "manual", .5, 200, reading_id=r)
+    store.add_snapshot(conn, colega.id, "goodreads", .4, 100, document="gr:1", external_id="g1")
+    store.link_document(conn, "gr:1", r)
+    assert [s.percentage for s in store.snapshots_for(conn, colega.id, r)] == [.4, .5]
