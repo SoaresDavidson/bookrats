@@ -1,5 +1,5 @@
-import React from "react";
 import * as SecureStore from "expo-secure-store";
+import React from "react";
 import type { WidgetTaskHandlerProps } from "react-native-android-widget";
 import { fetchSummary, type Outcome, type Summary } from "../api";
 import { BookratsWidget } from "./BookratsWidget";
@@ -13,10 +13,7 @@ export interface Loaded {
 }
 
 export async function load(): Promise<Loaded> {
-  const [url, token] = await Promise.all([
-    SecureStore.getItemAsync(KEYS.url),
-    SecureStore.getItemAsync(KEYS.token),
-  ]);
+  const [url, token] = await Promise.all([SecureStore.getItemAsync(KEYS.url), SecureStore.getItemAsync(KEYS.token)]);
   const outcome: Outcome = url && token ? await fetchSummary(url, token) : { kind: "unconfigured" };
   if (outcome.kind === "ok") {
     await SecureStore.setItemAsync(KEYS.last, JSON.stringify(outcome.summary));

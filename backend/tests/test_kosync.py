@@ -3,25 +3,67 @@ from bookrats import store
 H = {"x-auth-user": "davi", "x-auth-key": "md5x"}
 
 
-def test_auth_ok(client, davi): assert client.get("/users/auth", headers=H).json() == {"authorized": "OK"}
-def test_auth_bad(client, davi): assert client.get("/users/auth", headers={**H, "x-auth-key": "no"}).status_code == 401
-def test_register_disabled(client): assert client.post("/users/create", json={"username": "x", "password": "y"}).status_code == 402
+def test_auth_ok(client, davi):
+    assert client.get("/users/auth", headers=H).json() == {"authorized": "OK"}
+
+
+def test_auth_bad(client, davi):
+    assert client.get("/users/auth", headers={**H, "x-auth-key": "no"}).status_code == 401
+
+
+def test_register_disabled(client):
+    assert client.post("/users/create", json={"username": "x", "password": "y"}).status_code == 402
+
+
 def test_put_then_get_roundtrip(client, davi):
-    body = {"document": "h1", "progress": "/body/DocFragment[3]", "percentage": 0.42, "device": "Kindle", "device_id": "k1"}
+    body = {
+        "document": "h1",
+        "progress": "/body/DocFragment[3]",
+        "percentage": 0.42,
+        "device": "Kindle",
+        "device_id": "k1",
+    }
     assert client.put("/syncs/progress", json=body, headers=H).status_code == 200
     got = client.get("/syncs/progress/h1", headers=H).json()
     assert got["percentage"] == 0.42 and got["progress"] == "/body/DocFragment[3]"
+
+
 def test_put_rejects_bad_percentage(client, davi):
-    assert client.put("/syncs/progress", json={"document": "h1", "progress": "x", "percentage": 1.5, "device": "d", "device_id": "d"}, headers=H).status_code == 400
-def test_get_unknown_document_is_empty(client, davi): assert client.get("/syncs/progress/zz", headers=H).json() == {}
+    assert (
+        client.put(
+            "/syncs/progress",
+            json={"document": "h1", "progress": "x", "percentage": 1.5, "device": "d", "device_id": "d"},
+            headers=H,
+        ).status_code
+        == 400
+    )
+
+
+def test_get_unknown_document_is_empty(client, davi):
+    assert client.get("/syncs/progress/zz", headers=H).json() == {}
+
+
 def test_put_accepts_crosspoint_extensions(client, conn, davi):
-    body = {"document": "h2", "progress": "x", "percentage": 0.1, "device": "CrossPoint", "device_id": "crosspoint-reader",
-            "metadata": {"filename": "duna.epub", "title": "Duna", "authors": "Frank Herbert"}, "position": {"pctQ": 1, "spine": 2}}
+    body = {
+        "document": "h2",
+        "progress": "x",
+        "percentage": 0.1,
+        "device": "CrossPoint",
+        "device_id": "crosspoint-reader",
+        "metadata": {"filename": "duna.epub", "title": "Duna", "authors": "Frank Herbert"},
+        "position": {"pctQ": 1, "spine": 2},
+    }
     assert client.put("/syncs/progress", json=body, headers=H).status_code == 200
     assert conn.execute("select title from documents where hash='h2'").fetchone()[0] == "Duna"
+
+
 def test_put_stores_history(client, conn, davi):
     for p in (0.1, 0.2):
-        client.put("/syncs/progress", json={"document": "h1", "progress": "x", "percentage": p, "device": "d", "device_id": "d"}, headers=H)
+        client.put(
+            "/syncs/progress",
+            json={"document": "h1", "progress": "x", "percentage": p, "device": "d", "device_id": "d"},
+            headers=H,
+        )
     assert conn.execute("select count(*) from snapshots where document='h1'").fetchone()[0] == 2
 
 

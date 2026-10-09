@@ -14,6 +14,7 @@ export function Tabs({ tab: current, onChange }: { tab: Tab; onChange: (t: Tab) 
     <nav className="flex max-w-full bg-track rounded-full p-[3px]">
       {TABS.map((t) => (
         <button
+          type="button"
           key={t.id}
           className={`${tab} ${current === t.id ? "bg-surface text-ink font-semibold shadow-tab" : "bg-transparent text-muted font-medium"}`}
           aria-current={current === t.id ? "page" : undefined}

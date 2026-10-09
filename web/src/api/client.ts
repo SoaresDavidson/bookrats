@@ -1,4 +1,4 @@
-import type { ColorOption, ReadingListItem, Summary, SessionOut, UnlinkedDocument } from "./types";
+import type { ColorOption, ReadingListItem, SessionOut, Summary, UnlinkedDocument } from "./types";
 
 export class HttpError extends Error {
   status: number;
@@ -25,7 +25,10 @@ async function request<T>(token: string, path: string, init: RequestInit = {}): 
   const res = await fetch(path, { ...init, headers });
   if (res.status === 401) throw new AuthError();
   if (!res.ok) {
-    const detail = await res.json().then((b) => b?.detail, () => undefined);
+    const detail = await res.json().then(
+      (b) => b?.detail,
+      () => undefined,
+    );
     throw new HttpError(res.status, undefined, detail);
   }
   if (res.status === 204) return undefined as T;
@@ -47,8 +50,7 @@ export const createReading = (
   body: { title: string; author?: string; goodreads_book_id?: string; cover_url?: string },
 ) => request<unknown>(token, "/api/readings", post(body));
 
-export const getUnlinked = (token: string) =>
-  request<UnlinkedDocument[]>(token, "/api/documents/unlinked");
+export const getUnlinked = (token: string) => request<UnlinkedDocument[]>(token, "/api/documents/unlinked");
 
 export const linkDocument = (token: string, hash: string, readingId: number) =>
   request<void>(token, `/api/documents/${encodeURIComponent(hash)}/link`, post({ reading_id: readingId }));

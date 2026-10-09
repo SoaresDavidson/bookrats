@@ -16,6 +16,7 @@ def _run(handler, title="Duna", author="Frank Herbert", google=None):
     async def go():
         async with httpx.AsyncClient(transport=httpx.MockTransport(routed)) as c:
             return await find_cover(c, title, author)
+
     return asyncio.run(go())
 
 
@@ -53,12 +54,12 @@ def test_http_500():
 def test_connect_error():
     def handler(req):
         raise httpx.ConnectError("down")
+
     assert _run(handler) is None
 
 
 def test_prefers_exact_title_over_earlier_prefix_match():
-    docs = [{"title": "Imperador-Deus de Duna", "cover_i": 1},
-            {"title": "Duna", "cover_i": 12345}]
+    docs = [{"title": "Imperador-Deus de Duna", "cover_i": 1}, {"title": "Duna", "cover_i": 12345}]
     assert _run(lambda r: httpx.Response(200, json={"docs": docs})) == URL
 
 
@@ -68,8 +69,7 @@ def test_exact_match_ignores_accents_case_punctuation():
 
 
 def test_prefix_match_when_no_exact():
-    docs = [{"title": "Imperador-Deus de Duna", "cover_i": 1},
-            {"title": "Duna: edicao nova", "cover_i": 12345}]
+    docs = [{"title": "Imperador-Deus de Duna", "cover_i": 1}, {"title": "Duna: edicao nova", "cover_i": 12345}]
     assert _run(lambda r: httpx.Response(200, json={"docs": docs})) == URL
 
 
@@ -84,13 +84,15 @@ OL_MISS = lambda r: httpx.Response(200, json={"docs": []})  # noqa: E731
 
 
 def _gitems(*titles, key="thumbnail"):
-    return httpx.Response(200, json={"items": [
-        {"volumeInfo": {"title": t, "imageLinks": {key: GTHUMB}}} for t in titles]})
+    return httpx.Response(
+        200, json={"items": [{"volumeInfo": {"title": t, "imageLinks": {key: GTHUMB}}} for t in titles]}
+    )
 
 
 def test_ol_hit_never_calls_google():
     def google(req):
         raise AssertionError("google called")
+
     ol = lambda r: httpx.Response(200, json={"docs": [{"title": "Duna", "cover_i": 12345}]})  # noqa: E731
     assert _run(ol, google=google) == URL
 
@@ -138,6 +140,7 @@ def test_google_no_items_none():
 def test_ol_error_and_google_error_none():
     def boom(req):
         raise httpx.ConnectError("down")
+
     assert _run(boom, google=boom) is None
     assert _run(lambda r: httpx.Response(500), google=lambda r: httpx.Response(503)) is None
 

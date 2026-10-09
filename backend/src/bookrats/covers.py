@@ -46,8 +46,14 @@ async def _google(client: httpx.AsyncClient, title: str, author: str | None) -> 
         r = await client.get(GOOGLE_VOLUMES, params=params, timeout=5.0)
         r.raise_for_status()
         vols = [v["volumeInfo"] for v in r.json().get("items", [])]
-        v = _pick([v for v in vols if (v.get("imageLinks") or {}).get("thumbnail")
-                   or (v.get("imageLinks") or {}).get("smallThumbnail")], title)
+        v = _pick(
+            [
+                v
+                for v in vols
+                if (v.get("imageLinks") or {}).get("thumbnail") or (v.get("imageLinks") or {}).get("smallThumbnail")
+            ],
+            title,
+        )
         if not v:
             return None
         links = v["imageLinks"]

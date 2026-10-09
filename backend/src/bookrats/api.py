@@ -26,15 +26,14 @@ def current_user(
 ) -> store.User:
     if authorization is None or not authorization.startswith("Bearer "):
         raise HTTPException(401, "unauthorized")
-    user = store.user_by_token(conn, authorization[len("Bearer "):])
+    user = store.user_by_token(conn, authorization[len("Bearer ") :])
     if user is None:
         raise HTTPException(401, "unauthorized")
     return user
 
 
 def _session(s: Session) -> dict:
-    return {"from": s.start_pct, "to": s.end_pct,
-            "started_at": _iso(s.started_at), "ended_at": _iso(s.ended_at)}
+    return {"from": s.start_pct, "to": s.end_pct, "started_at": _iso(s.started_at), "ended_at": _iso(s.ended_at)}
 
 
 class ProgressIn(BaseModel):
@@ -105,25 +104,34 @@ def summary(user: store.User = Depends(current_user), conn: sqlite3.Connection =
     for i, u in enumerate(store.list_users(conn)):
         snaps = store.snapshots_for(conn, u.id, reading["id"]) if reading else []
         latest = snaps[-1] if snaps else None
-        readers.append({
-            "name": u.name,
-            "color": _color(effective_color(u, i)),
-            "percentage": latest.percentage if latest else None,
-            "updated_at": _iso(latest.ts) if latest else None,
-            "source": latest.source if latest else None,
-            "last_session": _session(group_sessions(snaps)[-1]) if snaps else None,
-        })
+        readers.append(
+            {
+                "name": u.name,
+                "color": _color(effective_color(u, i)),
+                "percentage": latest.percentage if latest else None,
+                "updated_at": _iso(latest.ts) if latest else None,
+                "source": latest.source if latest else None,
+                "last_session": _session(group_sessions(snaps)[-1]) if snaps else None,
+            }
+        )
     return {
-        "reading": {"id": reading["id"], "title": reading["title"], "author": reading["author"],
-                    "cover_url": reading["cover_url"]} if reading else None,
+        "reading": {
+            "id": reading["id"],
+            "title": reading["title"],
+            "author": reading["author"],
+            "cover_url": reading["cover_url"],
+        }
+        if reading
+        else None,
         "me": user.name,
         "readers": readers,
     }
 
 
 @router.get("/sessions")
-def sessions(user: str, limit: int = 20, _: store.User = Depends(current_user),
-             conn: sqlite3.Connection = Depends(get_conn)):
+def sessions(
+    user: str, limit: int = 20, _: store.User = Depends(current_user), conn: sqlite3.Connection = Depends(get_conn)
+):
     target = next((u for u in store.list_users(conn) if u.name == user), None)
     if target is None:
         raise HTTPException(404, "unknown user")
@@ -131,12 +139,13 @@ def sessions(user: str, limit: int = 20, _: store.User = Depends(current_user),
     if reading is None:
         return []
     snaps = store.snapshots_for(conn, target.id, reading["id"])
-    return [_session(s) for s in reversed(group_sessions(snaps))][:max(limit, 0)]
+    return [_session(s) for s in reversed(group_sessions(snaps))][: max(limit, 0)]
 
 
 @router.post("/progress", status_code=201)
-def post_progress(body: ProgressIn, user: store.User = Depends(current_user),
-                  conn: sqlite3.Connection = Depends(get_conn)):
+def post_progress(
+    body: ProgressIn, user: store.User = Depends(current_user), conn: sqlite3.Connection = Depends(get_conn)
+):
     reading = store.active_reading(conn)
     if reading is None:
         raise HTTPException(409, "no active reading")
@@ -145,9 +154,12 @@ def post_progress(body: ProgressIn, user: store.User = Depends(current_user),
 
 
 @router.post("/readings", status_code=201)
-async def post_reading(body: ReadingIn, _: store.User = Depends(current_user),
-                       conn: sqlite3.Connection = Depends(get_conn),
-                       http: httpx.AsyncClient = Depends(get_http)):
+async def post_reading(
+    body: ReadingIn,
+    _: store.User = Depends(current_user),
+    conn: sqlite3.Connection = Depends(get_conn),
+    http: httpx.AsyncClient = Depends(get_http),
+):
     cover = body.cover_url
     if cover is None:
         cover = await find_cover(http, body.title, body.author)
@@ -173,8 +185,12 @@ class ReadingPatch(BaseModel):
 
 
 @router.patch("/readings/{reading_id}", status_code=204)
-def patch_reading(reading_id: int, body: ReadingPatch, _: store.User = Depends(current_user),
-                  conn: sqlite3.Connection = Depends(get_conn)):
+def patch_reading(
+    reading_id: int,
+    body: ReadingPatch,
+    _: store.User = Depends(current_user),
+    conn: sqlite3.Connection = Depends(get_conn),
+):
     fields = {k: getattr(body, k) for k in body.model_fields_set}
     if "title" in fields and fields["title"] is None:
         raise HTTPException(422, "title cannot be null")
@@ -183,7 +199,7 @@ def patch_reading(reading_id: int, body: ReadingPatch, _: store.User = Depends(c
     try:
         store.update_reading(conn, reading_id, **fields)
     except KeyError:
-        raise HTTPException(404, "unknown reading")
+        raise HTTPException(404, "unknown reading") from None
     return Response(status_code=204)
 
 
@@ -192,31 +208,47 @@ def list_readings(_: store.User = Depends(current_user), conn: sqlite3.Connectio
     def ts(v):
         return _iso(v) if v is not None else None
 
-    return [{
-        "id": x["row"]["id"], "title": x["row"]["title"], "author": x["row"]["author"],
-        "cover_url": x["row"]["cover_url"], "goodreads_book_id": x["row"]["goodreads_book_id"],
-        "active": bool(x["row"]["active"]), "created_at": _iso(x["row"]["created_at"]),
-        "status": x["status"],
-        "readers": [{"name": r["name"], "percentage": r["percentage"], "updated_at": ts(r["updated_at"]),
-                     "started_at": ts(r["started_at"]), "finished_at": ts(r["finished_at"])}
-                    for r in x["readers"]],
-    } for x in store.list_readings(conn)]
+    return [
+        {
+            "id": x["row"]["id"],
+            "title": x["row"]["title"],
+            "author": x["row"]["author"],
+            "cover_url": x["row"]["cover_url"],
+            "goodreads_book_id": x["row"]["goodreads_book_id"],
+            "active": bool(x["row"]["active"]),
+            "created_at": _iso(x["row"]["created_at"]),
+            "status": x["status"],
+            "readers": [
+                {
+                    "name": r["name"],
+                    "percentage": r["percentage"],
+                    "updated_at": ts(r["updated_at"]),
+                    "started_at": ts(r["started_at"]),
+                    "finished_at": ts(r["finished_at"]),
+                }
+                for r in x["readers"]
+            ],
+        }
+        for x in store.list_readings(conn)
+    ]
 
 
 @router.post("/readings/{reading_id}/activate", status_code=204)
-def activate(reading_id: int, _: store.User = Depends(current_user),
-             conn: sqlite3.Connection = Depends(get_conn)):
+def activate(reading_id: int, _: store.User = Depends(current_user), conn: sqlite3.Connection = Depends(get_conn)):
     try:
         store.activate_reading(conn, reading_id)
     except KeyError:
-        raise HTTPException(404, "unknown reading")
+        raise HTTPException(404, "unknown reading") from None
     return Response(status_code=204)
 
 
 @router.post("/documents/{hash}/start", status_code=201)
-async def start_document(hash: str, _: store.User = Depends(current_user),
-                         conn: sqlite3.Connection = Depends(get_conn),
-                         http: httpx.AsyncClient = Depends(get_http)):
+async def start_document(
+    hash: str,
+    _: store.User = Depends(current_user),
+    conn: sqlite3.Connection = Depends(get_conn),
+    http: httpx.AsyncClient = Depends(get_http),
+):
     doc = conn.execute("SELECT * FROM documents WHERE hash=?", (hash,)).fetchone()
     if doc is None:
         raise HTTPException(404, "unknown document")
@@ -230,26 +262,32 @@ async def start_document(hash: str, _: store.User = Depends(current_user),
     try:
         rid = store.start_from_document(conn, hash, title, doc["authors"], gid, cover)
     except store.DocumentAlreadyLinked:
-        raise HTTPException(409, "documento já ligado a outra leitura")
+        raise HTTPException(409, "documento já ligado a outra leitura") from None
     return {"id": rid}
 
 
 @router.get("/documents/unlinked")
 def unlinked(_: store.User = Depends(current_user), conn: sqlite3.Connection = Depends(get_conn)):
-    return [{"hash": d["hash"], "title": d["title"], "authors": d["authors"],
-             "last_device": d["last_device"], "first_seen": d["first_seen"]}
-            for d in store.unlinked_documents(conn)]
+    return [
+        {
+            "hash": d["hash"],
+            "title": d["title"],
+            "authors": d["authors"],
+            "last_device": d["last_device"],
+            "first_seen": d["first_seen"],
+        }
+        for d in store.unlinked_documents(conn)
+    ]
 
 
 @router.post("/documents/{hash}/link", status_code=204)
-def link(hash: str, body: LinkIn, _: store.User = Depends(current_user),
-         conn: sqlite3.Connection = Depends(get_conn)):
+def link(hash: str, body: LinkIn, _: store.User = Depends(current_user), conn: sqlite3.Connection = Depends(get_conn)):
     if conn.execute("SELECT 1 FROM readings WHERE id=?", (body.reading_id,)).fetchone() is None:
         raise HTTPException(404, "unknown reading")
     try:
         store.link_document(conn, hash, body.reading_id)
     except KeyError:
-        raise HTTPException(404, "unknown document")
+        raise HTTPException(404, "unknown document") from None
     return Response(status_code=204)
 
 
@@ -259,8 +297,7 @@ def palette(_: store.User = Depends(current_user)):
 
 
 @router.put("/me/color", status_code=204)
-def put_color(body: ColorIn, user: store.User = Depends(current_user),
-              conn: sqlite3.Connection = Depends(get_conn)):
+def put_color(body: ColorIn, user: store.User = Depends(current_user), conn: sqlite3.Connection = Depends(get_conn)):
     color = body.color.lower() if is_hex(body.color) else body.color
     if color not in PALETTE and not is_hex(color):
         raise HTTPException(422, "unknown color")

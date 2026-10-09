@@ -13,16 +13,40 @@ vi.mock("../../api/client", async (orig) => ({
 import * as api from "../../api/client";
 import { Shelf } from "./Shelf";
 
-const rd = (name: string, pct: number | null, s: string | null, f: string | null) =>
-  ({ name, percentage: pct, updated_at: f ?? s, started_at: s, finished_at: f });
+const rd = (name: string, pct: number | null, s: string | null, f: string | null) => ({
+  name,
+  percentage: pct,
+  updated_at: f ?? s,
+  started_at: s,
+  finished_at: f,
+});
 
 const READINGS: ReadingListItem[] = [
-  { id: 1, title: "Duna", author: "Frank Herbert", cover_url: "https://x/d.jpg", goodreads_book_id: "55", active: true,
-    status: "lendo", created_at: "2026-03-01T15:00:00Z",
-    readers: [rd("Davi", 0.41, "2026-03-05T15:00:00Z", null), rd("Colega", null, null, null)] },
-  { id: 2, title: "Neuromancer", author: "Gibson", cover_url: null, goodreads_book_id: null, active: false,
-    status: "lido", created_at: "2026-01-01T15:00:00Z",
-    readers: [rd("Davi", 1, "2026-01-05T15:00:00Z", "2026-01-12T15:00:00Z"), rd("Colega", 1, "2026-01-06T15:00:00Z", "2026-01-20T15:00:00Z")] },
+  {
+    id: 1,
+    title: "Duna",
+    author: "Frank Herbert",
+    cover_url: "https://x/d.jpg",
+    goodreads_book_id: "55",
+    active: true,
+    status: "lendo",
+    created_at: "2026-03-01T15:00:00Z",
+    readers: [rd("Davi", 0.41, "2026-03-05T15:00:00Z", null), rd("Colega", null, null, null)],
+  },
+  {
+    id: 2,
+    title: "Neuromancer",
+    author: "Gibson",
+    cover_url: null,
+    goodreads_book_id: null,
+    active: false,
+    status: "lido",
+    created_at: "2026-01-01T15:00:00Z",
+    readers: [
+      rd("Davi", 1, "2026-01-05T15:00:00Z", "2026-01-12T15:00:00Z"),
+      rd("Colega", 1, "2026-01-06T15:00:00Z", "2026-01-20T15:00:00Z"),
+    ],
+  },
 ];
 
 beforeEach(() => {
@@ -160,8 +184,10 @@ describe("Shelf loading", () => {
       await screen.findByAltText("Duna");
       expect(document.querySelector(".cover-loading")).toBeNull();
     } finally {
-      if (d1) Object.defineProperty(HTMLImageElement.prototype, "complete", d1); else delete (HTMLImageElement.prototype as any).complete;
-      if (d2) Object.defineProperty(HTMLImageElement.prototype, "naturalWidth", d2); else delete (HTMLImageElement.prototype as any).naturalWidth;
+      if (d1) Object.defineProperty(HTMLImageElement.prototype, "complete", d1);
+      else Reflect.deleteProperty(HTMLImageElement.prototype, "complete");
+      if (d2) Object.defineProperty(HTMLImageElement.prototype, "naturalWidth", d2);
+      else Reflect.deleteProperty(HTMLImageElement.prototype, "naturalWidth");
     }
   });
 });

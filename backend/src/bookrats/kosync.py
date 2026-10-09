@@ -64,27 +64,41 @@ def auth(user=Depends(auth_user)):
 
 
 @router.put("/syncs/progress")
-async def put_progress(request: Request, user=Depends(auth_user),
-                       conn: sqlite3.Connection = Depends(get_conn)):
+async def put_progress(request: Request, user=Depends(auth_user), conn: sqlite3.Connection = Depends(get_conn)):
     try:
         p = Progress.model_validate(await request.json())
     except (ValidationError, ValueError):
         return error_response(400, 2003, "Invalid request")
     ts = int(time.time())
-    store.add_snapshot(conn, user.id, "kosync", p.percentage, ts, document=p.document,
-                       progress=str(p.progress), device=p.device, device_id=p.device_id,
-                       title=p.meta("title"), authors=p.meta("authors"))
+    store.add_snapshot(
+        conn,
+        user.id,
+        "kosync",
+        p.percentage,
+        ts,
+        document=p.document,
+        progress=str(p.progress),
+        device=p.device,
+        device_id=p.device_id,
+        title=p.meta("title"),
+        authors=p.meta("authors"),
+    )
     return {"document": p.document, "timestamp": ts}
 
 
 @router.get("/syncs/progress/{document}")
-def get_progress(document: str, user=Depends(auth_user),
-                 conn: sqlite3.Connection = Depends(get_conn)):
+def get_progress(document: str, user=Depends(auth_user), conn: sqlite3.Connection = Depends(get_conn)):
     r = store.latest_kosync(conn, user.id, document)
     if r is None:
         return {}
-    return {"document": r["document"], "progress": r["progress"], "percentage": r["percentage"],
-            "device": r["device"], "device_id": r["device_id"], "timestamp": r["ts"]}
+    return {
+        "document": r["document"],
+        "progress": r["progress"],
+        "percentage": r["percentage"],
+        "device": r["device"],
+        "device_id": r["device_id"],
+        "timestamp": r["ts"],
+    }
 
 
 @router.get("/healthcheck")

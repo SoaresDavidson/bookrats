@@ -1,5 +1,5 @@
-import type { Reader } from "../api/types";
 import { FALLBACK_COLORS } from "../api/client";
+import type { Reader } from "../api/types";
 
 /** Inline CSS variables carrying a reader's light and dark colors. */
 export function readerVars(r: Reader, i: number): React.CSSProperties {

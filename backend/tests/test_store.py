@@ -24,7 +24,8 @@ def test_linking_is_retroactive(conn, davi):
 
 
 def test_create_reading_deactivates_previous(conn):
-    store.create_reading(conn, "A"); b = store.create_reading(conn, "B")
+    store.create_reading(conn, "A")
+    b = store.create_reading(conn, "B")
     assert store.active_reading(conn)["id"] == b
 
 
@@ -70,10 +71,10 @@ def test_connect_uses_wal_and_busy_timeout(conn):
 
 def test_snapshots_for_mixes_sources_in_ts_order(conn, colega):
     r = store.create_reading(conn, "Duna")
-    store.add_snapshot(conn, colega.id, "manual", .5, 200, reading_id=r)
-    store.add_snapshot(conn, colega.id, "goodreads", .4, 100, document="gr:1", external_id="g1")
+    store.add_snapshot(conn, colega.id, "manual", 0.5, 200, reading_id=r)
+    store.add_snapshot(conn, colega.id, "goodreads", 0.4, 100, document="gr:1", external_id="g1")
     store.link_document(conn, "gr:1", r)
-    assert [s.percentage for s in store.snapshots_for(conn, colega.id, r)] == [.4, .5]
+    assert [s.percentage for s in store.snapshots_for(conn, colega.id, r)] == [0.4, 0.5]
 
 
 def test_set_cover_unknown_id(conn):
@@ -88,8 +89,10 @@ def test_connect_adds_cover_url_column_to_old_db(tmp_path):
 
     path = str(tmp_path / "old.db")
     raw = sqlite3.connect(path)
-    raw.execute("CREATE TABLE readings (id INTEGER PRIMARY KEY, title TEXT NOT NULL, author TEXT,"
-                " goodreads_book_id TEXT, active INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL)")
+    raw.execute(
+        "CREATE TABLE readings (id INTEGER PRIMARY KEY, title TEXT NOT NULL, author TEXT,"
+        " goodreads_book_id TEXT, active INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL)"
+    )
     raw.commit()
     raw.close()
     c = db.connect(path)
@@ -105,8 +108,10 @@ def test_connect_adds_users_color_column_to_old_db(tmp_path):
 
     path = str(tmp_path / "old2.db")
     raw = sqlite3.connect(path)
-    raw.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE,"
-                " kosync_username TEXT, kosync_key TEXT, goodreads_user_id TEXT, api_token TEXT NOT NULL UNIQUE)")
+    raw.execute(
+        "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE,"
+        " kosync_username TEXT, kosync_key TEXT, goodreads_user_id TEXT, api_token TEXT NOT NULL UNIQUE)"
+    )
     raw.commit()
     raw.close()
     c = db.connect(path)
@@ -134,7 +139,9 @@ def test_claim_color_only_first_wins_across_connections(db_path, conn, davi, col
 
 def test_init_schema_partial_and_duplicate_column_race(tmp_path):
     import sqlite3
+
     from bookrats import db
+
     p = str(tmp_path / "p.db")
     c1 = sqlite3.connect(p)
     c1.executescript(db.SCHEMA)

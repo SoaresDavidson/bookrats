@@ -1,6 +1,6 @@
 @import "@fontsource-variable/geist";
 @import "tailwindcss";
-@source not "../**/*.test.{ts,tsx}";
 @import "./theme.css";
 @import "./base.css";
 @import "./animations.css";
+@source not "../**/*.test.{ts,tsx}";

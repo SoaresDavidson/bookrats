@@ -48,8 +48,9 @@ const advance = (ms: number) =>
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date", "performance"] });
-  vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) =>
-    setTimeout(() => cb(performance.now()), 16) as unknown as number,
+  vi.stubGlobal(
+    "requestAnimationFrame",
+    (cb: FrameRequestCallback) => setTimeout(() => cb(performance.now()), 16) as unknown as number,
   );
   vi.stubGlobal("cancelAnimationFrame", (id: number) => clearTimeout(id));
   sessionStorage.clear();

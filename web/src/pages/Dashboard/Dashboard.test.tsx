@@ -59,7 +59,10 @@ describe("Dashboard", () => {
     render(<Dashboard token="tok" />);
     await screen.findByText(/Duna/);
     await vi.waitFor(() => expect(api.getSessions).toHaveBeenCalledTimes(2));
-    const names = vi.mocked(api.getSessions).mock.calls.map((c) => c[1]).sort();
+    const names = vi
+      .mocked(api.getSessions)
+      .mock.calls.map((c) => c[1])
+      .sort();
     expect(names).toEqual(["Colega", "Davi"]);
     expect(within(document.body).queryByText(/undefined/)).toBeNull();
   });
@@ -72,8 +75,7 @@ describe("Dashboard per-reader bars", () => {
     s.readers[1].percentage = b;
     vi.mocked(api.getSummary).mockResolvedValue(s);
   };
-  const w = (name: string) =>
-    document.querySelector<HTMLElement>(`[data-reader="${name}"]`)!.style.transform;
+  const w = (name: string) => document.querySelector<HTMLElement>(`[data-reader="${name}"]`)!.style.transform;
 
   it("gives each reader its own bar with its own width", async () => {
     sessionStorage.setItem("bookrats.barsAnimated", "1");
@@ -93,7 +95,12 @@ describe("Dashboard per-reader bars", () => {
 
   it("formats a negative last session with a plain hyphen", async () => {
     const s = makeSummary();
-    s.readers[0].last_session = { from: 0.5, to: 0.47, started_at: s.readers[0].updated_at!, ended_at: s.readers[0].updated_at! };
+    s.readers[0].last_session = {
+      from: 0.5,
+      to: 0.47,
+      started_at: s.readers[0].updated_at!,
+      ended_at: s.readers[0].updated_at!,
+    };
     vi.mocked(api.getSummary).mockResolvedValue(s);
     render(<Dashboard token="tok" />);
     expect(await screen.findByText(/-3 pontos \(50% → 47%\)/)).toBeTruthy();
@@ -106,7 +113,12 @@ describe("Dashboard per-reader bars", () => {
   });
 
   it("history is an animated collapsed panel with latest 5 and Ver todas", async () => {
-    const mk = (i: number) => ({ from: i / 100, to: (i + 1) / 100, started_at: `2026-01-0${i + 1}T00:00:00Z`, ended_at: `2026-01-0${i + 1}T01:00:00Z` });
+    const mk = (i: number) => ({
+      from: i / 100,
+      to: (i + 1) / 100,
+      started_at: `2026-01-0${i + 1}T00:00:00Z`,
+      ended_at: `2026-01-0${i + 1}T01:00:00Z`,
+    });
     vi.mocked(api.getSessions).mockResolvedValue([0, 1, 2, 3, 4, 5, 6].map(mk));
     render(<Dashboard token="tok" />);
     await screen.findByText(/Duna/);
@@ -114,7 +126,7 @@ describe("Dashboard per-reader bars", () => {
     const btn = screen.getAllByRole("button", { name: /Histórico de/ })[0];
     expect(btn.getAttribute("aria-expanded")).toBe("false");
     const panel = document.getElementById(btn.getAttribute("aria-controls")!) as HTMLElement;
-    expect(panel.getAttribute("role")).toBe("region");
+    expect(panel.tagName).toBe("SECTION"); // labelled <section> has the implicit region role
     expect(panel.getAttribute("aria-labelledby")).toBe(btn.id);
     const wrap = panel.firstElementChild as HTMLElement;
     expect(wrap.hasAttribute("inert")).toBe(true);

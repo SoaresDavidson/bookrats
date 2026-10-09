@@ -13,8 +13,8 @@ vi.mock("./api/client", async (orig) => ({
   linkDocument: vi.fn(),
 }));
 
-import * as api from "./api/client";
 import App from "./App";
+import * as api from "./api/client";
 
 const KEY = "bookrats.token";
 
@@ -63,7 +63,8 @@ describe("App", () => {
   it("has Progresso, Estante and Gerenciar tabs", async () => {
     localStorage.setItem(KEY, "secret");
     render(<App />);
-    for (const n of ["Progresso", "Estante", "Gerenciar"]) expect(await screen.findByRole("button", { name: n })).toBeTruthy();
+    for (const n of ["Progresso", "Estante", "Gerenciar"])
+      expect(await screen.findByRole("button", { name: n })).toBeTruthy();
   });
 
   it("marks only the active tab with aria-current=page", async () => {

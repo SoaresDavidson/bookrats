@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode, type Ref } from "react";
+import { type ReactNode, type Ref, useEffect, useRef } from "react";
 
 interface Props {
   labelledBy: string;
@@ -32,7 +32,9 @@ export function Dialog({ labelledBy, onClose, children, ref: outer }: Props) {
       }
       const root = inner.current;
       if (e.key !== "Tab" || !root) return;
-      const els = [...root.querySelectorAll<HTMLElement>("button, input")].filter((x) => !(x as HTMLButtonElement).disabled);
+      const els = [...root.querySelectorAll<HTMLElement>("button, input")].filter(
+        (x) => !(x as HTMLButtonElement).disabled,
+      );
       if (!els.length) return;
       const act = document.activeElement;
       const first = els[0];
@@ -50,8 +52,19 @@ export function Dialog({ labelledBy, onClose, children, ref: outer }: Props) {
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-10 bg-scrim flex items-end justify-center min-[520px]:items-center" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={setRef} className="w-full max-w-120 max-h-[90dvh] overflow-y-auto overscroll-contain bg-surface border border-line p-4 flex flex-col gap-3.5 rounded-card rounded-b-none min-[520px]:rounded-card focus:outline-none" role="dialog" aria-modal="true" aria-labelledby={labelledBy} tabIndex={-1}>
+    // biome-ignore lint/a11y/noStaticElementInteractions: backdrop click closes; Escape is handled on document
+    <div
+      className="fixed inset-0 z-10 bg-scrim flex items-end justify-center min-[520px]:items-center"
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        ref={setRef}
+        className="w-full max-w-120 max-h-[90dvh] overflow-y-auto overscroll-contain bg-surface border border-line p-4 flex flex-col gap-3.5 rounded-card rounded-b-none min-[520px]:rounded-card focus:outline-none"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={labelledBy}
+        tabIndex={-1}
+      >
         {children}
       </div>
     </div>

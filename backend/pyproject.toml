@@ -20,7 +20,19 @@ testpaths = ["tests"]
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    "ruff>=0.16.10",
 ]
 
 [project.scripts]
 bookrats = "bookrats.cli:main"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]  # the formatter owns line length; long SQL strings stay intact
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Header", "fastapi.Query"]

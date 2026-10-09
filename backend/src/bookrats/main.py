@@ -1,8 +1,8 @@
 import asyncio
 import contextlib
 import os
-from pathlib import Path
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
@@ -20,9 +20,7 @@ def create_app(db_path: str, start_poller: bool = True) -> FastAPI:
         task = None
         app.state.http = new_http_client()
         if start_poller:
-            task = asyncio.create_task(
-                poll_forever(db_path, Settings.from_env().goodreads_poll_seconds)
-            )
+            task = asyncio.create_task(poll_forever(db_path, Settings.from_env().goodreads_poll_seconds))
         try:
             yield
         finally:

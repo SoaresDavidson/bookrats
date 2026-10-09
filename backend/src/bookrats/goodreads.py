@@ -10,10 +10,7 @@ import httpx
 from bookrats import db, store
 
 FEED_URL = "https://www.goodreads.com/user/updates_rss/{user_id}"
-USER_AGENT = (
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/124.0 Safari/537.36"
-)
+USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 
 _PCT_RE = re.compile(r"is (\d+)% done with")
 _PAGE_RE = re.compile(r"is on page (\d+) of (\d+) of")
@@ -58,8 +55,11 @@ def parse_updates(xml: str) -> list[Update]:
         if pct is None or not e.get("published_parsed"):
             continue
         m = _BOOK_RE.search(e.get("summary", "") or e.get("description", "") or "")
-        out.append(Update(guid, m.group(1) if m else None, pct, calendar.timegm(e.published_parsed),
-                          tm.group(1) if tm else None))
+        out.append(
+            Update(
+                guid, m.group(1) if m else None, pct, calendar.timegm(e.published_parsed), tm.group(1) if tm else None
+            )
+        )
     return out
 
 
@@ -69,9 +69,7 @@ async def poll_once(conn, client: httpx.AsyncClient) -> int:
         if not user.goodreads_user_id:
             continue
         try:
-            resp = await client.get(
-                FEED_URL.format(user_id=user.goodreads_user_id), headers={"User-Agent": USER_AGENT}
-            )
+            resp = await client.get(FEED_URL.format(user_id=user.goodreads_user_id), headers={"User-Agent": USER_AGENT})
             resp.raise_for_status()
         except httpx.HTTPError as exc:
             log.warning("goodreads fetch failed for user %s: %s", user.id, exc)
@@ -81,8 +79,17 @@ async def poll_once(conn, client: httpx.AsyncClient) -> int:
             if u.book_id is None:
                 continue
             doc = "gr:" + u.book_id
-            if store.add_snapshot(conn, user.id, "goodreads", u.percentage, u.ts, document=doc,
-                                  device="goodreads", title=u.title, external_id="gr:" + u.guid):
+            if store.add_snapshot(
+                conn,
+                user.id,
+                "goodreads",
+                u.percentage,
+                u.ts,
+                document=doc,
+                device="goodreads",
+                title=u.title,
+                external_id="gr:" + u.guid,
+            ):
                 stored += 1
             if active and active["goodreads_book_id"] == u.book_id:
                 store.link_document(conn, doc, active["id"])

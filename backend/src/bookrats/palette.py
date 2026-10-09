@@ -1,3 +1,6 @@
+import colorsys
+import re
+
 PALETTE: dict[str, tuple[str, str]] = {
     "azul": ("#2F6FEB", "#6F9CF5"),
     "laranja": ("#D9480F", "#FF8A4C"),
@@ -9,8 +12,14 @@ PALETTE: dict[str, tuple[str, str]] = {
     "grafite": ("#495057", "#ADB5BD"),
 }
 LABELS: dict[str, str] = {
-    "azul": "Azul", "laranja": "Laranja", "verde": "Verde", "roxo": "Roxo",
-    "rosa": "Rosa", "ciano": "Ciano", "ambar": "Âmbar", "grafite": "Grafite",
+    "azul": "Azul",
+    "laranja": "Laranja",
+    "verde": "Verde",
+    "roxo": "Roxo",
+    "rosa": "Rosa",
+    "ciano": "Ciano",
+    "ambar": "Âmbar",
+    "grafite": "Grafite",
 }
 DEFAULT_ORDER = ["azul", "laranja"]
 
@@ -18,9 +27,6 @@ DEFAULT_ORDER = ["azul", "laranja"]
 def effective_color(user, index: int) -> str:
     return user.color or DEFAULT_ORDER[index % len(DEFAULT_ORDER)]
 
-
-import colorsys
-import re
 
 LIGHT_TRACK, DARK_TRACK = "#e4e4e7", "#313137"
 _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
@@ -31,7 +37,7 @@ def is_hex(v: str) -> bool:
 
 
 def _lum(h: str) -> float:
-    c = [int(h[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+    c = [int(h[i : i + 2], 16) / 255 for i in (1, 3, 5)]
     c = [x / 12.92 if x <= 0.03928 else ((x + 0.055) / 1.055) ** 2.4 for x in c]
     return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
 
@@ -44,12 +50,12 @@ def contrast(a: str, b: str) -> float:
 def _adjust(hex_: str, track: str, direction: int) -> str:
     if contrast(hex_, track) >= 3:
         return hex_
-    r, g, b = (int(hex_[i:i + 2], 16) / 255 for i in (1, 3, 5))
-    h, l, s = colorsys.rgb_to_hls(r, g, b)
+    r, g, b = (int(hex_[i : i + 2], 16) / 255 for i in (1, 3, 5))
+    h, lig, sat = colorsys.rgb_to_hls(r, g, b)
     best, best_c = hex_, contrast(hex_, track)
     for step in range(1, 101):
-        nl = min(1.0, max(0.0, l + direction * step * 0.01))
-        out = "#%02x%02x%02x" % tuple(round(x * 255) for x in colorsys.hls_to_rgb(h, nl, s))
+        nl = min(1.0, max(0.0, lig + direction * step * 0.01))
+        out = "#" + "".join(f"{round(x * 255):02x}" for x in colorsys.hls_to_rgb(h, nl, sat))
         c = contrast(out, track)
         if c >= 3:
             return out

@@ -53,8 +53,7 @@ def test_duplicate_name_fails_cleanly(monkeypatch, tmp_path, capsys):
 
 def test_new_reading(monkeypatch, tmp_path):
     path = _setup(monkeypatch, tmp_path)
-    rc = main(["new-reading", "--title", "Duna", "--author", "Frank Herbert",
-               "--goodreads-book-id", "44767458"])
+    rc = main(["new-reading", "--title", "Duna", "--author", "Frank Herbert", "--goodreads-book-id", "44767458"])
     assert rc == 0
     r = store.active_reading(db.connect(path))
     assert r["title"] == "Duna"

@@ -16,7 +16,8 @@ def client(db_path):
     app = create_app(db_path, start_poller=False)
     with TestClient(app) as c:
         app.state.http = httpx.AsyncClient(
-            transport=httpx.MockTransport(lambda r: httpx.Response(200, json={"docs": []})))
+            transport=httpx.MockTransport(lambda r: httpx.Response(200, json={"docs": []}))
+        )
         yield c
 
 

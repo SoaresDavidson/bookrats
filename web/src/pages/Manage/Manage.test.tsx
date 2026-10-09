@@ -27,9 +27,14 @@ const docs: UnlinkedDocument[] = [
 
 const LABELS = ["Azul", "Laranja", "Verde", "Roxo", "Rosa", "Ciano", "Âmbar", "Grafite"];
 const PALETTE = [
-  ["azul", "#2F6FEB", "#6F9CF5"], ["laranja", "#D9480F", "#FF8A4C"], ["verde", "#2B8A3E", "#51CF66"],
-  ["roxo", "#7048E8", "#9775FA"], ["rosa", "#D6336C", "#F06595"], ["ciano", "#0C8599", "#3BC9DB"],
-  ["ambar", "#B76E00", "#FCC419"], ["grafite", "#495057", "#ADB5BD"],
+  ["azul", "#2F6FEB", "#6F9CF5"],
+  ["laranja", "#D9480F", "#FF8A4C"],
+  ["verde", "#2B8A3E", "#51CF66"],
+  ["roxo", "#7048E8", "#9775FA"],
+  ["rosa", "#D6336C", "#F06595"],
+  ["ciano", "#0C8599", "#3BC9DB"],
+  ["ambar", "#B76E00", "#FCC419"],
+  ["grafite", "#495057", "#ADB5BD"],
 ].map(([id, light, dark], i) => ({ id, label: LABELS[i], light, dark }));
 
 const docRow = async (text: RegExp) => (await screen.findByText(text)).closest("li") as HTMLElement;
@@ -277,7 +282,9 @@ describe("Manage", () => {
     render(<Manage token="tok" />);
     fireEvent.change(await screen.findByLabelText("Título"), { target: { value: "X" } });
     fireEvent.change(screen.getByLabelText("Meu progresso (%)"), { target: { value: "10" } });
-    await vi.waitFor(() => expect((screen.getByRole("button", { name: "Salvar capa" }) as HTMLButtonElement).disabled).toBe(false));
+    await vi.waitFor(() =>
+      expect((screen.getByRole("button", { name: "Salvar capa" }) as HTMLButtonElement).disabled).toBe(false),
+    );
     for (const n of ["Criar leitura", "Salvar progresso", "Salvar capa"]) {
       const b = screen.getByRole("button", { name: n });
       fireEvent.click(b);
@@ -294,14 +301,18 @@ describe("Manage", () => {
     const user = userEvent.setup();
     render(<Manage token="tok" />);
     await user.type(await screen.findByLabelText("Nova URL da capa"), "http://x/y.jpg");
-    await vi.waitFor(() => expect((screen.getByRole("button", { name: "Salvar capa" }) as HTMLButtonElement).disabled).toBe(false));
+    await vi.waitFor(() =>
+      expect((screen.getByRole("button", { name: "Salvar capa" }) as HTMLButtonElement).disabled).toBe(false),
+    );
     await user.click(screen.getByRole("button", { name: "Salvar capa" }));
     expect(await screen.findByText("URL inválida (use http ou https)")).toBeTruthy();
     expect(screen.queryByText(/Algo deu errado/)).toBeNull();
   });
 
   it("shows a field error for a 422 on create with a cover URL", async () => {
-    vi.mocked(api.createReading).mockRejectedValue(new api.HttpError(422, "x", [{ loc: ["body", "cover_url"], msg: "bad", type: "value_error" }]));
+    vi.mocked(api.createReading).mockRejectedValue(
+      new api.HttpError(422, "x", [{ loc: ["body", "cover_url"], msg: "bad", type: "value_error" }]),
+    );
     const user = userEvent.setup();
     render(<Manage token="tok" />);
     await user.type(await screen.findByLabelText("Título"), "X");
@@ -311,7 +322,9 @@ describe("Manage", () => {
   });
 
   it("shows the generic error for a 422 on create not about cover_url", async () => {
-    vi.mocked(api.createReading).mockRejectedValue(new api.HttpError(422, "x", [{ loc: ["body", "title"], msg: "bad", type: "value_error" }]));
+    vi.mocked(api.createReading).mockRejectedValue(
+      new api.HttpError(422, "x", [{ loc: ["body", "title"], msg: "bad", type: "value_error" }]),
+    );
     const user = userEvent.setup();
     render(<Manage token="tok" />);
     await user.type(await screen.findByLabelText("Título"), "X");

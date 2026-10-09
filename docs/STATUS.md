@@ -12,6 +12,8 @@ Handoff for the next session. Product spec: `docs/superpowers/specs/2026-10-08-b
 | iPhone widget | `widgets/scriptable/bookrats.js` | Scriptable (iOS only) | `node --check widgets/scriptable/bookrats.js` |
 | Deploy | `backend/Dockerfile` (multi-stage, context = repo root), `deploy/docker-compose.yml` (+ cloudflared), `.dockerignore` | Docker | `docker build -f backend/Dockerfile -t bookrats .` |
 
+Lint and format: Biome for TS/JS/CSS (`biome.json` at the repo root, shared by `web/`, `mobile/` and `widgets/`; `npm run lint` / `npm run format` in `web/` or `mobile/`) and Ruff for Python (`[tool.ruff]` in `backend/pyproject.toml`; `uv run ruff check . && uv run ruff format .` in `backend/`). Line width 120 everywhere.
+
 ### Backend features
 - kosync server API for KOReader and CrossPoint (`/users/auth`, `PUT/GET /syncs/progress`, `/healthcheck`); sign-up disabled; every sync stored as a snapshot; CrossPoint metadata (title/authors) stored.
 - Goodreads updates RSS poller (15 min) for the colleague; progress items become document `gr:<book_id>`.

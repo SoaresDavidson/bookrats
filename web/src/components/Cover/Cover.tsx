@@ -25,7 +25,7 @@ function CoverInner({ url, title, small, loading, fluid }: Props) {
   const ref = useRef<HTMLImageElement>(null);
   useLayoutEffect(() => {
     const el = ref.current;
-    if (el && el.complete && el.naturalWidth > 0) setLoaded(true);
+    if (el?.complete && el.naturalWidth > 0) setLoaded(true);
   }, []);
   const size = fluid
     ? "w-full rounded-card shadow-shelf"
@@ -63,7 +63,10 @@ function CoverInner({ url, title, small, loading, fluid }: Props) {
     <div className="cover-slot relative w-full" aria-busy={!loaded}>
       {img}
       {!loaded && (
-        <div className="cover-loading shimmer absolute inset-0 flex items-center justify-center rounded-card bg-track pointer-events-none overflow-hidden" aria-hidden="true">
+        <div
+          className="cover-loading shimmer absolute inset-0 flex items-center justify-center rounded-card bg-track pointer-events-none overflow-hidden"
+          aria-hidden="true"
+        >
           <span className="relative z-1 size-5 rounded-full border-2 border-muted border-r-transparent animate-spinner motion-reduce:animate-none" />
         </div>
       )}

@@ -12,7 +12,7 @@ def _two(conn, davi, colega):
     store.add_snapshot(conn, davi.id, "kosync", 1.0, 1000, document="ha", reading_id=a)
     store.add_snapshot(conn, colega.id, "manual", 1.0, 2000, reading_id=a)
     b = store.create_reading(conn, "Novo", "Autor B")
-    store.add_snapshot(conn, davi.id, "manual", .41, 3000, reading_id=b)
+    store.add_snapshot(conn, davi.id, "manual", 0.41, 3000, reading_id=b)
     return a, b
 
 
@@ -33,13 +33,22 @@ def test_list_active_first_with_readers(client, conn, davi, colega):
     rows = _list(client)
     assert [r["id"] for r in rows] == [b, a]
     assert rows[0]["active"] is True and rows[1]["active"] is False
-    assert set(rows[0]) == {"id", "title", "author", "cover_url", "goodreads_book_id",
-                            "active", "created_at", "status", "readers"}
+    assert set(rows[0]) == {
+        "id",
+        "title",
+        "author",
+        "cover_url",
+        "goodreads_book_id",
+        "active",
+        "created_at",
+        "status",
+        "readers",
+    }
     assert set(rows[0]["readers"][0]) == {"name", "percentage", "updated_at", "started_at", "finished_at"}
     assert rows[0]["title"] == "Novo" and rows[0]["author"] == "Autor B"
     assert [x["percentage"] for x in rows[1]["readers"]] == [1.0, 1.0]
     assert [x["name"] for x in rows[1]["readers"]] == ["Davi", "Colega"]
-    assert [x["percentage"] for x in rows[0]["readers"]] == [pytest.approx(.41), None]
+    assert [x["percentage"] for x in rows[0]["readers"]] == [pytest.approx(0.41), None]
     assert rows[0]["readers"][1]["updated_at"] is None
     assert rows[1]["readers"][0]["updated_at"] == "1970-01-01T00:16:40Z"
     assert rows[0]["created_at"].endswith("Z")
@@ -50,8 +59,8 @@ def test_list_inactive_ordered_by_recent_progress_then_created(client, conn, dav
     y = store.create_reading(conn, "Y")
     z = store.create_reading(conn, "Z")
     w = store.create_reading(conn, "W")  # active, no progress
-    store.add_snapshot(conn, davi.id, "manual", .1, 500, reading_id=x)
-    store.add_snapshot(conn, davi.id, "manual", .1, 900, reading_id=y)
+    store.add_snapshot(conn, davi.id, "manual", 0.1, 500, reading_id=x)
+    store.add_snapshot(conn, davi.id, "manual", 0.1, 900, reading_id=y)
     conn.execute("UPDATE readings SET created_at=10 WHERE id=?", (z,))
     conn.commit()
     assert [r["id"] for r in _list(client)] == [w, y, x, z]
@@ -88,9 +97,14 @@ def test_patch_author_and_unknown_404(client, conn, davi):
     assert client.patch("/api/readings/999", headers=AUTH, json={"title": "X"}).status_code == 404
 
 
-@pytest.mark.parametrize("body", [
-    {"title": ""}, {"title": "a" * 201}, {"cover_url": "javascript:x"},
-])
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"title": ""},
+        {"title": "a" * 201},
+        {"cover_url": "javascript:x"},
+    ],
+)
 def test_patch_validation_422(client, conn, davi, body):
     r = store.create_reading(conn, "T")
     assert client.patch(f"/api/readings/{r}", headers=AUTH, json=body).status_code == 422
@@ -102,7 +116,7 @@ def test_patch_title_200_ok(client, conn, davi):
 
 
 def test_patch_goodreads_id_links_document(client, conn, davi):
-    store.add_snapshot(conn, davi.id, "goodreads", .5, 100, document="gr:777", title="Hail Mary")
+    store.add_snapshot(conn, davi.id, "goodreads", 0.5, 100, document="gr:777", title="Hail Mary")
     r = store.create_reading(conn, "T")
     assert store.snapshots_for(conn, davi.id, r) == []
     assert client.patch(f"/api/readings/{r}", headers=AUTH, json={"goodreads_book_id": "777"}).status_code == 204
@@ -111,7 +125,7 @@ def test_patch_goodreads_id_links_document(client, conn, davi):
 
 
 def _doc(conn, davi, h, title, authors=None):
-    store.add_snapshot(conn, davi.id, "kosync", .2, 100, document=h, title=title, authors=authors)
+    store.add_snapshot(conn, davi.id, "kosync", 0.2, 100, document=h, title=title, authors=authors)
 
 
 def test_start_from_kosync_document(client, conn, davi):
@@ -128,7 +142,7 @@ def test_start_from_kosync_document(client, conn, davi):
 
 
 def test_start_from_goodreads_document_sets_book_id(client, conn, davi):
-    store.add_snapshot(conn, davi.id, "goodreads", .3, 100, document="gr:1234", title="Projeto Hail Mary")
+    store.add_snapshot(conn, davi.id, "goodreads", 0.3, 100, document="gr:1234", title="Projeto Hail Mary")
     rid = client.post("/api/documents/gr%3A1234/start", headers=AUTH, json={}).json()["id"]
     row = next(x for x in _list(client) if x["id"] == rid)
     assert row["goodreads_book_id"] == "1234" and row["title"] == "Projeto Hail Mary" and row["active"]
@@ -158,10 +172,10 @@ def test_start_resolves_cover(client, conn, davi):
 
 def test_started_finished_and_status(client, conn, davi, colega):
     r = store.create_reading(conn, "Duna")
-    store.add_snapshot(conn, davi.id, "manual", .1, 1000, reading_id=r)
-    store.add_snapshot(conn, davi.id, "manual", .995, 5000, reading_id=r)
+    store.add_snapshot(conn, davi.id, "manual", 0.1, 1000, reading_id=r)
+    store.add_snapshot(conn, davi.id, "manual", 0.995, 5000, reading_id=r)
     store.add_snapshot(conn, davi.id, "manual", 1.0, 9000, reading_id=r)
-    store.add_snapshot(conn, colega.id, "manual", .5, 2000, reading_id=r)
+    store.add_snapshot(conn, colega.id, "manual", 0.5, 2000, reading_id=r)
     store.create_reading(conn, "Outro")  # makes r inactive
     row = next(x for x in _list(client) if x["id"] == r)
     d, c = row["readers"]
@@ -174,7 +188,7 @@ def test_started_finished_and_status(client, conn, davi, colega):
 def test_status_lido_and_lendo(client, conn, davi, colega):
     r = store.create_reading(conn, "Duna")
     store.add_snapshot(conn, davi.id, "manual", 1.0, 1000, reading_id=r)
-    store.add_snapshot(conn, colega.id, "manual", .99, 2000, reading_id=r)
+    store.add_snapshot(conn, colega.id, "manual", 0.99, 2000, reading_id=r)
     assert _list(client)[0]["status"] == "lendo"
     store.create_reading(conn, "Outro")
     row = next(x for x in _list(client) if x["id"] == r)
@@ -196,7 +210,7 @@ def test_start_already_linked_409(client, conn, davi):
 
 
 def test_goodreads_relink_skips_linked_docs(client, conn, davi):
-    store.add_snapshot(conn, davi.id, "goodreads", .5, 100, document="gr:777", title="H")
+    store.add_snapshot(conn, davi.id, "goodreads", 0.5, 100, document="gr:777", title="H")
     a = store.create_reading(conn, "A")
     store.link_document(conn, "gr:777", a)
     b = store.create_reading(conn, "B", goodreads_book_id="777")
@@ -229,9 +243,16 @@ def test_store_start_from_linked_document_rolls_back(conn, davi):
 
 
 def test_post_reading_strips_and_validates(client, davi):
-    ok = client.post("/api/readings", headers=AUTH, json={"title": "  Duna  ", "author": "  Herbert ", "cover_url": "https://x/y.jpg"})
+    ok = client.post(
+        "/api/readings",
+        headers=AUTH,
+        json={"title": "  Duna  ", "author": "  Herbert ", "cover_url": "https://x/y.jpg"},
+    )
     assert ok.status_code == 201
     row = next(r for r in _list(client) if r["id"] == ok.json()["id"])
     assert row["title"] == "Duna" and row["author"] == "Herbert"
     for t in ["   ", "", "x" * 201]:
-        assert client.post("/api/readings", headers=AUTH, json={"title": t, "cover_url": "https://x/y.jpg"}).status_code == 422
+        assert (
+            client.post("/api/readings", headers=AUTH, json={"title": t, "cover_url": "https://x/y.jpg"}).status_code
+            == 422
+        )

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-const easeOut = (power: number) => (t: number) => 1 - Math.pow(1 - t, power);
+const easeOut = (power: number) => (t: number) => 1 - (1 - t) ** power;
 
 function reducedMotion(): boolean {
   try {

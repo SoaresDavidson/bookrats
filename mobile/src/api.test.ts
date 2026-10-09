@@ -1,4 +1,4 @@
-import { fetchSummary, FETCH_TIMEOUT_MS } from "./api";
+import { FETCH_TIMEOUT_MS, fetchSummary } from "./api";
 
 const realFetch = globalThis.fetch;
 

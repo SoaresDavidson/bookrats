@@ -34,8 +34,14 @@ def main(argv: list[str] | None = None) -> int:
         key = hashlib.md5(args.kosync_password.encode()).hexdigest() if args.kosync_password else None
         token = secrets.token_urlsafe(24)
         try:
-            store.add_user(conn, args.name, token, kosync_username=args.kosync_user,
-                           kosync_key=key, goodreads_user_id=args.goodreads_id)
+            store.add_user(
+                conn,
+                args.name,
+                token,
+                kosync_username=args.kosync_user,
+                kosync_key=key,
+                goodreads_user_id=args.goodreads_id,
+            )
         except sqlite3.IntegrityError:
             print(f"error: user '{args.name}' already exists", file=sys.stderr)
             return 1

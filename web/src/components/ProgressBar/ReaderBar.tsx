@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Reader } from "../../api/types";
 import { useCountUp } from "../../hooks/useCountUp";
 import { ago, pct } from "../../lib/format";
-import { ui } from "../../lib/ui";
 import { readerVars } from "../../lib/readerVars";
+import { ui } from "../../lib/ui";
 
 function points(s: { from: number; to: number }): string {
   const a = Math.round(s.from * 100);
@@ -32,10 +32,10 @@ export function ReaderBar({ r, i, animate }: { r: Reader; i: number; animate: bo
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const raf = useRef<number[]>([]);
   const isOn = useRef(false);
-  const cancelRaf = () => {
+  const cancelRaf = useCallback(() => {
     for (const id of raf.current) cancelAnimationFrame(id);
     raf.current = [];
-  };
+  }, []);
   useEffect(() => {
     if (v > prev.current) {
       clearTimeout(timer.current);
@@ -58,20 +58,25 @@ export function ReaderBar({ r, i, animate }: { r: Reader; i: number; animate: bo
       }
     }
     prev.current = v;
-  }, [v]);
+  }, [v, cancelRaf]);
   useEffect(
     () => () => {
       clearTimeout(timer.current);
       cancelRaf();
     },
-    [],
+    [cancelRaf],
   );
   const text = shown === v ? pct(r.percentage) : `${Math.round(shown)}%`;
   return (
     <div className="flex flex-col gap-1.5">
       <div className={ui.readerTop}>
-        <span className={ui.name}><span className={ui.dot} style={readerVars(r, i)} />{r.name}</span>
-        <span className={ui.pct} data-testid={`pct-${r.name}`}>{text}</span>
+        <span className={ui.name}>
+          <span className={ui.dot} style={readerVars(r, i)} />
+          {r.name}
+        </span>
+        <span className={ui.pct} data-testid={`pct-${r.name}`}>
+          {text}
+        </span>
       </div>
       <div className="h-1.5 rounded-full bg-track">
         <div

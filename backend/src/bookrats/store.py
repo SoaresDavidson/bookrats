@@ -41,8 +41,11 @@ def add_user(conn, name, api_token, kosync_username=None, kosync_key=None, goodr
 
 
 def user_by_kosync(conn, username, key) -> User | None:
-    return _user(conn.execute(
-        f"SELECT {_USER_COLS} FROM users WHERE kosync_username=? AND kosync_key=?", (username, key)).fetchone())
+    return _user(
+        conn.execute(
+            f"SELECT {_USER_COLS} FROM users WHERE kosync_username=? AND kosync_key=?", (username, key)
+        ).fetchone()
+    )
 
 
 def user_by_token(conn, token) -> User | None:
@@ -61,8 +64,10 @@ def create_reading(conn, title, author=None, goodreads_book_id=None, cover_url=N
             (title, author, goodreads_book_id, int(time.time()), cover_url),
         )
         if goodreads_book_id is not None:
-            conn.execute("UPDATE documents SET reading_id=? WHERE hash=? AND reading_id IS NULL",
-                         (cur.lastrowid, "gr:" + str(goodreads_book_id)))
+            conn.execute(
+                "UPDATE documents SET reading_id=? WHERE hash=? AND reading_id IS NULL",
+                (cur.lastrowid, "gr:" + str(goodreads_book_id)),
+            )
         conn.commit()
     except Exception:
         conn.rollback()
@@ -81,13 +86,28 @@ def active_reading(conn) -> sqlite3.Row | None:
     return conn.execute("SELECT * FROM readings WHERE active=1 ORDER BY id DESC LIMIT 1").fetchone()
 
 
-def add_snapshot(conn, user_id, source, percentage, ts, *, document=None, reading_id=None,
-                 progress=None, device=None, device_id=None, external_id=None,
-                 title=None, authors=None) -> bool:
+def add_snapshot(
+    conn,
+    user_id,
+    source,
+    percentage,
+    ts,
+    *,
+    document=None,
+    reading_id=None,
+    progress=None,
+    device=None,
+    device_id=None,
+    external_id=None,
+    title=None,
+    authors=None,
+) -> bool:
     if not 0 <= percentage <= 1:
         raise ValueError(f"percentage out of range: {percentage}")
-    if external_id is not None and conn.execute(
-            "SELECT 1 FROM snapshots WHERE external_id=?", (external_id,)).fetchone():
+    if (
+        external_id is not None
+        and conn.execute("SELECT 1 FROM snapshots WHERE external_id=?", (external_id,)).fetchone()
+    ):
         return False
     try:
         if document is not None:
@@ -132,8 +152,9 @@ def snapshots_for(conn, user_id, reading_id) -> list[Snapshot]:
 
 def latest_kosync(conn, user_id, document) -> sqlite3.Row | None:
     return conn.execute(
-        "SELECT * FROM snapshots WHERE user_id=? AND source='kosync' AND document=? "
-        "ORDER BY ts DESC, id DESC LIMIT 1", (user_id, document)).fetchone()
+        "SELECT * FROM snapshots WHERE user_id=? AND source='kosync' AND document=? ORDER BY ts DESC, id DESC LIMIT 1",
+        (user_id, document),
+    ).fetchone()
 
 
 def set_color(conn, user_id, color_id) -> None:
@@ -184,8 +205,9 @@ def update_reading(conn, reading_id, **fields) -> None:
             conn.execute(f"UPDATE readings SET {cols} WHERE id=?", (*fields.values(), reading_id))
         gid = fields.get("goodreads_book_id")
         if gid:
-            conn.execute("UPDATE documents SET reading_id=? WHERE hash=? AND reading_id IS NULL",
-                         (reading_id, "gr:" + str(gid)))
+            conn.execute(
+                "UPDATE documents SET reading_id=? WHERE hash=? AND reading_id IS NULL", (reading_id, "gr:" + str(gid))
+            )
         conn.commit()
     except Exception:
         conn.rollback()
@@ -203,13 +225,15 @@ def list_readings(conn) -> list[dict]:
         for u in users:
             snaps = snapshots_for(conn, u.id, r["id"])
             fin = next((s.ts for s in snaps if s.percentage >= FINISHED), None)
-            readers.append({
-                "name": u.name,
-                "percentage": snaps[-1].percentage if snaps else None,
-                "updated_at": snaps[-1].ts if snaps else None,
-                "started_at": snaps[0].ts if snaps else None,
-                "finished_at": fin,
-            })
+            readers.append(
+                {
+                    "name": u.name,
+                    "percentage": snaps[-1].percentage if snaps else None,
+                    "updated_at": snaps[-1].ts if snaps else None,
+                    "started_at": snaps[0].ts if snaps else None,
+                    "finished_at": fin,
+                }
+            )
         with_data = [x for x in readers if x["started_at"] is not None]
         if r["active"]:
             status = "lendo"
@@ -218,8 +242,14 @@ def list_readings(conn) -> list[dict]:
         else:
             status = "pausado"
         latest = max((x["updated_at"] for x in readers if x["updated_at"] is not None), default=None)
-        out.append({"row": r, "readers": readers, "status": status,
-                    "sort": (bool(r["active"]), latest if latest is not None else r["created_at"], r["created_at"])})
+        out.append(
+            {
+                "row": r,
+                "readers": readers,
+                "status": status,
+                "sort": (bool(r["active"]), latest if latest is not None else r["created_at"], r["created_at"]),
+            }
+        )
     out.sort(key=lambda x: x["sort"], reverse=True)
     return out
 
@@ -234,9 +264,11 @@ def start_from_document(conn, hash, title, authors, goodreads_book_id, cover_url
         conn.execute("UPDATE readings SET active=0")
         cur = conn.execute(
             "INSERT INTO readings (title, author, goodreads_book_id, active, created_at, cover_url) VALUES (?,?,?,1,?,?)",
-            (title, authors, goodreads_book_id, int(time.time()), cover_url))
-        upd = conn.execute("UPDATE documents SET reading_id=? WHERE hash=? AND reading_id IS NULL",
-                           (cur.lastrowid, hash))
+            (title, authors, goodreads_book_id, int(time.time()), cover_url),
+        )
+        upd = conn.execute(
+            "UPDATE documents SET reading_id=? WHERE hash=? AND reading_id IS NULL", (cur.lastrowid, hash)
+        )
         if upd.rowcount == 0:
             raise DocumentAlreadyLinked(hash)
         conn.commit()

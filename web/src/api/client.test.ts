@@ -1,11 +1,30 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
-  AuthError, HttpError, activateReading, listReadings, startFromDocument, updateReading, createReading, getPalette, getSessions, getSummary, getUnlinked, linkDocument, postProgress, setColor, setCover,
+  AuthError,
+  activateReading,
+  createReading,
+  getPalette,
+  getSessions,
+  getSummary,
+  getUnlinked,
+  HttpError,
+  linkDocument,
+  listReadings,
+  postProgress,
+  setColor,
+  setCover,
+  startFromDocument,
+  updateReading,
 } from "./client";
 
 const fetchMock = vi.fn();
-beforeEach(() => { fetchMock.mockReset(); globalThis.fetch = fetchMock as unknown as typeof fetch; });
-afterEach(() => { vi.restoreAllMocks(); });
+beforeEach(() => {
+  fetchMock.mockReset();
+  globalThis.fetch = fetchMock as unknown as typeof fetch;
+});
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });

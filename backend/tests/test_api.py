@@ -4,7 +4,7 @@ from bookrats import store
 
 AUTH = {"Authorization": "Bearer t-davi"}
 AUTH_C = {"Authorization": "Bearer t-colega"}
-SNAPS = [(.30, 0), (.34, 600), (.36, 5000), (.41, 5600)]
+SNAPS = [(0.30, 0), (0.34, 600), (0.36, 5000), (0.41, 5600)]
 
 
 def _seed(conn, davi, author=None):
@@ -15,21 +15,34 @@ def _seed(conn, davi, author=None):
     return r
 
 
-def test_requires_token(client): assert client.get("/api/summary").status_code == 401
+def test_requires_token(client):
+    assert client.get("/api/summary").status_code == 401
+
+
 def test_summary_without_reading(client, davi, colega):
     j = client.get("/api/summary", headers=AUTH).json()
     assert j["reading"] is None and [r["percentage"] for r in j["readers"]] == [None, None]
+
+
 def test_summary_latest_and_last_session(client, conn, davi, colega):
     r = store.create_reading(conn, "Duna")
-    for p, ts in [(.30, 0), (.34, 600), (.36, 5000), (.41, 5600)]:
+    for p, ts in [(0.30, 0), (0.34, 600), (0.36, 5000), (0.41, 5600)]:
         store.add_snapshot(conn, davi.id, "kosync", p, ts, document="h1")
     store.link_document(conn, "h1", r)
     d = client.get("/api/summary", headers=AUTH).json()["readers"][0]
-    assert d["percentage"] == .41 and d["last_session"]["from"] == .34 and d["last_session"]["to"] == .41
+    assert d["percentage"] == 0.41 and d["last_session"]["from"] == 0.34 and d["last_session"]["to"] == 0.41
+
+
 def test_manual_progress_needs_reading(client, colega):
-    assert client.post("/api/progress", json={"percentage": .2}, headers={"Authorization": "Bearer t-colega"}).status_code == 409
+    assert (
+        client.post("/api/progress", json={"percentage": 0.2}, headers={"Authorization": "Bearer t-colega"}).status_code
+        == 409
+    )
+
+
 def test_link_unknown_hash_404(client, conn, davi):
-    r = store.create_reading(conn, "X"); assert client.post("/api/documents/zz/link", json={"reading_id": r}, headers=AUTH).status_code == 404
+    r = store.create_reading(conn, "X")
+    assert client.post("/api/documents/zz/link", json={"reading_id": r}, headers=AUTH).status_code == 404
 
 
 def test_summary_me_and_readers_order(client, davi, colega):
@@ -41,13 +54,18 @@ def test_summary_me_and_readers_order(client, davi, colega):
 
 def test_summary_reading_object(client, conn, davi, colega):
     r = store.create_reading(conn, "Duna", "Frank Herbert")
-    assert client.get("/api/summary", headers=AUTH).json()["reading"] == {"id": r, "title": "Duna", "author": "Frank Herbert", "cover_url": None}
+    assert client.get("/api/summary", headers=AUTH).json()["reading"] == {
+        "id": r,
+        "title": "Duna",
+        "author": "Frank Herbert",
+        "cover_url": None,
+    }
 
 
 def test_summary_reader_fields(client, conn, davi, colega):
     _seed(conn, davi)
     d, c = client.get("/api/summary", headers=AUTH).json()["readers"]
-    assert d["percentage"] == pytest.approx(.41)
+    assert d["percentage"] == pytest.approx(0.41)
     assert d["updated_at"] == "1970-01-01T01:33:20Z"
     assert d["source"] == "kosync"
     assert c["percentage"] is None and c["updated_at"] is None
@@ -66,10 +84,10 @@ def test_sessions_limit_and_order(client, conn, davi, colega):
     _seed(conn, davi)
     one = client.get("/api/sessions?user=Davi&limit=1", headers=AUTH).json()
     assert len(one) == 1
-    assert one[0]["from"] == pytest.approx(.34) and one[0]["to"] == pytest.approx(.41)
+    assert one[0]["from"] == pytest.approx(0.34) and one[0]["to"] == pytest.approx(0.41)
     both = client.get("/api/sessions?user=Davi", headers=AUTH).json()
     assert len(both) == 2
-    assert both[0]["from"] == pytest.approx(.34) and both[0]["to"] == pytest.approx(.41)
+    assert both[0]["from"] == pytest.approx(0.34) and both[0]["to"] == pytest.approx(0.41)
 
 
 def test_sessions_unknown_user_404(client, davi):
@@ -78,9 +96,9 @@ def test_sessions_unknown_user_404(client, davi):
 
 def test_post_progress_manual(client, conn, davi, colega):
     store.create_reading(conn, "Duna")
-    assert client.post("/api/progress", json={"percentage": .2}, headers=AUTH_C).status_code == 201
+    assert client.post("/api/progress", json={"percentage": 0.2}, headers=AUTH_C).status_code == 201
     c = client.get("/api/summary", headers=AUTH).json()["readers"][1]
-    assert c["percentage"] == pytest.approx(.2) and c["source"] == "manual"
+    assert c["percentage"] == pytest.approx(0.2) and c["source"] == "manual"
 
 
 def test_post_progress_out_of_range(client, conn, davi):
@@ -100,7 +118,7 @@ def test_post_reading_becomes_active(client, davi):
 
 
 def test_unlinked_documents_and_link(client, conn, davi):
-    store.add_snapshot(conn, davi.id, "kosync", .1, 100, document="hh", device="Kindle")
+    store.add_snapshot(conn, davi.id, "kosync", 0.1, 100, document="hh", device="Kindle")
     r = store.create_reading(conn, "X")
     docs = client.get("/api/documents/unlinked", headers=AUTH).json()
     assert [d["hash"] for d in docs] == ["hh"]
@@ -110,7 +128,7 @@ def test_unlinked_documents_and_link(client, conn, davi):
 
 
 def test_link_unknown_reading_404(client, conn, davi):
-    store.add_snapshot(conn, davi.id, "kosync", .1, 100, document="hh")
+    store.add_snapshot(conn, davi.id, "kosync", 0.1, 100, document="hh")
     assert client.post("/api/documents/hh/link", json={"reading_id": 999}, headers=AUTH).status_code == 404
 
 
@@ -126,14 +144,17 @@ def test_kosync_still_wired(client):
     assert client.get("/healthcheck").status_code == 200
 
 
-@pytest.mark.parametrize("method,url,body", [
-    ("get", "/api/summary", None),
-    ("get", "/api/sessions?user=Davi", None),
-    ("post", "/api/progress", {"percentage": .1}),
-    ("post", "/api/readings", {"title": "X"}),
-    ("get", "/api/documents/unlinked", None),
-    ("post", "/api/documents/h/link", {"reading_id": 1}),
-])
+@pytest.mark.parametrize(
+    "method,url,body",
+    [
+        ("get", "/api/summary", None),
+        ("get", "/api/sessions?user=Davi", None),
+        ("post", "/api/progress", {"percentage": 0.1}),
+        ("post", "/api/readings", {"title": "X"}),
+        ("get", "/api/documents/unlinked", None),
+        ("post", "/api/documents/h/link", {"reading_id": 1}),
+    ],
+)
 def test_api_routes_require_token(client, davi, method, url, body):
     r = client.get(url) if method == "get" else client.post(url, json=body)
     assert r.status_code == 401
@@ -173,8 +194,7 @@ def test_post_reading_resolves_cover(client, davi):
 
 def test_post_reading_explicit_cover_skips_lookup(client, davi):
     calls = _mock_http(client, _found)
-    r = client.post("/api/readings", headers=AUTH,
-                    json={"title": "Duna", "cover_url": "https://example.com/c.jpg"})
+    r = client.post("/api/readings", headers=AUTH, json={"title": "Duna", "cover_url": "https://example.com/c.jpg"})
     assert r.status_code == 201
     assert _cover(client) == "https://example.com/c.jpg"
     assert calls == []

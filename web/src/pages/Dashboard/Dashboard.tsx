@@ -5,8 +5,8 @@ import { Cover } from "../../components/Cover/Cover";
 import { HistoryPanel } from "../../components/HistoryPanel/HistoryPanel";
 import { ReaderBar } from "../../components/ProgressBar/ReaderBar";
 import { DashboardSkeleton } from "../../components/Skeleton/Skeleton";
-import { ui } from "../../lib/ui";
 import { readerVars } from "../../lib/readerVars";
+import { ui } from "../../lib/ui";
 
 interface Props {
   token: string;
@@ -98,21 +98,36 @@ export function Dashboard({ token, onAuthError, onGoManage }: Props) {
     };
   }, [token, names, onAuthError]);
 
-  if (!summary) return error ? <p className={ui.toastError} role="alert">Não foi possível carregar o progresso. Verifique sua conexão; vamos tentar de novo em 1 minuto.</p> : <DashboardSkeleton />;
+  if (!summary)
+    return error ? (
+      <p className={ui.toastError} role="alert">
+        Não foi possível carregar o progresso. Verifique sua conexão; vamos tentar de novo em 1 minuto.
+      </p>
+    ) : (
+      <DashboardSkeleton />
+    );
   if (!summary.reading)
     return (
       <section className={`${ui.cardBox} ${ui.emptyState}`}>
         <h1 className="sr-only">Leitura atual</h1>
         <p className={ui.empty}>Nenhuma leitura ativa</p>
         <p className={ui.muted}>Crie uma leitura para começar a comparar o progresso de vocês.</p>
-        {onGoManage && <button className={`${ui.btn} ${ui.btnPrimary} mt-2`} onClick={onGoManage}>Ir para Gerenciar</button>}
+        {onGoManage && (
+          <button type="button" className={`${ui.btn} ${ui.btnPrimary} mt-2`} onClick={onGoManage}>
+            Ir para Gerenciar
+          </button>
+        )}
       </section>
     );
 
   const { reading, readers } = summary;
   return (
     <section className={ui.stack}>
-      {error && <p className={ui.toastError} role="alert">Desatualizado: não foi possível atualizar agora.</p>}
+      {error && (
+        <p className={ui.toastError} role="alert">
+          Desatualizado: não foi possível atualizar agora.
+        </p>
+      )}
       <div className={`${ui.cardBox} p-5 flex flex-col gap-5`}>
         <div className={ui.hero}>
           <Cover url={reading.cover_url} title={reading.title} />
@@ -122,7 +137,9 @@ export function Dashboard({ token, onAuthError, onGoManage }: Props) {
           </div>
         </div>
         <div className="flex flex-col gap-4">
-          {readers.map((r, i) => <ReaderBar key={r.name} r={r} i={i} animate={animate} />)}
+          {readers.map((r, i) => (
+            <ReaderBar key={r.name} r={r} i={i} animate={animate} />
+          ))}
           {lead(readers) && <p className={ui.lead}>{lead(readers)}</p>}
         </div>
       </div>

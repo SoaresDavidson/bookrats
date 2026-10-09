@@ -1,4 +1,3 @@
-import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react-native";
 import * as SecureStore from "expo-secure-store";
 import App from "./App";
@@ -24,7 +23,9 @@ beforeEach(() => {
 });
 
 test("loads saved url and token on mount", async () => {
-  jest.mocked(SecureStore.getItemAsync).mockImplementation(async (k: string) => (k === "bookrats.url" ? "https://b.example" : "tok"));
+  jest
+    .mocked(SecureStore.getItemAsync)
+    .mockImplementation(async (k: string) => (k === "bookrats.url" ? "https://b.example" : "tok"));
   await render(<App />);
   expect(await screen.findByDisplayValue("https://b.example")).toBeOnTheScreen();
 });

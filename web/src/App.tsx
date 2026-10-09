@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
-import { ui } from "./lib/ui";
 import { LogoutButton } from "./components/LogoutButton/LogoutButton";
-import { Tabs, type Tab } from "./components/Tabs/Tabs";
+import { type Tab, Tabs } from "./components/Tabs/Tabs";
+import { ui } from "./lib/ui";
 import { Dashboard } from "./pages/Dashboard/Dashboard";
 import { Manage } from "./pages/Manage/Manage";
 import { Shelf } from "./pages/Shelf/Shelf";
@@ -51,9 +51,17 @@ export default function App() {
         >
           <label className={ui.field}>
             <span>Cole seu token</span>
-            <input className={ui.input} type="password" autoComplete="off" value={draft} onChange={(e) => setDraft(e.target.value)} />
+            <input
+              className={ui.input}
+              type="password"
+              autoComplete="off"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+            />
           </label>
-          <button className={`${ui.btn} ${ui.btnPrimary}`} type="submit">Entrar</button>
+          <button className={`${ui.btn} ${ui.btnPrimary}`} type="submit">
+            Entrar
+          </button>
         </form>
       </main>
     );

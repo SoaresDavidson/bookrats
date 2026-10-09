@@ -11,11 +11,11 @@ const CACHE_FILE = "bookrats.json";
 
 // --- helpers start
 function pct(p) {
-  return p === null || p === undefined ? "sem dados" : Math.round(p * 100) + "%";
+  return p === null || p === undefined ? "sem dados" : `${Math.round(p * 100)}%`;
 }
 
 function sessionText(s) {
-  return s ? Math.round(s.from * 100) + "% → " + Math.round(s.to * 100) + "%" : "";
+  return s ? `${Math.round(s.from * 100)}% → ${Math.round(s.to * 100)}%` : "";
 }
 
 function ago(iso, now) {
@@ -24,11 +24,11 @@ function ago(iso, now) {
   if (Number.isNaN(t)) return "sem dados";
   const n = now || new Date();
   const min = Math.max(0, Math.floor((n.getTime() - t) / 60000));
-  if (min < 60) return "há " + min + " min";
+  if (min < 60) return `há ${min} min`;
   const h = Math.floor(min / 60);
-  if (h < 24) return "há " + h + " h";
+  if (h < 24) return `há ${h} h`;
   const d = Math.floor(h / 24);
-  return d === 1 ? "há 1 dia" : "há " + d + " dias";
+  return d === 1 ? "há 1 dia" : `há ${d} dias`;
 }
 // --- helpers end
 
@@ -43,7 +43,7 @@ function readCache() {
     const p = cachePath();
     if (!fm.fileExists(p)) return null;
     return JSON.parse(fm.readString(p));
-  } catch (e) {
+  } catch (_e) {
     return null;
   }
 }
@@ -51,14 +51,14 @@ function readCache() {
 function writeCache(data) {
   try {
     FileManager.local().writeString(cachePath(), JSON.stringify(data));
-  } catch (e) {}
+  } catch (_e) {}
 }
 
 // Returns {summary, stale, error}; error is "auth" | "offline" | null
 async function loadSummary() {
   try {
-    const req = new Request(BASE + "/api/summary");
-    req.headers = { Authorization: "Bearer " + TOKEN };
+    const req = new Request(`${BASE}/api/summary`);
+    req.headers = { Authorization: `Bearer ${TOKEN}` };
     req.timeoutInterval = 15;
     let json = null;
     try {
@@ -73,7 +73,7 @@ async function loadSummary() {
       writeCache(json);
       return { summary: json, stale: false, error: null };
     }
-  } catch (e) {}
+  } catch (_e) {}
   const cached = readCache();
   if (cached) return { summary: cached, stale: true, error: null };
   return { summary: null, stale: false, error: "offline" };
@@ -90,15 +90,15 @@ async function loadCover(url) {
   if (!url) return null;
   try {
     const fm = FileManager.local();
-    const path = fm.joinPath(fm.documentsDirectory(), "bookrats-cover-" + urlHash(url) + ".img");
+    const path = fm.joinPath(fm.documentsDirectory(), `bookrats-cover-${urlHash(url)}.img`);
     if (fm.fileExists(path)) return fm.readImage(path);
     const img = await new Request(url).loadImage();
     if (!img) return null;
     try {
       fm.writeImage(path, img);
-    } catch (e) {}
+    } catch (_e) {}
     return img;
-  } catch (e) {
+  } catch (_e) {
     return null;
   }
 }
@@ -136,18 +136,27 @@ function message(widget, text) {
 function buildWidget(summary, stale, error, cover) {
   const widget = new ListWidget();
   widget.backgroundColor = Color.dynamic(new Color("#FFFFFF"), new Color("#1C1C1E"));
-  widget.url = BASE + "/app/";
+  widget.url = `${BASE}/app/`;
   widget.refreshAfterDate = new Date(Date.now() + REFRESH_MIN * 60 * 1000);
   widget.setPadding(12, 14, 12, 14);
 
   const family = config.widgetFamily || "medium";
   const small = family === "small";
-  if (family.indexOf("accessory") === 0) { message(widget, "Use o widget pequeno ou médio"); return widget; }
+  if (family.indexOf("accessory") === 0) {
+    message(widget, "Use o widget pequeno ou médio");
+    return widget;
+  }
   const textColor = Color.dynamic(new Color("#111111"), new Color("#F2F2F7"));
   const subColor = Color.dynamic(new Color("#6B6B70"), new Color("#9A9AA0"));
 
-  if (error === "auth") { message(widget, "token inválido"); return widget; }
-  if (error === "offline" || !summary) { message(widget, "Sem conexão"); return widget; }
+  if (error === "auth") {
+    message(widget, "token inválido");
+    return widget;
+  }
+  if (error === "offline" || !summary) {
+    message(widget, "Sem conexão");
+    return widget;
+  }
 
   if (!summary.reading) {
     message(widget, "Nenhuma leitura ativa");
@@ -170,23 +179,23 @@ function buildWidget(summary, stale, error, cover) {
     title.lineLimit = 1;
     body.addSpacer(6);
 
-    const barW = small ? 120 : (cover ? 190 : 260);
-    summary.readers.slice(0, 2).forEach(function (r, i) {
+    const barW = small ? 120 : cover ? 190 : 260;
+    summary.readers.slice(0, 2).forEach((r, i) => {
       const rc = r.color;
-      const color = rc ? (Device.isUsingDarkAppearance() ? rc.dark : rc.light) : (COLORS[i] || COLORS[0]);
+      const color = rc ? (Device.isUsingDarkAppearance() ? rc.dark : rc.light) : COLORS[i] || COLORS[0];
       const row = body.addStack();
       row.layoutVertically();
       const img = row.addImage(barImage(r.percentage, color, barW, 8));
       img.imageSize = new Size(barW, 8);
       img.resizable = true;
       row.addSpacer(2);
-      let line = r.name + " " + pct(r.percentage);
+      let line = `${r.name} ${pct(r.percentage)}`;
       if (!small) {
         const parts = [];
         const s = sessionText(r.last_session);
         if (s) parts.push(s);
         if (r.updated_at) parts.push(ago(r.updated_at));
-        if (parts.length) line += " · " + parts.join(" · ");
+        if (parts.length) line += ` · ${parts.join(" · ")}`;
       }
       const t = row.addText(line);
       t.font = Font.systemFont(small ? 11 : 12);
@@ -209,8 +218,7 @@ function buildWidget(summary, stale, error, cover) {
 async function main() {
   const res = await loadSummary();
   const family = config.widgetFamily || "medium";
-  const cover = res.summary && res.summary.reading && family !== "small"
-    ? await loadCover(res.summary.reading.cover_url) : null;
+  const cover = res.summary?.reading && family !== "small" ? await loadCover(res.summary.reading.cover_url) : null;
   const widget = buildWidget(res.summary, res.stale, res.error, cover);
   if (config.runsInWidget) {
     Script.setWidget(widget);

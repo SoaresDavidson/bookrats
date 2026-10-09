@@ -16,8 +16,7 @@ def get_conn(request: Request) -> Iterator[sqlite3.Connection]:
 
 
 def new_http_client() -> httpx.AsyncClient:
-    return httpx.AsyncClient(
-        timeout=5.0, headers={"User-Agent": "Bookrats/0.1 (personal reading tracker)"})
+    return httpx.AsyncClient(timeout=5.0, headers={"User-Agent": "Bookrats/0.1 (personal reading tracker)"})
 
 
 def get_http(request: Request) -> httpx.AsyncClient:

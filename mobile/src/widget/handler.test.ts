@@ -9,7 +9,9 @@ import * as SecureStore from "expo-secure-store";
 import { load } from "./handler";
 
 const realFetch = globalThis.fetch;
-const stubFetch = (f: unknown) => { globalThis.fetch = f as typeof fetch; };
+const stubFetch = (f: unknown) => {
+  globalThis.fetch = f as typeof fetch;
+};
 
 const summary = { reading: null, me: "a", readers: [] };
 
@@ -23,7 +25,9 @@ beforeEach(() => {
 
 test("corrupt cache with failing fetch -> network, no cache", async () => {
   mockStore.set("bookrats.last", "{not json");
-  stubFetch(async () => { throw new Error("down"); });
+  stubFetch(async () => {
+    throw new Error("down");
+  });
   expect(await load()).toEqual({ outcome: { kind: "network" }, cached: null });
 });
 
@@ -45,7 +49,9 @@ test("success does not read cache", async () => {
 
 test("offline with cache -> network + cached", async () => {
   mockStore.set("bookrats.last", JSON.stringify(summary));
-  stubFetch(async () => { throw new Error("down"); });
+  stubFetch(async () => {
+    throw new Error("down");
+  });
   expect(await load()).toEqual({ outcome: { kind: "network" }, cached: summary });
 });
 

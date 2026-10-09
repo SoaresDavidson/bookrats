@@ -1,17 +1,25 @@
-import React, { memo, useCallback, useEffect, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { requestWidgetUpdate } from "react-native-android-widget";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { fetchSummary } from "./src/api";
 import { BookratsWidget } from "./src/widget/BookratsWidget";
 import { KEYS, load } from "./src/widget/handler";
 import { toWidgetState } from "./src/widget/state";
 
 const Button = memo(function Button({
-  label, onPress, primary, disabled,
-}: { label: string; onPress: () => void; primary?: boolean; disabled?: boolean }) {
+  label,
+  onPress,
+  primary,
+  disabled,
+}: {
+  label: string;
+  onPress: () => void;
+  primary?: boolean;
+  disabled?: boolean;
+}) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -111,7 +119,9 @@ export default function App() {
         <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : "height"}>
           <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
             <View style={styles.card}>
-              <Text style={styles.title} accessibilityRole="header">Bookrats</Text>
+              <Text style={styles.title} accessibilityRole="header">
+                Bookrats
+              </Text>
               <Text style={styles.label}>Endereço do servidor</Text>
               <TextInput
                 style={styles.input}
@@ -139,7 +149,11 @@ export default function App() {
               <Button label="Salvar" onPress={save} primary disabled={busy} />
               <Button label="Testar" onPress={test} disabled={busy} />
               <Button label="Atualizar widget" onPress={refresh} disabled={busy} />
-              {msg ? <Text style={styles.msg} accessibilityLiveRegion="polite">{msg}</Text> : null}
+              {msg ? (
+                <Text style={styles.msg} accessibilityLiveRegion="polite">
+                  {msg}
+                </Text>
+              ) : null}
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -157,7 +171,15 @@ const styles = StyleSheet.create({
   card: { backgroundColor: "#FFFFFF", borderRadius: 12, padding: 20, gap: 10, borderWidth: 1, borderColor: "#E4E4E7" },
   title: { fontSize: 22, fontWeight: "700", color: "#18181B", marginBottom: 4 },
   label: { fontSize: 13, color: "#52525B" },
-  input: { minHeight: 48, borderWidth: 1, borderColor: "#D4D4D8", borderRadius: 8, paddingHorizontal: 12, fontSize: 16, color: "#18181B" },
+  input: {
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: "#D4D4D8",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    color: "#18181B",
+  },
   button: { minHeight: 48, borderRadius: 8, alignItems: "center", justifyContent: "center" },
   primary: { backgroundColor: "#18181B" },
   secondary: { backgroundColor: "#F4F4F5", borderWidth: 1, borderColor: "#D4D4D8" },

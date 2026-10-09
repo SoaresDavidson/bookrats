@@ -6,7 +6,7 @@ export function Skeleton({ className }: { className: string }) {
 /** Skeleton for the progress view. */
 export function DashboardSkeleton() {
   return (
-    <div className="flex flex-col gap-3.5" aria-busy="true" aria-label="Carregando">
+    <div className="flex flex-col gap-3.5" role="status" aria-busy="true" aria-label="Carregando">
       <Skeleton className="h-[30px] w-[60%]" />
       <Skeleton className="h-[90px] rounded-card" />
       <Skeleton className="h-3.5 rounded-full" />

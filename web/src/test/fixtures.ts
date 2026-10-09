@@ -15,7 +15,14 @@ export function makeSummary(cover_url: string | null = null): Summary {
         source: "kosync",
         last_session: { from: 0.34, to: 0.41, started_at: iso(30 * 60000), ended_at: iso(5 * 60000) },
       },
-      { name: "Colega", color: { id: "laranja", light: "#D9480F", dark: "#FF8A4C" }, percentage: null, updated_at: null, source: null, last_session: null },
+      {
+        name: "Colega",
+        color: { id: "laranja", light: "#D9480F", dark: "#FF8A4C" },
+        percentage: null,
+        updated_at: null,
+        source: null,
+        last_session: null,
+      },
     ],
   };
 }
