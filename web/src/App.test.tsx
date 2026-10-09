@@ -65,4 +65,17 @@ describe("App", () => {
     render(<App />);
     for (const n of ["Progresso", "Estante", "Gerenciar"]) expect(await screen.findByRole("button", { name: n })).toBeTruthy();
   });
+
+  it("marks only the active tab with aria-current=page", async () => {
+    localStorage.setItem(KEY, "secret");
+    const user = userEvent.setup();
+    render(<App />);
+    const prog = await screen.findByRole("button", { name: "Progresso" });
+    expect(prog.getAttribute("aria-current")).toBe("page");
+    const shelf = screen.getByRole("button", { name: "Estante" });
+    expect(shelf.getAttribute("aria-current")).toBeNull();
+    await user.click(shelf);
+    expect(shelf.getAttribute("aria-current")).toBe("page");
+    expect(prog.getAttribute("aria-current")).toBeNull();
+  });
 });

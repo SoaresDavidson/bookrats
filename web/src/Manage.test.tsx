@@ -26,7 +26,7 @@ const docs: UnlinkedDocument[] = [
 ];
 
 const PALETTE = [
-  ["azul", "#2F6FEB", "#6F9CF5"], ["laranja", "#E8590C", "#FF8A4C"], ["verde", "#2B8A3E", "#51CF66"],
+  ["azul", "#2F6FEB", "#6F9CF5"], ["laranja", "#D9480F", "#FF8A4C"], ["verde", "#2B8A3E", "#51CF66"],
   ["roxo", "#7048E8", "#9775FA"], ["rosa", "#D6336C", "#F06595"], ["ciano", "#0C8599", "#3BC9DB"],
   ["ambar", "#B76E00", "#FCC419"], ["grafite", "#495057", "#ADB5BD"],
 ].map(([id, light, dark]) => ({ id, light, dark }));
@@ -236,5 +236,77 @@ describe("Manage", () => {
       expect(within(row).getByRole("button", { name: "É este livro" })).toBeTruthy();
       expect(within(row).queryByRole("button", { name: "Começar a ler este" })).toBeNull();
     });
+  });
+
+  const deferred = () => {
+    let resolve!: (v?: unknown) => void;
+    const promise = new Promise((r) => (resolve = r));
+    return { promise, resolve };
+  };
+
+  it("double click on Começar a ler este calls the API once", async () => {
+    const d = deferred();
+    vi.mocked(api.startFromDocument).mockReturnValue(d.promise as Promise<{ id: number }>);
+    render(<Manage token="tok" />);
+    const btn = await screen.findByRole("button", { name: "Começar a ler este" });
+    fireEvent.click(btn);
+    fireEvent.click(btn);
+    expect(api.startFromDocument).toHaveBeenCalledTimes(1);
+    expect((btn as HTMLButtonElement).disabled).toBe(true);
+    d.resolve({ id: 5 });
+  });
+
+  it("double click on É este livro calls the API once", async () => {
+    const d = deferred();
+    vi.mocked(api.linkDocument).mockReturnValue(d.promise as Promise<void>);
+    render(<Manage token="tok" />);
+    await screen.findByText(/Messias de Duna/);
+    const btn = (await screen.findAllByRole("button", { name: "É este livro" }))[1];
+    await vi.waitFor(() => expect((btn as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(btn);
+    fireEvent.click(btn);
+    expect(api.linkDocument).toHaveBeenCalledTimes(1);
+    d.resolve();
+  });
+
+  it("double submit of Criar leitura, Salvar progresso and Salvar capa calls the API once", async () => {
+    const d = deferred();
+    vi.mocked(api.createReading).mockReturnValue(d.promise as Promise<unknown>);
+    vi.mocked(api.postProgress).mockReturnValue(d.promise as Promise<unknown>);
+    vi.mocked(api.setCover).mockReturnValue(d.promise as Promise<void>);
+    render(<Manage token="tok" />);
+    fireEvent.change(await screen.findByLabelText("Título"), { target: { value: "X" } });
+    fireEvent.change(screen.getByLabelText("Meu progresso (%)"), { target: { value: "10" } });
+    await vi.waitFor(() => expect((screen.getByRole("button", { name: "Salvar capa" }) as HTMLButtonElement).disabled).toBe(false));
+    for (const n of ["Criar leitura", "Salvar progresso", "Salvar capa"]) {
+      const b = screen.getByRole("button", { name: n });
+      fireEvent.click(b);
+      fireEvent.click(b);
+    }
+    expect(api.createReading).toHaveBeenCalledTimes(1);
+    expect(api.postProgress).toHaveBeenCalledTimes(1);
+    expect(api.setCover).toHaveBeenCalledTimes(1);
+    d.resolve({});
+  });
+
+  it("shows a field error for a 422 invalid cover URL", async () => {
+    vi.mocked(api.setCover).mockRejectedValue(new api.HttpError(422));
+    const user = userEvent.setup();
+    render(<Manage token="tok" />);
+    await user.type(await screen.findByLabelText("Nova URL da capa"), "http://x/y.jpg");
+    await vi.waitFor(() => expect((screen.getByRole("button", { name: "Salvar capa" }) as HTMLButtonElement).disabled).toBe(false));
+    await user.click(screen.getByRole("button", { name: "Salvar capa" }));
+    expect(await screen.findByText("URL inválida (use http ou https)")).toBeTruthy();
+    expect(screen.queryByText(/Algo deu errado/)).toBeNull();
+  });
+
+  it("shows a field error for a 422 on create with a cover URL", async () => {
+    vi.mocked(api.createReading).mockRejectedValue(new api.HttpError(422));
+    const user = userEvent.setup();
+    render(<Manage token="tok" />);
+    await user.type(await screen.findByLabelText("Título"), "X");
+    await user.type(screen.getByLabelText("URL da capa (opcional)"), "http://x/y.jpg");
+    await user.click(screen.getByRole("button", { name: "Criar leitura" }));
+    expect(await screen.findByText("URL inválida (use http ou https)")).toBeTruthy();
   });
 });

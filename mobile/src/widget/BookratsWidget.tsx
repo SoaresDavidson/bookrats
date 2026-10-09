@@ -3,7 +3,7 @@ import { FlexWidget, TextWidget } from "react-native-android-widget";
 import type { ReaderRow, WidgetState } from "./state";
 
 // Widgets cannot reliably read the system theme, so we use one fixed dark
-// neutral (zinc-900). #2F6FEB gives ~3.6:1 and #E8590C ~5:1 on it for the bars
+// neutral (zinc-900). #2F6FEB gives ~3.6:1 and #D9480F ~5:1 on it for the bars
 // (non-text, needs 3:1); all text is near-white / light zinc (>= 7:1).
 const BG = "#18181B";
 const TRACK = "#3F3F46";

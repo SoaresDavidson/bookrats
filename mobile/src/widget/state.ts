@@ -1,7 +1,7 @@
 import type { Outcome, Summary } from "../api";
 import { ago, pct, sessionText } from "../format";
 
-export const READER_COLORS = ["#2F6FEB", "#E8590C"];
+export const READER_COLORS = ["#2F6FEB", "#D9480F"];
 
 export interface ReaderRow {
   name: string;

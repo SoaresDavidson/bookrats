@@ -1,7 +1,7 @@
 @import "@fontsource-variable/geist";
 
 /* Shape lock: cards 16px, inputs/buttons 12px, tabs and bar pill. One zinc gray family.
-   Accent (chrome and first reader) is #2F6FEB; second reader #E8590C. No pure black/white. */
+   Accent (chrome and first reader) is #2F6FEB; second reader #D9480F. No pure black/white. */
 :root {
   --bg: #f4f4f5;
   --card: #fbfbfc;

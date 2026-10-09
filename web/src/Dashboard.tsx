@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useId } from "react";
-import { AuthError, getSessions, getSummary, type Reader, type SessionOut, type Summary } from "./api";
+import { AuthError, FALLBACK_COLORS, getSessions, getSummary, type Reader, type SessionOut, type Summary } from "./api";
 import { Cover } from "./Cover";
 import { ago, pct, sessionText } from "./format";
 import { useCountUp } from "./useCountUp";
@@ -25,15 +25,42 @@ function ReaderBar({ r, i, animate }: { r: Reader; i: number; animate: boolean }
   const [advanced, setAdvanced] = useState(false);
   const prev = useRef(v);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const raf = useRef<number[]>([]);
+  const isOn = useRef(false);
+  const cancelRaf = () => {
+    for (const id of raf.current) cancelAnimationFrame(id);
+    raf.current = [];
+  };
   useEffect(() => {
     if (v > prev.current) {
-      setAdvanced(true);
       clearTimeout(timer.current);
-      timer.current = setTimeout(() => setAdvanced(false), 1600);
+      timer.current = setTimeout(() => {
+        isOn.current = false;
+        setAdvanced(false);
+      }, 1600);
+      cancelRaf();
+      if (isOn.current) {
+        // Restart the CSS animations: drop the class for two frames, then re-add it.
+        setAdvanced(false);
+        const a = requestAnimationFrame(() => {
+          const b = requestAnimationFrame(() => setAdvanced(true));
+          raf.current.push(b);
+        });
+        raf.current.push(a);
+      } else {
+        isOn.current = true;
+        setAdvanced(true);
+      }
     }
     prev.current = v;
   }, [v]);
-  useEffect(() => () => clearTimeout(timer.current), []);
+  useEffect(
+    () => () => {
+      clearTimeout(timer.current);
+      cancelRaf();
+    },
+    [],
+  );
   const text = shown === v ? pct(r.percentage) : `${Math.round(shown)}%`;
   return (
     <div className="reader">
@@ -58,13 +85,8 @@ function ReaderBar({ r, i, animate }: { r: Reader; i: number; animate: boolean }
   );
 }
 
-const FALLBACK = [
-  { id: "azul", light: "#2F6FEB", dark: "#6F9CF5" },
-  { id: "laranja", light: "#E8590C", dark: "#FF8A4C" },
-];
-
 function vars(r: Reader, i: number): React.CSSProperties {
-  const c = r.color ?? FALLBACK[i % 2];
+  const c = r.color ?? FALLBACK_COLORS[i % 2];
   return { ["--c-light" as string]: c.light, ["--c-dark" as string]: c.dark };
 }
 
@@ -189,11 +211,11 @@ export function Dashboard({ token, onAuthError, onGoManage }: Props) {
     }
   }, [loaded]);
 
-  const names = summary?.reading ? summary.readers.map((r) => r.name).join("\n") : "";
+  const names = summary?.reading ? summary.readers.map((r) => `${r.name}\t${r.updated_at ?? ""}`).join("\n") : "";
   useEffect(() => {
     if (!names) return;
     let alive = true;
-    for (const name of names.split("\n")) {
+    for (const name of names.split("\n").map((n) => n.split("\t")[0])) {
       getSessions(token, name)
         .then((s) => alive && setHistory((h) => ({ ...h, [name]: s })))
         .catch((e) => {

@@ -64,9 +64,9 @@ export default function App() {
       <header className="top">
         <p className="brand">Bookrats</p>
         <nav className="tabs">
-          <button className={tab === "progress" ? "tab on" : "tab"} onClick={() => setTab("progress")}>Progresso</button>
-          <button className={tab === "shelf" ? "tab on" : "tab"} onClick={() => setTab("shelf")}>Estante</button>
-          <button className={tab === "manage" ? "tab on" : "tab"} onClick={() => setTab("manage")}>Gerenciar</button>
+          <button className={tab === "progress" ? "tab on" : "tab"} aria-current={tab === "progress" ? "page" : undefined} onClick={() => setTab("progress")}>Progresso</button>
+          <button className={tab === "shelf" ? "tab on" : "tab"} aria-current={tab === "shelf" ? "page" : undefined} onClick={() => setTab("shelf")}>Estante</button>
+          <button className={tab === "manage" ? "tab on" : "tab"} aria-current={tab === "manage" ? "page" : undefined} onClick={() => setTab("manage")}>Gerenciar</button>
         </nav>
       </header>
       {tab === "progress" ? (

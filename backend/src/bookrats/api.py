@@ -62,6 +62,19 @@ class ReadingIn(BaseModel):
 
     _v = field_validator("cover_url")(_clean_cover_url)
 
+    @field_validator("title")
+    @classmethod
+    def _title(cls, v):
+        v = v.strip()
+        if not v or len(v) > 200:
+            raise ValueError("title must be 1-200 chars")
+        return v
+
+    @field_validator("author")
+    @classmethod
+    def _author(cls, v):
+        return v.strip() or None if v is not None else None
+
 
 class CoverIn(BaseModel):
     cover_url: str | None
@@ -214,7 +227,10 @@ async def start_document(hash: str, _: store.User = Depends(current_user),
         raise HTTPException(422, "document has no title")
     cover = await find_cover(http, title, doc["authors"])
     gid = hash[3:] if hash.startswith("gr:") and len(hash) > 3 else None
-    rid = store.start_from_document(conn, hash, title, doc["authors"], gid, cover)
+    try:
+        rid = store.start_from_document(conn, hash, title, doc["authors"], gid, cover)
+    except store.DocumentAlreadyLinked:
+        raise HTTPException(409, "documento já ligado a outra leitura")
     return {"id": rid}
 
 

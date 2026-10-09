@@ -127,3 +127,8 @@ export const updateReading = (
 
 export const startFromDocument = (token: string, hash: string) =>
   request<{ id: number }>(token, `/api/documents/${encodeURIComponent(hash)}/start`, post({}));
+
+export const FALLBACK_COLORS: ColorOption[] = [
+  { id: "azul", light: "#2F6FEB", dark: "#6F9CF5" },
+  { id: "laranja", light: "#D9480F", dark: "#FF8A4C" },
+];

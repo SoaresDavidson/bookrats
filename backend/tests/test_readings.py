@@ -209,3 +209,29 @@ def test_goodreads_relink_skips_linked_docs(client, conn, davi):
 def test_patch_title_null_422(client, conn, davi):
     r = store.create_reading(conn, "T")
     assert client.patch(f"/api/readings/{r}", headers=AUTH, json={"title": None}).status_code == 422
+
+
+def test_second_start_of_same_document_409_one_reading(client, conn, davi):
+    _doc(conn, davi, "hx", "Duna", None)
+    assert client.post("/api/documents/hx/start", headers=AUTH, json={}).status_code == 201
+    assert client.post("/api/documents/hx/start", headers=AUTH, json={}).status_code == 409
+    assert len([r for r in _list(client) if r["title"] == "Duna"]) == 1
+
+
+def test_store_start_from_linked_document_rolls_back(conn, davi):
+    _doc(conn, davi, "hy", "Duna", None)
+    first = store.start_from_document(conn, "hy", "Duna", None, None, None)
+    with pytest.raises(store.DocumentAlreadyLinked):
+        store.start_from_document(conn, "hy", "Duna", None, None, None)
+    n = conn.execute("SELECT COUNT(*) FROM readings").fetchone()[0]
+    assert n == 1
+    assert conn.execute("SELECT active FROM readings WHERE id=?", (first,)).fetchone()[0] == 1
+
+
+def test_post_reading_strips_and_validates(client, davi):
+    ok = client.post("/api/readings", headers=AUTH, json={"title": "  Duna  ", "author": "  Herbert ", "cover_url": "https://x/y.jpg"})
+    assert ok.status_code == 201
+    row = next(r for r in _list(client) if r["id"] == ok.json()["id"])
+    assert row["title"] == "Duna" and row["author"] == "Herbert"
+    for t in ["   ", "", "x" * 201]:
+        assert client.post("/api/readings", headers=AUTH, json={"title": t, "cover_url": "https://x/y.jpg"}).status_code == 422

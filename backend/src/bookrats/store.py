@@ -224,6 +224,10 @@ def list_readings(conn) -> list[dict]:
     return out
 
 
+class DocumentAlreadyLinked(Exception):
+    pass
+
+
 def start_from_document(conn, hash, title, authors, goodreads_book_id, cover_url) -> int:
     """Create, link and activate a reading from a document in one transaction."""
     try:
@@ -231,7 +235,10 @@ def start_from_document(conn, hash, title, authors, goodreads_book_id, cover_url
         cur = conn.execute(
             "INSERT INTO readings (title, author, goodreads_book_id, active, created_at, cover_url) VALUES (?,?,?,1,?,?)",
             (title, authors, goodreads_book_id, int(time.time()), cover_url))
-        conn.execute("UPDATE documents SET reading_id=? WHERE hash=?", (cur.lastrowid, hash))
+        upd = conn.execute("UPDATE documents SET reading_id=? WHERE hash=? AND reading_id IS NULL",
+                           (cur.lastrowid, hash))
+        if upd.rowcount == 0:
+            raise DocumentAlreadyLinked(hash)
         conn.commit()
     except Exception:
         conn.rollback()

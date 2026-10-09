@@ -5,7 +5,7 @@
 const BASE = "https://bookrats.<domain>";
 const TOKEN = "";
 
-const COLORS = ["#2F6FEB", "#E8590C"];
+const COLORS = ["#2F6FEB", "#D9480F"];
 const REFRESH_MIN = 15;
 const CACHE_FILE = "bookrats.json";
 
@@ -190,7 +190,7 @@ function buildWidget(summary, stale, error, cover) {
       }
       const t = row.addText(line);
       t.font = Font.systemFont(small ? 11 : 12);
-      t.textColor = color;
+      t.textColor = textColor;
       t.lineLimit = 1;
       t.minimumScaleFactor = 0.8;
       body.addSpacer(5);

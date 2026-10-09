@@ -6,16 +6,13 @@ import { pct } from "./format";
 import {
   activateReading,
   AuthError,
+  FALLBACK_COLORS,
   getSummary,
   listReadings,
   updateReading,
   type ReadingListItem,
 } from "./api";
 
-const FALLBACK = [
-  { light: "#2F6FEB", dark: "#6C9BFF" },
-  { light: "#E8590C", dark: "#FF8A4C" },
-];
 const STATUS: Record<ReadingListItem["status"], string> = { lendo: "Lendo", lido: "Lido", pausado: "Pausado" };
 const fmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
 const date = (iso: string) => fmt.format(new Date(iso));
@@ -254,7 +251,7 @@ function Detail({ item, token, colors, guard, onClose, onChanged }: DetailProps)
           <>
             <ul className="detail-readers">
               {item.readers.map((r, idx) => {
-                const c = colors[r.name] ?? FALLBACK[idx % 2];
+                const c = colors[r.name] ?? FALLBACK_COLORS[idx % 2];
                 return (
                   <li key={r.name} className="detail-reader" style={{ ["--c-light" as string]: c.light, ["--c-dark" as string]: c.dark }}>
                     <div className="reader-top">

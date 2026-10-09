@@ -16,7 +16,7 @@
 
 - Percent shown as integer, rounded: `Math.round(p * 100) + "%"`.
 - Session text format (all clients, pt-BR): `"34% → 41%"`; staleness text: `"há 5 min"`, `"há 3 h"`, `"há 2 dias"`; no data: `"sem dados"`.
-- Reader order and colors fixed: first reader `#2F6FEB`, second `#E8590C` (both legible on light and dark).
+- Reader order and colors fixed: first reader `#2F6FEB`, second `#D9480F` (both legible on light and dark).
 - Token storage: web `localStorage["bookrats.token"]`; Scriptable constants at top of script; Android `expo-secure-store`.
 - Android widget refresh: `updatePeriodMillis = 1800000` (Android minimum) plus refresh on tap.
 - Scriptable refresh: `widget.refreshAfterDate = now + 15 min`.
@@ -166,7 +166,7 @@ Tests: backend — find_cover hit/miss/HTTP error with MockTransport; POST witho
 **Decision (user request 2026-10-09):** each user picks the color of their own bar from a curated palette; the two readers may not share a color.
 
 **Palette (id → light-theme hex / dark-theme hex, all ≥3:1 against their track and background in both themes):**
-`azul #2F6FEB/#6F9CF5`, `laranja #E8590C/#FF8A4C`, `verde #2B8A3E/#51CF66`, `roxo #7048E8/#9775FA`, `rosa #D6336C/#F06595`, `ciano #0C8599/#3BC9DB`, `ambar #B76E00/#FCC419`, `grafite #495057/#ADB5BD`.
+`azul #2F6FEB/#6F9CF5`, `laranja #D9480F/#FF8A4C`, `verde #2B8A3E/#51CF66`, `roxo #7048E8/#9775FA`, `rosa #D6336C/#F06595`, `ciano #0C8599/#3BC9DB`, `ambar #B76E00/#FCC419`, `grafite #495057/#ADB5BD`.
 Defaults: user id order → azul, laranja.
 
 **Files:**

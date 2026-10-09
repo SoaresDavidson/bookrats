@@ -1,6 +1,11 @@
-node_modules
-.venv
+**/node_modules
+**/.venv
+**/*.db
+**/dist
+**/__pycache__
 .git
-*.db
 .superpowers
-web/dist
+.playwright-mcp
+mobile/
+widgets/
+docs/

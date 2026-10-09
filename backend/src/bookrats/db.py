@@ -20,14 +20,21 @@ CREATE TABLE IF NOT EXISTS snapshots (
 """
 
 
+def _add_column(conn: sqlite3.Connection, table: str, col: str, decl: str) -> None:
+    cols = [r[1] for r in conn.execute(f"pragma table_info({table})")]
+    if col in cols:
+        return
+    try:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
+    except sqlite3.OperationalError as e:
+        if "duplicate column" not in str(e).lower():
+            raise
+
+
 def init_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
-    ucols = [r[1] for r in conn.execute("pragma table_info(users)")]
-    if "color" not in ucols:
-        conn.execute("ALTER TABLE users ADD COLUMN color TEXT")
-    cols = [r[1] for r in conn.execute("pragma table_info(readings)")]
-    if "cover_url" not in cols:
-        conn.execute("ALTER TABLE readings ADD COLUMN cover_url TEXT")
+    _add_column(conn, "users", "color", "TEXT")
+    _add_column(conn, "readings", "cover_url", "TEXT")
     conn.commit()
 
 

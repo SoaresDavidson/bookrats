@@ -20,14 +20,14 @@ const reader = (name: string, percentage: number | null, extra: object = {}) => 
 const full = summary([reader("ana", 0.41), reader("bia", 0.6)]);
 
 describe("toWidgetState", () => {
-  test("colors", () => expect(READER_COLORS).toEqual(["#2F6FEB", "#E8590C"]));
+  test("colors", () => expect(READER_COLORS).toEqual(["#2F6FEB", "#D9480F"]));
 
   test("ok -> data", () => {
     const s = toWidgetState({ kind: "ok", summary: full }, null, now);
     expect(s).toMatchObject({ kind: "data", title: "Dune", stale: false });
     if (s.kind !== "data") throw new Error();
     expect(s.readers.map((r) => r.name)).toEqual(["ana", "bia"]);
-    expect(s.readers.map((r) => r.color)).toEqual(["#2F6FEB", "#E8590C"]);
+    expect(s.readers.map((r) => r.color)).toEqual(["#2F6FEB", "#D9480F"]);
     expect(s.readers[0]).toMatchObject({ pct: "41%", fill: 0.41, session: "34% → 41%", ago: "há 5 min" });
   });
 

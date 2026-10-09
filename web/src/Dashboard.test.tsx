@@ -158,7 +158,7 @@ describe("Dashboard reader colors", () => {
     const c = document.querySelector('[data-reader="Colega"]') as HTMLElement;
     expect(d.style.getPropertyValue("--c-light")).toBe("#2F6FEB");
     expect(d.style.getPropertyValue("--c-dark")).toBe("#6F9CF5");
-    expect(c.style.getPropertyValue("--c-light")).toBe("#E8590C");
+    expect(c.style.getPropertyValue("--c-light")).toBe("#D9480F");
     expect(c.style.getPropertyValue("--c-dark")).toBe("#FF8A4C");
   });
 

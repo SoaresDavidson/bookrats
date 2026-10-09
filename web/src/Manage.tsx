@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { Cover } from "./Cover";
 import {
   AuthError,
+  HttpError,
   createReading,
   getPalette,
   getSummary,
@@ -135,13 +136,27 @@ export function Manage({ token, onAuthError }: Props) {
     };
   }, [open, close]);
 
-  const run = async (fn: () => Promise<unknown>, ok: string) => {
+  const pendingRef = useRef(new Set<string>());
+  const [pending, setPending] = useState<Set<string>>(new Set());
+  const isPending = (k: string) => pending.has(k);
+  const [coverErr, setCoverErr] = useState("");
+  const [createCoverErr, setCreateCoverErr] = useState("");
+  const COVER_INVALID = "URL inválida (use http ou https)";
+
+  const run = async (key: string, fn: () => Promise<unknown>, ok: string, onInvalid?: () => boolean) => {
+    if (pendingRef.current.has(key)) return;
+    pendingRef.current.add(key);
+    setPending(new Set(pendingRef.current));
     try {
       await fn();
       setMsg(ok);
       await refresh();
     } catch (e) {
+      if (e instanceof HttpError && e.status === 422 && onInvalid?.()) return;
       guard(e);
+    } finally {
+      pendingRef.current.delete(key);
+      setPending(new Set(pendingRef.current));
     }
   };
 
@@ -153,7 +168,7 @@ export function Manage({ token, onAuthError }: Props) {
       return;
     }
     setProgErr("");
-    void run(() => postProgress(token, n / 100), "Progresso salvo.");
+    void run("progress", () => postProgress(token, n / 100), "Progresso salvo.");
   };
 
   const create = (e: FormEvent) => {
@@ -168,13 +183,23 @@ export function Manage({ token, onAuthError }: Props) {
     if (author.trim()) body.author = author.trim();
     if (grId.trim()) body.goodreads_book_id = grId.trim();
     if (coverUrl.trim()) body.cover_url = coverUrl.trim();
-    void run(async () => {
-      await createReading(token, body);
-      setTitle("");
-      setAuthor("");
-      setGrId("");
-      setCoverUrl("");
-    }, "Leitura criada.");
+    setCreateCoverErr("");
+    void run(
+      "create",
+      async () => {
+        await createReading(token, body);
+        setTitle("");
+        setAuthor("");
+        setGrId("");
+        setCoverUrl("");
+      },
+      "Leitura criada.",
+      () => {
+        if (!body.cover_url) return false;
+        setCreateCoverErr(COVER_INVALID);
+        return true;
+      },
+    );
   };
 
   const readingId = summary?.reading?.id;
@@ -198,7 +223,7 @@ export function Manage({ token, onAuthError }: Props) {
           <input type="number" inputMode="numeric" min={0} max={100} value={value} aria-invalid={!!progErr} onChange={(e) => setValue(e.target.value)} />
           {progErr && <span className="field-error">{progErr}</span>}
         </label>
-        <button className="btn primary" type="submit">Salvar progresso</button>
+        <button className="btn primary" type="submit" disabled={isPending("progress")}>Salvar progresso</button>
       </form>
 
       <section className="card stack">
@@ -275,9 +300,10 @@ export function Manage({ token, onAuthError }: Props) {
         </label>
         <label className="field">
           <span>URL da capa (opcional)</span>
-          <input type="url" inputMode="url" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} />
+          <input type="url" inputMode="url" value={coverUrl} aria-invalid={!!createCoverErr} onChange={(e) => setCoverUrl(e.target.value)} />
+          {createCoverErr && <span className="field-error">{createCoverErr}</span>}
         </label>
-        <button className="btn primary" type="submit">Criar leitura</button>
+        <button className="btn primary" type="submit" disabled={isPending("create")}>Criar leitura</button>
       </form>
 
       <form
@@ -285,10 +311,19 @@ export function Manage({ token, onAuthError }: Props) {
         onSubmit={(e) => {
           e.preventDefault();
           const u = newCover.trim();
-          void run(async () => {
-            await setCover(token, readingId!, u === "" ? null : u);
-            setNewCover("");
-          }, "Capa salva.");
+          setCoverErr("");
+          void run(
+            "cover",
+            async () => {
+              await setCover(token, readingId!, u === "" ? null : u);
+              setNewCover("");
+            },
+            "Capa salva.",
+            () => {
+              setCoverErr(COVER_INVALID);
+              return true;
+            },
+          );
         }}
       >
         <h2 className="sub">Capa</h2>
@@ -297,9 +332,10 @@ export function Manage({ token, onAuthError }: Props) {
         )}
         <label className="field">
           <span>Nova URL da capa</span>
-          <input type="url" inputMode="url" value={newCover} onChange={(e) => setNewCover(e.target.value)} />
+          <input type="url" inputMode="url" value={newCover} aria-invalid={!!coverErr} onChange={(e) => setNewCover(e.target.value)} />
+          {coverErr && <span className="field-error">{coverErr}</span>}
         </label>
-        <button className="btn" type="submit" disabled={readingId === undefined}>Salvar capa</button>
+        <button className="btn" type="submit" disabled={readingId === undefined || isPending("cover")}>Salvar capa</button>
       </form>
 
       <section className="card">
@@ -318,14 +354,14 @@ export function Manage({ token, onAuthError }: Props) {
                 </div>
                 <div className="doc-actions">
                 {d.title && (
-                  <button className="btn primary" onClick={() => void run(() => startFromDocument(token, d.hash), "Leitura iniciada.")}>
+                  <button className="btn primary" disabled={isPending(`start:${d.hash}`)} onClick={() => void run(`start:${d.hash}`, () => startFromDocument(token, d.hash), "Leitura iniciada.")}>
                     Começar a ler este
                   </button>
                 )}
                 <button
                   className="btn"
-                  disabled={readingId === undefined}
-                  onClick={() => void run(() => linkDocument(token, d.hash, readingId!), "Documento vinculado.")}
+                  disabled={readingId === undefined || isPending(`link:${d.hash}`)}
+                  onClick={() => void run(`link:${d.hash}`, () => linkDocument(token, d.hash, readingId!), "Documento vinculado.")}
                 >
                   É este livro
                 </button>

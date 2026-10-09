@@ -162,4 +162,31 @@ describe("live progress update", () => {
     await advance(1700);
     expect(fill().classList.contains("is-advanced")).toBe(false);
   });
+
+  it("restarts the glow when a second increase arrives mid-glow", async () => {
+    await load();
+    await pollTo(0.47);
+    await advance(50);
+    expect(fill().classList.contains("is-advanced")).toBe(true);
+    await advance(450);
+    vi.mocked(api.getSummary).mockResolvedValue(summaryWith(0.52));
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await advance(1);
+    expect(fill().classList.contains("is-advanced")).toBe(false);
+    await advance(60);
+    expect(fill().classList.contains("is-advanced")).toBe(true);
+    await advance(1650);
+    expect(fill().classList.contains("is-advanced")).toBe(false);
+  });
+
+  it("refetches session history when a reader's updated_at changes", async () => {
+    await load();
+    const before = vi.mocked(api.getSessions).mock.calls.length;
+    expect(before).toBe(2);
+    await pollTo(0.47);
+    await advance(10);
+    expect(vi.mocked(api.getSessions).mock.calls.length).toBeGreaterThan(before);
+  });
 });

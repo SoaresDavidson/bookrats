@@ -1,6 +1,6 @@
 PALETTE: dict[str, tuple[str, str]] = {
     "azul": ("#2F6FEB", "#6F9CF5"),
-    "laranja": ("#E8590C", "#FF8A4C"),
+    "laranja": ("#D9480F", "#FF8A4C"),
     "verde": ("#2B8A3E", "#51CF66"),
     "roxo": ("#7048E8", "#9775FA"),
     "rosa": ("#D6336C", "#F06595"),

@@ -130,3 +130,21 @@ def test_claim_color_only_first_wins_across_connections(db_path, conn, davi, col
         assert store.claim_color(c2, colega.id, "roxo") is True
     finally:
         c2.close()
+
+
+def test_init_schema_partial_and_duplicate_column_race(tmp_path):
+    import sqlite3
+    from bookrats import db
+    p = str(tmp_path / "p.db")
+    c1 = sqlite3.connect(p)
+    c1.executescript(db.SCHEMA)
+    c1.commit()
+    c2 = db.connect(p)  # adds missing columns
+    c1.row_factory = sqlite3.Row
+    db.init_schema(c1)  # second connection sees columns already present; must not raise
+    db.init_schema(c2)
+    # simulate a stale pragma view: another connection added the column between check and ALTER
+    c3 = sqlite3.connect(p)
+    db._add_column(c3, "users", "color", "TEXT")
+    cols = [r[1] for r in c3.execute("pragma table_info(users)")]
+    assert cols.count("color") == 1
