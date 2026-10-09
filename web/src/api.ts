@@ -31,7 +31,7 @@ export interface UnlinkedDocument {
   title: string | null;
   authors: string | null;
   last_device: string | null;
-  first_seen: string;
+  first_seen: number;
 }
 
 async function request<T>(token: string, path: string, init: RequestInit = {}): Promise<T> {

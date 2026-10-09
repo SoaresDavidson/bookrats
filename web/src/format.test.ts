@@ -10,3 +10,11 @@ test("ago", () => {
   expect(ago("2026-10-06T12:00:00Z", now)).toBe("há 2 dias");
   expect(ago(null, now)).toBe("sem dados");
 });
+
+test("ago edge cases", () => {
+  const now = new Date("2026-10-08T12:00:00Z");
+  expect(ago("2026-10-07T12:00:00Z", now)).toBe("há 1 dia");
+  expect(ago("not-a-date", now)).toBe("sem dados");
+  expect(ago("2026-10-08T11:01:00Z", now)).toBe("há 59 min");
+  expect(ago("2026-10-08T12:30:00Z", now)).toBe("há 0 min");
+});
