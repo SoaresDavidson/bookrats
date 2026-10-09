@@ -204,3 +204,13 @@ Tests: backend — defaults when unset, set/get roundtrip, unknown id 422, confl
 **Task 7 amendment (user 2026-10-09: "quero um histórico, quero me lembrar dos livros que li com meu colega"):**
 - GET /api/readings per reader adds `started_at` (first snapshot) and `finished_at` (first snapshot with percentage ≥ 0.99), both ISO or null; reading gains `status`: "lendo" | "lido" | "pausado".
 - The list UI moves from a Manage card to a new tab "Estante" (tabs: Progresso, Estante, Gerenciar): `Shelf({token})` cover grid with status labels; detail dialog with per-reader start/finish dates (dd/mm/aaaa), "Leu em N dias", "<nome> terminou primeiro", "Retomar" (non-active) and "Editar".
+
+---
+
+### Task 8: Simpler color picker with custom colors
+
+**Decision (user 2026-10-09):** the swatch grid is buggy and ugly. Replace with: two circles (one per friend, name below); only your own circle is interactive; tapping it opens a popover with one row of preset swatches plus a final "+" option that opens the native color picker (`<input type="color">`) for any color.
+
+**Backend:** `PUT /api/me/color` accepts a palette id OR a hex `#rrggbb` (case-insensitive, stored lowercase); 422 otherwise. Summary color for a custom hex: `{"id": "custom", "light": "#rrggbb", "dark": <derived>}` where dark = the hex lightened in HSL steps until contrast ≥ 3:1 against the dark track `#313137` (unchanged if already ≥ 3:1); light likewise darkened until ≥ 3:1 against the light track `#e4e4e7`. Conflict (409 "cor em uso") only when the effective light hex equals the other user's effective light hex (palette ids resolve to their light hex). `GET /api/palette` unchanged.
+
+**Web:** Manage card "Cores": two 48px circles with name below (yours first, labelled "Você"/your name), your circle is a button with aria-haspopup="dialog" and aria-expanded; popover anchored below it with a caret, one row of the 8 preset swatches (36px, the other friend's current color disabled with a diagonal strike and title "Em uso por <nome>"), the selected one with a check, and a last "+" swatch that triggers the native color input; choosing applies immediately (PUT) and closes; Esc/click outside closes; focus returns to your circle. No text labels per swatch (aria-label only). 409 → small inline message under the circles "Essa cor já está em uso".
