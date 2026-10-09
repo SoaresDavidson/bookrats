@@ -115,7 +115,13 @@ export function Manage({ token, onAuthError }: Props) {
       list[next].focus();
     };
     const onDown = (e: PointerEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) close();
+      const t = e.target as HTMLElement;
+      if (wrapRef.current?.contains(t)) return;
+      if (t.closest?.("button, input, a, select, textarea, [tabindex]")) setOpen(false);
+      else {
+        setOpen(false);
+        setTimeout(() => mineRef.current?.focus(), 0);
+      }
     };
     const input = colorRef.current;
     const onChange = () => input && void pickRef.current(input.value);
@@ -175,6 +181,10 @@ export function Manage({ token, onAuthError }: Props) {
   const mineIdx = summary ? summary.readers.findIndex((r) => r.name === summary.me) : -1;
   const mine = mineIdx >= 0 ? summary!.readers[mineIdx] : undefined;
   const other = summary?.readers.find((r) => r.name !== summary.me);
+  const storedHex = mine?.color.hex ?? mine?.color.light ?? "#2f6feb";
+  useEffect(() => {
+    if (open && colorRef.current) colorRef.current.value = storedHex;
+  }, [open, storedHex]);
   const LABELS: Record<string, string> = { azul: "Azul", laranja: "Laranja", verde: "Verde", roxo: "Roxo", rosa: "Rosa", ciano: "Ciano", ambar: "Âmbar", grafite: "Grafite" };
 
   return (
@@ -227,14 +237,14 @@ export function Manage({ token, onAuthError }: Props) {
                 })}
                 <button
                   type="button"
-                  className="pick custom"
+                  className={mine?.color.id === "custom" ? "pick custom is-custom-active" : "pick custom"}
                   aria-label="Cor personalizada"
                   aria-pressed={mine?.color.id === "custom"}
                   onClick={() => colorRef.current?.click()}
                 >
                   <span className="pick-dot" style={mine?.color.id === "custom" ? cvars(mine.color) : undefined} />
                 </button>
-                <input ref={colorRef} className="sr-only" type="color" aria-label="Escolher cor personalizada" tabIndex={-1} defaultValue={mine?.color.hex ?? mine?.color.light ?? "#2f6feb"} />
+                <input ref={colorRef} className="sr-only" type="color" aria-label="Escolher cor personalizada" tabIndex={-1} />
               </div>
             )}
           </div>

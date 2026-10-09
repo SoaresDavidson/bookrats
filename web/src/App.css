@@ -134,7 +134,7 @@
 @media (prefers-color-scheme: dark) { .detail-reader .dot { background: var(--c-dark, var(--accent)); } }
 @media (max-width: 380px) { .tabs .tab { padding: 0 6px; font-size: var(--t-xs); } }
 
-.circles { display: flex; gap: 28px; align-items: flex-start; }
+.circles { display: flex; gap: 0; align-items: flex-start; }
 .circle-item { position: relative; width: 96px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .circle { width: 48px; height: 48px; border-radius: 50%; border: 0; padding: 0; display: block; background: var(--c-light, var(--track)); box-shadow: inset 0 0 0 1px rgb(24 24 27 / 0.2); }
 button.circle { cursor: pointer; }
@@ -145,8 +145,8 @@ button.circle { cursor: pointer; }
 .pick { position: relative; width: 44px; height: 44px; padding: 4px; border: 0; background: none; border-radius: 50%; cursor: pointer; }
 .pick-dot { display: block; position: relative; width: 36px; height: 36px; border-radius: 50%; background: var(--c-light, var(--track)); box-shadow: inset 0 0 0 1px rgb(24 24 27 / 0.2); }
 .pick[aria-pressed="true"] .pick-dot::after { content: ""; position: absolute; left: 11px; top: 9px; width: 14px; height: 7px; border: solid var(--mark, #fff); border-width: 0 0 3px 3px; transform: rotate(-45deg); }
-.pick.custom .pick-dot { background: conic-gradient(#e8590c, #fcc419, #51cf66, #3bc9db, #6f9cf5, #9775fa, #f06595, #e8590c); }
-.pick.custom .pick-dot::before { content: "+"; position: absolute; inset: 4px; display: grid; place-items: center; border-radius: 50%; background: var(--card); color: var(--ink); font-weight: 700; font-size: 1.1rem; line-height: 1; }
+.pick.custom:not(.is-custom-active) .pick-dot { background: conic-gradient(#e8590c, #fcc419, #51cf66, #3bc9db, #6f9cf5, #9775fa, #f06595, #e8590c); }
+.pick.custom:not(.is-custom-active) .pick-dot::before { content: "+"; position: absolute; inset: 4px; display: grid; place-items: center; border-radius: 50%; background: var(--card); color: var(--ink); font-weight: 700; font-size: 1.1rem; line-height: 1; }
 .pick.custom[aria-pressed="true"] .pick-dot::before { content: none; }
 .pick.taken { cursor: not-allowed; }
 .pick.taken .pick-dot { opacity: 0.45; }
@@ -155,6 +155,7 @@ button.circle { cursor: pointer; }
 @media (prefers-color-scheme: dark) {
   .circle, .pick-dot { background: var(--c-dark, var(--track)); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.25); }
   .pick[aria-pressed="true"] .pick-dot::after { border-color: var(--mark-dark, #fff); }
-  .pick.custom .pick-dot { background: conic-gradient(#e8590c, #fcc419, #51cf66, #3bc9db, #6f9cf5, #9775fa, #f06595, #e8590c); }
+  .pick.custom:not(.is-custom-active) .pick-dot { background: conic-gradient(#e8590c, #fcc419, #51cf66, #3bc9db, #6f9cf5, #9775fa, #f06595, #e8590c); }
 }
 @media (prefers-reduced-motion: reduce) { .popover { animation: none; } }
+.circle-item + .circle-item { margin-left: -20px; }

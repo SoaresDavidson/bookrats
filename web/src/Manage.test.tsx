@@ -181,6 +181,32 @@ describe("Manage", () => {
       expect(api.setColor).toHaveBeenCalledWith("tok", "#123456");
     });
 
+    it("focus moves to the pressed preset; Tab wraps; Esc returns focus", async () => {
+      const { user, mine, dialog } = await open();
+      expect(document.activeElement).toBe(within(dialog).getByRole("button", { name: "Azul" }));
+      within(dialog).getByRole("button", { name: "Cor personalizada" }).focus();
+      await user.tab();
+      expect(document.activeElement).toBe(within(dialog).getByRole("button", { name: "Azul" }));
+      await user.keyboard("{Escape}");
+      await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect(document.activeElement).toBe(mine);
+    });
+
+    it("outside pointerdown on non-focusable area returns focus to the circle", async () => {
+      const { user, mine } = await open();
+      await user.pointer({ keys: "[MouseLeft]", target: document.body });
+      await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect(document.activeElement).toBe(mine);
+    });
+
+    it("outside pointerdown on another focusable element does not steal focus", async () => {
+      const { user } = await open();
+      const btn = screen.getByRole("button", { name: "Salvar progresso" });
+      await user.click(btn);
+      await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect(document.activeElement).toBe(btn);
+    });
+
     it("Escape closes the popover", async () => {
       const { user } = await open();
       await user.keyboard("{Escape}");
