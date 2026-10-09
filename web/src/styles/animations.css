@@ -30,15 +30,15 @@
   animation: bar-sweep var(--duration-sweep) ease-out forwards;
 }
 
-/* Collapse: animates grid rows. Open state is toggled by the .open class. */
-.collapse {
+/* History panel: animates grid rows. Open state is toggled by the .open class. */
+.history-panel {
   display: grid;
   grid-template-rows: 0fr;
   opacity: 0;
   transition: grid-template-rows var(--duration-collapse) var(--ease-collapse), opacity var(--duration-fade);
 }
-.collapse.open { grid-template-rows: 1fr; opacity: 1; }
-.collapse.more { opacity: 1; }
+.history-panel.open { grid-template-rows: 1fr; opacity: 1; }
+.history-panel.history-more { opacity: 1; }
 
 /* Shimmer on loading placeholders. */
 .shimmer::after {
@@ -88,7 +88,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .collapse { transition: none; }
+  .history-panel { transition: none; }
   .bar-fill.is-advanced, .bar-fill.is-advanced::after { animation: none; }
   .bar-fill.is-advanced {
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-light, var(--color-accent)) 55%, transparent);

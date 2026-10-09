@@ -21,7 +21,7 @@ export function HistoryPanel({ name, style, sessions }: { name: string; style: R
         <span className={ui.dot} style={style} />Histórico de {name}
         <svg className="ml-auto text-muted transition-transform duration-200 ease-soft group-aria-expanded:rotate-180 motion-reduce:transition-none" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </button>
-      <div id={pid} role="region" aria-labelledby={bid} className={`collapse${open ? " open" : ""}`}>
+      <div id={pid} role="region" aria-labelledby={bid} className={`history-panel${open ? " open" : ""}`}>
         <div className="overflow-hidden p-1.5 -m-1.5 min-h-0 flex flex-col" inert={!open}>
           {sessions.length === 0 ? (
             <p className={ui.muted}>Sem sessões ainda.</p>
@@ -30,7 +30,7 @@ export function HistoryPanel({ name, style, sessions }: { name: string; style: R
               <ul>{sessions.slice(0, 5).map(row)}</ul>
               {sessions.length > 5 && (
                 <>
-                  <div className={`collapse more${all ? " open" : ""}`} inert={!all}>
+                  <div className={`history-panel history-more${all ? " open" : ""}`} inert={!all}>
                     <div className="overflow-hidden p-1.5 -m-1.5 min-h-0 flex flex-col"><ul>{sessions.slice(5).map(row)}</ul></div>
                   </div>
                   <button className={`${ui.link} self-start p-0`} type="button" onClick={() => setAll((v) => !v)}>
