@@ -71,3 +71,22 @@ def test_users_are_isolated(client, conn, davi, colega):
 def test_basic_authorization_header_is_ignored(client, davi):
     r = client.get("/users/auth", headers={**H, "Authorization": "Basic ZGF2aTpwdw=="})
     assert r.status_code == 200
+
+
+def test_put_string_percentage_is_400(client, davi):
+    b = _body()
+    b["percentage"] = "0.5"
+    r = client.put("/syncs/progress", json=b, headers=H)
+    assert r.status_code == 400 and r.json() == {"code": 2003, "message": "Invalid request"}
+
+
+def test_put_authors_list_is_joined(client, conn, davi):
+    b = {**_body("h3"), "metadata": {"title": "T", "authors": ["A", "B"]}}
+    assert client.put("/syncs/progress", json=b, headers=H).status_code == 200
+    assert conn.execute("select authors from documents where hash='h3'").fetchone()[0] == "A, B"
+
+
+def test_put_junk_metadata_is_ignored(client, conn, davi):
+    b = {**_body("h4"), "metadata": "junk"}
+    assert client.put("/syncs/progress", json=b, headers=H).status_code == 200
+    assert conn.execute("select title from documents where hash='h4'").fetchone()[0] is None

@@ -1,5 +1,6 @@
 import sqlite3
 import time
+from typing import Any
 
 from fastapi import APIRouter, Depends, Header, Request
 from fastapi.responses import JSONResponse
@@ -20,20 +21,25 @@ def error_response(status: int, code: int, message: str) -> JSONResponse:
     return JSONResponse({"code": code, "message": message}, status_code=status)
 
 
-class Metadata(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    title: str | None = None
-    authors: str | None = None
+def _text(v) -> str | None:
+    if isinstance(v, str):
+        return v
+    if isinstance(v, list) and v and all(isinstance(x, str) for x in v):
+        return ", ".join(v)
+    return None
 
 
 class Progress(BaseModel):
     model_config = ConfigDict(extra="ignore")
     document: str
     progress: str
-    percentage: float = Field(ge=0, le=1)
+    percentage: float = Field(ge=0, le=1, strict=True)
     device: str
     device_id: str
-    metadata: Metadata | None = None
+    metadata: Any = None
+
+    def meta(self, key: str) -> str | None:
+        return _text(self.metadata.get(key)) if isinstance(self.metadata, dict) else None
 
 
 def auth_user(
@@ -65,10 +71,9 @@ async def put_progress(request: Request, user=Depends(auth_user),
     except (ValidationError, ValueError):
         return error_response(400, 2003, "Invalid request")
     ts = int(time.time())
-    md = p.metadata
     store.add_snapshot(conn, user.id, "kosync", p.percentage, ts, document=p.document,
                        progress=p.progress, device=p.device, device_id=p.device_id,
-                       title=md.title if md else None, authors=md.authors if md else None)
+                       title=p.meta("title"), authors=p.meta("authors"))
     return {"document": p.document, "timestamp": ts}
 
 
