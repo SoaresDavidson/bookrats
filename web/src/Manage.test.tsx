@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { UnlinkedDocument } from "./api";
@@ -137,33 +137,60 @@ describe("Manage", () => {
   });
 
   describe("bar color", () => {
-    it("shows 8 radios, mine checked, other's disabled with description", async () => {
-      render(<Manage token="tok" />);
-      await screen.findByText("Cor da minha barra");
-      const radios = await screen.findAllByRole("radio");
-      expect(radios.map((r) => (r as HTMLInputElement).labels?.[0]?.textContent?.trim() ?? r.getAttribute("aria-label"))
-        .map((t) => LABELS.find((l) => t?.startsWith(l)))).toEqual(LABELS);
-      expect(screen.getByRole("radio", { name: /^Azul/ })).toHaveProperty("checked", true);
-      const lar = screen.getByRole("radio", { name: /^Laranja/ }) as HTMLInputElement;
-      expect(lar.disabled).toBe(true);
-      const text = (lar.labels?.[0]?.textContent ?? "") + (lar.getAttribute("aria-label") ?? "") +
-        (lar.getAttribute("aria-describedby") ? document.getElementById(lar.getAttribute("aria-describedby")!)?.textContent : "");
-      expect(text).toContain("em uso por Colega");
-    });
-
-    it("selecting Verde calls setColor", async () => {
+    const open = async () => {
       const user = userEvent.setup();
       render(<Manage token="tok" />);
-      await user.click(await screen.findByRole("radio", { name: /^Verde/ }));
+      const mine = await screen.findByRole("button", { name: "Mudar minha cor" });
+      await user.click(mine);
+      return { user, mine, dialog: await screen.findByRole("dialog", { name: "Escolher cor" }) };
+    };
+
+    it("shows two circles: mine is a button, other is non-interactive", async () => {
+      render(<Manage token="tok" />);
+      expect(await screen.findByText("Cores")).toBeTruthy();
+      expect(await screen.findByRole("button", { name: "Mudar minha cor" })).toBeTruthy();
+      const other = screen.getByLabelText("Cor de Colega");
+      expect(other.tagName).not.toBe("BUTTON");
+      expect(screen.queryByRole("button", { name: "Cor de Colega" })).toBeNull();
+    });
+
+    it("popover lists 8 presets, current pressed, other's disabled", async () => {
+      const { dialog } = await open();
+      for (const l of LABELS) expect(within(dialog).getByRole("button", { name: l })).toBeTruthy();
+      expect(within(dialog).getByRole("button", { name: "Cor personalizada" })).toBeTruthy();
+      expect(within(dialog).getByRole("button", { name: "Azul" }).getAttribute("aria-pressed")).toBe("true");
+      const lar = within(dialog).getByRole("button", { name: "Laranja" }) as HTMLButtonElement;
+      expect(lar.disabled).toBe(true);
+      expect(lar.getAttribute("title")).toBe("Em uso por Colega");
+    });
+
+    it("picking Verde calls setColor, closes, returns focus", async () => {
+      const { user, mine, dialog } = await open();
+      await user.click(within(dialog).getByRole("button", { name: "Verde" }));
       expect(api.setColor).toHaveBeenCalledWith("tok", "verde");
+      await vi.waitFor(() => expect(screen.queryByRole("dialog", { name: "Escolher cor" })).toBeNull());
+      expect(document.activeElement).toBe(mine);
+    });
+
+    it("custom color input calls setColor with hex", async () => {
+      const { user, dialog } = await open();
+      await user.click(within(dialog).getByRole("button", { name: "Cor personalizada" }));
+      const input = screen.getByLabelText("Escolher cor personalizada") as HTMLInputElement;
+      expect(input.type).toBe("color");
+      fireEvent.change(input, { target: { value: "#123456" } });
+      expect(api.setColor).toHaveBeenCalledWith("tok", "#123456");
+    });
+
+    it("Escape closes the popover", async () => {
+      const { user } = await open();
+      await user.keyboard("{Escape}");
+      await vi.waitFor(() => expect(screen.queryByRole("dialog", { name: "Escolher cor" })).toBeNull());
     });
 
     it("409 shows inline error", async () => {
-      const user = userEvent.setup();
-      const err = Object.assign(new Error("HTTP 409"), { status: 409 });
-      vi.mocked(api.setColor).mockRejectedValue(err);
-      render(<Manage token="tok" />);
-      await user.click(await screen.findByRole("radio", { name: /^Verde/ }));
+      vi.mocked(api.setColor).mockRejectedValue(Object.assign(new Error("HTTP 409"), { status: 409 }));
+      const { user, dialog } = await open();
+      await user.click(within(dialog).getByRole("button", { name: "Verde" }));
       expect(await screen.findByText("Essa cor já está em uso")).toBeTruthy();
     });
   });
