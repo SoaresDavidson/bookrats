@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
-  AuthError, createReading, getSessions, getSummary, getUnlinked, linkDocument, postProgress,
+  AuthError, createReading, getSessions, getSummary, getUnlinked, linkDocument, postProgress, setCover,
 } from "./api";
 
 const fetchMock = vi.fn();
@@ -59,4 +59,13 @@ test("getSessions builds query", async () => {
   fetchMock.mockResolvedValue(json([]));
   await getSessions("tok", "Davi");
   expect(fetchMock.mock.calls[0][0]).toBe("/api/sessions?user=Davi&limit=20");
+});
+
+test("setCover patches the reading and tolerates 204", async () => {
+  fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+  await expect(setCover("tok", 3, "u")).resolves.toBeUndefined();
+  const [url, init] = fetchMock.mock.calls[0];
+  expect(url).toBe("/api/readings/3");
+  expect(init.method).toBe("PATCH");
+  expect(init.body).toBe('{"cover_url":"u"}');
 });

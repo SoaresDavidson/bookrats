@@ -74,3 +74,25 @@ def test_snapshots_for_mixes_sources_in_ts_order(conn, colega):
     store.add_snapshot(conn, colega.id, "goodreads", .4, 100, document="gr:1", external_id="g1")
     store.link_document(conn, "gr:1", r)
     assert [s.percentage for s in store.snapshots_for(conn, colega.id, r)] == [.4, .5]
+
+
+def test_set_cover_unknown_id(conn):
+    with pytest.raises(KeyError):
+        store.set_cover(conn, 999, "u")
+
+
+def test_connect_adds_cover_url_column_to_old_db(tmp_path):
+    import sqlite3
+
+    from bookrats import db
+
+    path = str(tmp_path / "old.db")
+    raw = sqlite3.connect(path)
+    raw.execute("CREATE TABLE readings (id INTEGER PRIMARY KEY, title TEXT NOT NULL, author TEXT,"
+                " goodreads_book_id TEXT, active INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL)")
+    raw.commit()
+    raw.close()
+    c = db.connect(path)
+    cols = [r[1] for r in c.execute("pragma table_info(readings)")]
+    c.close()
+    assert "cover_url" in cols

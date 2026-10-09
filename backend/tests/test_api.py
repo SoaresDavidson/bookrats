@@ -137,3 +137,75 @@ def test_kosync_still_wired(client):
 def test_api_routes_require_token(client, davi, method, url, body):
     r = client.get(url) if method == "get" else client.post(url, json=body)
     assert r.status_code == 401
+
+
+# --- covers ---
+import httpx  # noqa: E402
+
+COVER = "https://covers.openlibrary.org/b/id/12345-L.jpg"
+
+
+def _mock_http(client, handler):
+    calls = []
+
+    def wrapped(req):
+        calls.append(req)
+        return handler(req)
+
+    client.app.state.http = httpx.AsyncClient(transport=httpx.MockTransport(wrapped))
+    return calls
+
+
+def _found(req):
+    return httpx.Response(200, json={"docs": [{"cover_i": 12345}]})
+
+
+def _cover(client):
+    return client.get("/api/summary", headers=AUTH).json()["reading"]["cover_url"]
+
+
+def test_post_reading_resolves_cover(client, davi):
+    _mock_http(client, _found)
+    r = client.post("/api/readings", headers=AUTH, json={"title": "Duna", "author": "Frank Herbert"})
+    assert r.status_code == 201
+    assert _cover(client) == COVER
+
+
+def test_post_reading_explicit_cover_skips_lookup(client, davi):
+    calls = _mock_http(client, _found)
+    r = client.post("/api/readings", headers=AUTH,
+                    json={"title": "Duna", "cover_url": "https://example.com/c.jpg"})
+    assert r.status_code == 201
+    assert _cover(client) == "https://example.com/c.jpg"
+    assert calls == []
+
+
+def test_post_reading_lookup_failure_still_201(client, davi):
+    _mock_http(client, lambda req: httpx.Response(500))
+    r = client.post("/api/readings", headers=AUTH, json={"title": "Duna"})
+    assert r.status_code == 201
+    assert _cover(client) is None
+
+
+def test_patch_cover_set_and_clear(client, conn, davi):
+    rid = store.create_reading(conn, "Duna")
+    r = client.patch(f"/api/readings/{rid}", headers=AUTH, json={"cover_url": "https://x/y.jpg"})
+    assert r.status_code == 204
+    assert _cover(client) == "https://x/y.jpg"
+    r = client.patch(f"/api/readings/{rid}", headers=AUTH, json={"cover_url": None})
+    assert r.status_code == 204
+    assert _cover(client) is None
+
+
+def test_patch_cover_unknown_404(client, davi):
+    assert client.patch("/api/readings/999", headers=AUTH, json={"cover_url": "u"}).status_code == 404
+
+
+def test_patch_cover_requires_token(client, conn, davi):
+    rid = store.create_reading(conn, "Duna")
+    assert client.patch(f"/api/readings/{rid}", json={"cover_url": "u"}).status_code == 401
+
+
+def test_summary_without_reading_ok(client, davi):
+    r = client.get("/api/summary", headers=AUTH)
+    assert r.status_code == 200 and r.json()["reading"] is None

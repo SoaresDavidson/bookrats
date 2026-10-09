@@ -11,6 +11,7 @@ vi.mock("./api", async (orig) => ({
   createReading: vi.fn(),
   getUnlinked: vi.fn(),
   linkDocument: vi.fn(),
+  setCover: vi.fn(),
 }));
 
 import * as api from "./api";
@@ -27,6 +28,7 @@ beforeEach(() => {
   vi.mocked(api.postProgress).mockReset().mockResolvedValue({});
   vi.mocked(api.createReading).mockReset().mockResolvedValue({});
   vi.mocked(api.linkDocument).mockReset().mockResolvedValue(undefined);
+  vi.mocked(api.setCover).mockReset().mockResolvedValue(undefined);
 });
 
 describe("Manage", () => {
@@ -88,5 +90,34 @@ describe("Manage", () => {
     const buttons = screen.getAllByRole("button", { name: "É este livro" });
     expect(buttons.length).toBe(2);
     for (const b of buttons) expect((b as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("sends cover_url when filled and omits it when empty", async () => {
+    const user = userEvent.setup();
+    render(<Manage token="tok" />);
+    await user.type(await screen.findByLabelText("Título"), "Neuromancer");
+    await user.type(screen.getByLabelText("URL da capa (opcional)"), "https://x/c.jpg");
+    await user.click(screen.getByRole("button", { name: "Criar leitura" }));
+    expect(api.createReading).toHaveBeenCalledWith("tok", {
+      title: "Neuromancer",
+      cover_url: "https://x/c.jpg",
+    });
+  });
+
+  it("changes the cover of the active reading", async () => {
+    const user = userEvent.setup();
+    render(<Manage token="tok" />);
+    const input = await screen.findByLabelText("Nova URL da capa");
+    await user.type(input, "https://x/new.jpg");
+    await user.click(screen.getByRole("button", { name: "Salvar capa" }));
+    expect(api.setCover).toHaveBeenCalledWith("tok", 1, "https://x/new.jpg");
+  });
+
+  it("disables save cover without an active reading", async () => {
+    vi.mocked(api.getSummary).mockResolvedValue({ ...makeSummary(), reading: null });
+    render(<Manage token="tok" />);
+    await screen.findByText(/Messias de Duna/);
+    const b = screen.getByRole("button", { name: "Salvar capa" }) as HTMLButtonElement;
+    expect(b.disabled).toBe(true);
   });
 });

@@ -2,9 +2,9 @@ import type { Summary } from "./api";
 
 const iso = (msAgo: number) => new Date(Date.now() - msAgo).toISOString();
 
-export function makeSummary(): Summary {
+export function makeSummary(cover_url: string | null = null): Summary {
   return {
-    reading: { id: 1, title: "Duna", author: "Frank Herbert" },
+    reading: { id: 1, title: "Duna", author: "Frank Herbert", cover_url },
     me: "Davi",
     readers: [
       {

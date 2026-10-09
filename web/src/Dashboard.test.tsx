@@ -89,3 +89,20 @@ describe("Dashboard bar stacking", () => {
     expect(z("Davi")).toBeGreaterThan(z("Colega"));
   });
 });
+
+describe("Dashboard cover", () => {
+  it("renders the cover image with title as alt", async () => {
+    vi.mocked(api.getSummary).mockResolvedValue(makeSummary("https://x/c.jpg"));
+    render(<Dashboard token="tok" />);
+    const img = (await screen.findByAltText("Duna")) as HTMLImageElement;
+    expect(img.tagName).toBe("IMG");
+    expect(img.getAttribute("src")).toBe("https://x/c.jpg");
+  });
+
+  it("renders an initials placeholder without cover", async () => {
+    render(<Dashboard token="tok" />);
+    await screen.findByText(/Duna/);
+    expect(screen.queryByRole("img")).toBeNull();
+    expect(screen.getByTestId("cover-placeholder").textContent).toContain("D");
+  });
+});
