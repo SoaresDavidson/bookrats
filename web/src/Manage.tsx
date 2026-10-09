@@ -3,7 +3,10 @@ import { Cover } from "./Cover";
 import {
   AuthError,
   createReading,
+  getPalette,
   getSummary,
+  setColor,
+  type ColorOption,
   getUnlinked,
   linkDocument,
   setCover,
@@ -29,6 +32,8 @@ export function Manage({ token, onAuthError }: Props) {
   const [msg, setMsg] = useState("");
   const [progErr, setProgErr] = useState("");
   const [titleErr, setTitleErr] = useState("");
+  const [palette, setPalette] = useState<ColorOption[]>([]);
+  const [colorErr, setColorErr] = useState("");
 
   const guard = useCallback(
     (e: unknown) => {
@@ -53,6 +58,21 @@ export function Manage({ token, onAuthError }: Props) {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    getPalette(token).then(setPalette).catch(guard);
+  }, [token, guard]);
+
+  const pick = async (id: string) => {
+    setColorErr("");
+    try {
+      await setColor(token, id);
+      await refresh();
+    } catch (e) {
+      if (e instanceof Error && (e as { status?: number }).status === 409) setColorErr("Essa cor já está em uso");
+      else guard(e);
+    }
+  };
 
   const run = async (fn: () => Promise<unknown>, ok: string) => {
     try {
@@ -97,6 +117,10 @@ export function Manage({ token, onAuthError }: Props) {
   };
 
   const readingId = summary?.reading?.id;
+  const mineIdx = summary ? summary.readers.findIndex((r) => r.name === summary.me) : -1;
+  const mine = mineIdx >= 0 ? summary!.readers[mineIdx] : undefined;
+  const other = summary?.readers.find((r) => r.name !== summary.me);
+  const LABELS: Record<string, string> = { azul: "Azul", laranja: "Laranja", verde: "Verde", roxo: "Roxo", rosa: "Rosa", ciano: "Ciano", ambar: "Âmbar", grafite: "Grafite" };
 
   return (
     <div className="stack">
@@ -111,6 +135,32 @@ export function Manage({ token, onAuthError }: Props) {
         </label>
         <button className="btn primary" type="submit">Salvar progresso</button>
       </form>
+
+      <fieldset className="card swatches" aria-describedby={colorErr ? "color-err" : undefined}>
+        <legend className="sub">Cor da minha barra</legend>
+        <div className="swatch-grid">
+          {palette.map((c) => {
+            const taken = other?.color.id === c.id;
+            return (
+              <label key={c.id} className="swatch" style={{ ["--c-light" as string]: c.light, ["--c-dark" as string]: c.dark }}>
+                <input
+                  type="radio"
+                  name="bar-color"
+                  value={c.id}
+                  checked={mine?.color.id === c.id}
+                  disabled={taken}
+                  onChange={() => void pick(c.id)}
+                />
+                <span>
+                  {LABELS[c.id] ?? c.id}
+                  {taken && <span className="xs"> em uso por {other!.name}</span>}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+        {colorErr && <p id="color-err" className="field-error" role="alert">{colorErr}</p>}
+      </fieldset>
 
       <form className="card stack" onSubmit={create}>
         <h2 className="sub">Nova leitura</h2>

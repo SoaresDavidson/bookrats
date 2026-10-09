@@ -1,8 +1,23 @@
-export class AuthError extends Error {
+export class HttpError extends Error {
+  status: number;
+  constructor(status: number, message = `HTTP ${status}`) {
+    super(message);
+    this.name = "HttpError";
+    this.status = status;
+  }
+}
+
+export class AuthError extends HttpError {
   constructor() {
-    super("unauthorized");
+    super(401, "unauthorized");
     this.name = "AuthError";
   }
+}
+
+export interface ColorOption {
+  id: string;
+  light: string;
+  dark: string;
 }
 
 export interface SessionOut {
@@ -14,6 +29,7 @@ export interface SessionOut {
 
 export interface Reader {
   name: string;
+  color: ColorOption;
   percentage: number | null;
   updated_at: string | null;
   source: string | null;
@@ -40,7 +56,7 @@ async function request<T>(token: string, path: string, init: RequestInit = {}): 
   if (init.body !== undefined) headers.set("Content-Type", "application/json");
   const res = await fetch(path, { ...init, headers });
   if (res.status === 401) throw new AuthError();
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) throw new HttpError(res.status);
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }
@@ -71,3 +87,8 @@ export const setCover = (token: string, readingId: number, coverUrl: string | nu
     method: "PATCH",
     body: JSON.stringify({ cover_url: coverUrl }),
   });
+
+export const getPalette = (token: string) => request<ColorOption[]>(token, "/api/palette");
+
+export const setColor = (token: string, colorId: string) =>
+  request<void>(token, "/api/me/color", { method: "PUT", body: JSON.stringify({ color: colorId }) });

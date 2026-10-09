@@ -5,8 +5,15 @@ export interface SessionOut {
   ended_at: string;
 }
 
+export interface ReaderColor {
+  id: string;
+  light: string;
+  dark: string;
+}
+
 export interface Reader {
   name: string;
+  color?: ReaderColor;
   percentage: number | null;
   updated_at: string | null;
   source: string | null;

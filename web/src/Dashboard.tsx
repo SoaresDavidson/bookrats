@@ -3,7 +3,15 @@ import { AuthError, getSessions, getSummary, type Reader, type SessionOut, type 
 import { Cover } from "./Cover";
 import { ago, pct, sessionText } from "./format";
 
-export const COLORS = ["#2F6FEB", "#E8590C"];
+const FALLBACK = [
+  { id: "azul", light: "#2F6FEB", dark: "#6F9CF5" },
+  { id: "laranja", light: "#E8590C", dark: "#FF8A4C" },
+];
+
+function vars(r: Reader, i: number): React.CSSProperties {
+  const c = r.color ?? FALLBACK[i % 2];
+  return { ["--c-light" as string]: c.light, ["--c-dark" as string]: c.dark };
+}
 
 interface Props {
   token: string;
@@ -39,13 +47,13 @@ function lead(readers: Reader[]): string {
   return `${d > 0 ? a.name : b.name} à frente por ${n} ${n === 1 ? "ponto" : "pontos"}`;
 }
 
-function HistoryList({ name, color, sessions }: { name: string; color: string; sessions: SessionOut[] }) {
+function HistoryList({ name, style, sessions }: { name: string; style: React.CSSProperties; sessions: SessionOut[] }) {
   const [all, setAll] = useState(false);
   const shown = all ? sessions : sessions.slice(0, 5);
   return (
     <details className="history">
       <summary>
-        <span className="dot" style={{ ["--c" as string]: color }} />Histórico de {name}
+        <span className="dot" style={style} />Histórico de {name}
         <svg className="chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </summary>
       {sessions.length === 0 ? (
@@ -149,7 +157,7 @@ export function Dashboard({ token, onAuthError, onGoManage }: Props) {
             return (
               <div key={r.name} className="reader">
                 <div className="reader-top">
-                  <span className="name"><span className="dot" style={{ ["--c" as string]: COLORS[i % 2] }} />{r.name}</span>
+                  <span className="name"><span className="dot" style={vars(r, i)} />{r.name}</span>
                   <span className="pct">{pct(r.percentage)}</span>
                 </div>
                 <div className="bar">
@@ -161,7 +169,7 @@ export function Dashboard({ token, onAuthError, onGoManage }: Props) {
                     aria-valuemax={100}
                     aria-valuenow={v}
                     data-reader={r.name}
-                    style={{ width: `${v}%`, background: COLORS[i % 2] }}
+                    style={{ width: `${v}%`, ...vars(r, i) }}
                   />
                 </div>
                 <p className="muted">{lastLine(r)}</p>
@@ -172,7 +180,7 @@ export function Dashboard({ token, onAuthError, onGoManage }: Props) {
         </div>
       </div>
       {readers.map((r, i) => (
-        <HistoryList key={r.name} name={r.name} color={COLORS[i % 2]} sessions={history[r.name] ?? []} />
+        <HistoryList key={r.name} name={r.name} style={vars(r, i)} sessions={history[r.name] ?? []} />
       ))}
     </section>
   );

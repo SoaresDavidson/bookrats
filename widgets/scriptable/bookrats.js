@@ -172,7 +172,8 @@ function buildWidget(summary, stale, error, cover) {
 
     const barW = small ? 120 : (cover ? 190 : 260);
     summary.readers.slice(0, 2).forEach(function (r, i) {
-      const color = COLORS[i] || COLORS[0];
+      const rc = r.color;
+      const color = rc ? (Device.isUsingDarkAppearance() ? rc.dark : rc.light) : (COLORS[i] || COLORS[0]);
       const row = body.addStack();
       row.layoutVertically();
       const img = row.addImage(barImage(r.percentage, color, barW, 8));

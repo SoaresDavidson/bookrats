@@ -11,6 +11,7 @@ class User:
     kosync_key: str | None
     goodreads_user_id: str | None
     api_token: str
+    color: str | None = None
 
 
 @dataclass
@@ -23,7 +24,7 @@ class Snapshot:
     document: str | None
 
 
-_USER_COLS = "id, name, kosync_username, kosync_key, goodreads_user_id, api_token"
+_USER_COLS = "id, name, kosync_username, kosync_key, goodreads_user_id, api_token, color"
 
 
 def _user(row: sqlite3.Row | None) -> User | None:
@@ -133,3 +134,8 @@ def latest_kosync(conn, user_id, document) -> sqlite3.Row | None:
     return conn.execute(
         "SELECT * FROM snapshots WHERE user_id=? AND source='kosync' AND document=? "
         "ORDER BY ts DESC, id DESC LIMIT 1", (user_id, document)).fetchone()
+
+
+def set_color(conn, user_id, color_id) -> None:
+    conn.execute("UPDATE users SET color=? WHERE id=?", (color_id, user_id))
+    conn.commit()

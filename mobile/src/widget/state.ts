@@ -25,7 +25,7 @@ function fromSummary(s: Summary, stale: boolean, now: Date): WidgetState {
     stale,
     readers: s.readers.map((r, i) => ({
       name: r.name,
-      color: READER_COLORS[i % READER_COLORS.length],
+      color: r.color?.dark ?? READER_COLORS[i % READER_COLORS.length],
       pct: pct(r.percentage),
       fill: r.percentage === null ? 0 : Math.min(1, Math.max(0, r.percentage)),
       session: sessionText(r.last_session),

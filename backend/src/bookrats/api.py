@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from pydantic import BaseModel, Field, field_validator
 
 from bookrats import store
+from bookrats.palette import PALETTE, effective_color
 from bookrats.covers import find_cover
 from bookrats.deps import get_conn, get_http
 from bookrats.sessions import Session, group_sessions
@@ -68,6 +69,15 @@ class CoverIn(BaseModel):
     _v = field_validator("cover_url")(_clean_cover_url)
 
 
+class ColorIn(BaseModel):
+    color: str
+
+
+def _color(cid: str) -> dict:
+    light, dark = PALETTE[cid]
+    return {"id": cid, "light": light, "dark": dark}
+
+
 class LinkIn(BaseModel):
     reading_id: int
 
@@ -76,11 +86,12 @@ class LinkIn(BaseModel):
 def summary(user: store.User = Depends(current_user), conn: sqlite3.Connection = Depends(get_conn)):
     reading = store.active_reading(conn)
     readers = []
-    for u in store.list_users(conn):
+    for i, u in enumerate(store.list_users(conn)):
         snaps = store.snapshots_for(conn, u.id, reading["id"]) if reading else []
         latest = snaps[-1] if snaps else None
         readers.append({
             "name": u.name,
+            "color": _color(effective_color(u, i)),
             "percentage": latest.percentage if latest else None,
             "updated_at": _iso(latest.ts) if latest else None,
             "source": latest.source if latest else None,
@@ -153,4 +164,21 @@ def link(hash: str, body: LinkIn, _: store.User = Depends(current_user),
         store.link_document(conn, hash, body.reading_id)
     except KeyError:
         raise HTTPException(404, "unknown document")
+    return Response(status_code=204)
+
+
+@router.get("/palette")
+def palette(_: store.User = Depends(current_user)):
+    return [_color(cid) for cid in PALETTE]
+
+
+@router.put("/me/color", status_code=204)
+def put_color(body: ColorIn, user: store.User = Depends(current_user),
+              conn: sqlite3.Connection = Depends(get_conn)):
+    if body.color not in PALETTE:
+        raise HTTPException(422, "unknown color")
+    for i, u in enumerate(store.list_users(conn)):
+        if u.id != user.id and effective_color(u, i) == body.color:
+            raise HTTPException(409, "cor em uso")
+    store.set_color(conn, user.id, body.color)
     return Response(status_code=204)
