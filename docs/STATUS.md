@@ -10,7 +10,7 @@ Handoff for the next session. Product spec: `docs/superpowers/specs/2026-10-08-b
 | Web (PWA) | `web/` | React 19, Vite, TS, Tailwind v4 (`src/styles/`), Vitest | `cd web && npx vitest run && npx tsc -b && npm run build` (97) |
 | Android widget app | `mobile/` | Expo SDK 57, react-native-android-widget, expo-secure-store, safe-area-context; Jest (jest-expo) + React Native Testing Library | `cd mobile && npm test && npx tsc --noEmit` (26) |
 | iPhone widget | `widgets/scriptable/bookrats.js` | Scriptable (iOS only) | `node --check widgets/scriptable/bookrats.js` |
-| Deploy | `backend/Dockerfile` (multi-stage, context = repo root), `deploy/docker-compose.yml` (+ cloudflared), `.dockerignore` | Docker | `docker build -f backend/Dockerfile -t bookrats .` |
+| Deploy | `backend/Dockerfile` (multi-stage, context = repo root), `deploy/docker-compose.yml` (+ Tailscale Funnel, `deploy/tailscale/serve.json`), `.dockerignore` | Docker | `docker build -f backend/Dockerfile -t bookrats .` |
 
 Lint and format: Biome for TS/JS/CSS (`biome.json` at the repo root, shared by `web/`, `mobile/` and `widgets/`; `npm run lint` / `npm run format` in `web/` or `mobile/`) and Ruff for Python (`[tool.ruff]` in `backend/pyproject.toml`; `uv run ruff check . && uv run ruff format .` in `backend/`). Line width 120 everywhere.
 
@@ -37,12 +37,11 @@ uv run uvicorn bookrats.asgi:app --port 8000   # open http://localhost:8000/app/
 ```
 
 ## Not done yet (needs the user / a device)
-1. Deploy on the homelab: Cloudflare Zero Trust tunnel → `deploy/.env` `TUNNEL_TOKEN`, `docker compose -f deploy/docker-compose.yml up -d`, create users with `docker compose exec bookrats bookrats add-user …`. On Cloudflare disable Bot Fight Mode / Browser Integrity Check for the hostname (they can block KOReader).
+1. Deploy on the homelab with Tailscale Funnel (see README "Deploy"): auth key → `deploy/.env` `TS_AUTHKEY`, `docker compose -f deploy/docker-compose.yml up -d --build`, create users with `docker compose exec bookrats bookrats add-user …`. Public URL: `https://bookrats.<tailnet>.ts.net`. Registration from KOReader is disabled by design; use Login.
 2. Configure readers: KOReader custom sync server; CrossPoint Settings → System → KOReader Sync (URL, document matching **Binary** on both devices, server type **Other**; CrossPoint sync is manual).
 3. Colleague: public Goodreads profile, progress updates in %; replace `backend/tests/fixtures/goodreads_updates.xml` (partly synthesized %) with his real feed and re-check the regexes.
 4. iPhone: install Scriptable, paste `widgets/scriptable/bookrats.js`, set `BASE` and `TOKEN` (see `widgets/scriptable/README.md`); untested on device.
 5. Android: build the APK on a machine with the Android SDK or via EAS (`mobile/README.md`); verify widget bars (fractional flex), tap refresh, keyboard behaviour (`KeyboardAvoidingView behavior="height"` may double-compensate).
-6. No git remote yet.
 
 ## Known minor follow-ups (non-blocking)
 - Shelf 40ms neighbour "wave" delay is neutralised by the cover fade transition.

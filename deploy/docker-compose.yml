@@ -1,12 +1,31 @@
 services:
+  # Joins the tailnet as "bookrats" and publishes https://bookrats.<tailnet>.ts.net
+  # to the internet with Tailscale Funnel (no domain, no open router port).
+  tailscale:
+    image: tailscale/tailscale:latest
+    hostname: bookrats
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY}
+      TS_HOSTNAME: bookrats
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - tailscale-state:/var/lib/tailscale
+      - ./tailscale:/config:ro
+    restart: unless-stopped
+
   bookrats:
     build:
       context: ..
       dockerfile: backend/Dockerfile
+    # Share the tailscale container's network so Funnel proxies to 127.0.0.1:8000.
+    network_mode: service:tailscale
     environment:
       BOOKRATS_DB: /data/bookrats.db
     volumes:
       - bookrats-data:/data
+    depends_on:
+      - tailscale
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthcheck')"]
       interval: 30s
@@ -14,14 +33,6 @@ services:
       retries: 3
     restart: unless-stopped
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate run
-    environment:
-      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
-    depends_on:
-      - bookrats
-    restart: unless-stopped
-
 volumes:
   bookrats-data:
+  tailscale-state:
