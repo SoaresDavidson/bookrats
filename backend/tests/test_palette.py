@@ -9,7 +9,9 @@ EXPECTED = [
 def test_palette_endpoint_order_and_values(client, davi):
     r = client.get("/api/palette", headers={"Authorization": "Bearer t-davi"})
     assert r.status_code == 200
-    assert r.json() == [{"id": i, "light": l, "dark": d} for i, l, d in EXPECTED]
+    labels = ["Azul", "Laranja", "Verde", "Roxo", "Rosa", "Ciano", "Âmbar", "Grafite"]
+    assert r.json() == [{"id": i, "label": n, "light": l, "dark": d}
+                        for (i, l, d), n in zip(EXPECTED, labels)]
 
 
 def test_palette_requires_auth(client, davi):

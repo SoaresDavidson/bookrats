@@ -25,12 +25,12 @@ const docs: UnlinkedDocument[] = [
   { hash: "gr:99", title: "Messias de Duna", authors: null, last_device: "goodreads", first_seen: 1760000000 },
 ];
 
+const LABELS = ["Azul", "Laranja", "Verde", "Roxo", "Rosa", "Ciano", "Âmbar", "Grafite"];
 const PALETTE = [
   ["azul", "#2F6FEB", "#6F9CF5"], ["laranja", "#D9480F", "#FF8A4C"], ["verde", "#2B8A3E", "#51CF66"],
   ["roxo", "#7048E8", "#9775FA"], ["rosa", "#D6336C", "#F06595"], ["ciano", "#0C8599", "#3BC9DB"],
   ["ambar", "#B76E00", "#FCC419"], ["grafite", "#495057", "#ADB5BD"],
-].map(([id, light, dark]) => ({ id, light, dark }));
-const LABELS = ["Azul", "Laranja", "Verde", "Roxo", "Rosa", "Ciano", "Âmbar", "Grafite"];
+].map(([id, light, dark], i) => ({ id, label: LABELS[i], light, dark }));
 
 const docRow = async (text: RegExp) => (await screen.findByText(text)).closest("li") as HTMLElement;
 

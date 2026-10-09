@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, field_validator
 from bookrats import store
 from bookrats.covers import find_cover
 from bookrats.deps import get_conn, get_http
-from bookrats.palette import PALETTE, effective_color, is_hex, resolve
+from bookrats.palette import LABELS, PALETTE, effective_color, is_hex, resolve
 from bookrats.sessions import Session, group_sessions
 
 router = APIRouter()
@@ -255,7 +255,7 @@ def link(hash: str, body: LinkIn, _: store.User = Depends(current_user),
 
 @router.get("/palette")
 def palette(_: store.User = Depends(current_user)):
-    return [_color(cid) for cid in PALETTE]
+    return [{**_color(cid), "label": LABELS[cid]} for cid in PALETTE]
 
 
 @router.put("/me/color", status_code=204)

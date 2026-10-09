@@ -23,8 +23,6 @@ const strike =
 const wheel =
   "bg-(image:--gradient-wheel) shadow-swatch before:content-['+'] before:absolute before:inset-1 before:grid before:place-items-center before:rounded-full before:bg-surface before:text-ink before:font-bold before:text-[1.1rem] before:leading-none";
 
-const LABELS: Record<string, string> = { azul: "Azul", laranja: "Laranja", verde: "Verde", roxo: "Roxo", rosa: "Rosa", ciano: "Ciano", ambar: "Âmbar", grafite: "Grafite" };
-
 interface Props {
   token: string;
   mine?: Reader;
@@ -132,7 +130,7 @@ export function ColorPicker({ token, mine, other, palette, refresh, guard }: Pro
                       key={c.id}
                       type="button"
                       className={`relative size-11 p-1 border-0 bg-transparent rounded-full ${taken ? "cursor-not-allowed" : "cursor-pointer"}`}
-                      aria-label={LABELS[c.id] ?? c.id}
+                      aria-label={c.label ?? c.id}
                       aria-pressed={pressed}
                       disabled={taken}
                       title={taken ? `Em uso por ${other!.name}` : undefined}

@@ -1,6 +1,7 @@
 export interface ColorOption {
   id: string;
   hex?: string;
+  label?: string;
   light: string;
   dark: string;
 }
