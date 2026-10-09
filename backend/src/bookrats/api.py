@@ -8,8 +8,8 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from pydantic import BaseModel, Field, field_validator
 
 from bookrats import store
-from bookrats.covers import find_cover
-from bookrats.deps import get_conn, get_http
+from bookrats.covers import find_cover, search_covers
+from bookrats.deps import get_conn, get_google_key, get_http
 from bookrats.palette import LABELS, PALETTE, effective_color, is_hex, resolve
 from bookrats.sessions import Session, group_sessions
 
@@ -159,10 +159,11 @@ async def post_reading(
     _: store.User = Depends(current_user),
     conn: sqlite3.Connection = Depends(get_conn),
     http: httpx.AsyncClient = Depends(get_http),
+    google_key: str | None = Depends(get_google_key),
 ):
     cover = body.cover_url
     if cover is None:
-        cover = await find_cover(http, body.title, body.author)
+        cover = await find_cover(http, body.title, body.author, google_key)
     return {"id": store.create_reading(conn, body.title, body.author, body.goodreads_book_id, cover)}
 
 
@@ -248,6 +249,7 @@ async def start_document(
     _: store.User = Depends(current_user),
     conn: sqlite3.Connection = Depends(get_conn),
     http: httpx.AsyncClient = Depends(get_http),
+    google_key: str | None = Depends(get_google_key),
 ):
     doc = conn.execute("SELECT * FROM documents WHERE hash=?", (hash,)).fetchone()
     if doc is None:
@@ -257,7 +259,7 @@ async def start_document(
     title = (doc["title"] or "").strip()
     if not title:
         raise HTTPException(422, "document has no title")
-    cover = await find_cover(http, title, doc["authors"])
+    cover = await find_cover(http, title, doc["authors"], google_key)
     gid = hash[3:] if hash.startswith("gr:") and len(hash) > 3 else None
     try:
         rid = store.start_from_document(conn, hash, title, doc["authors"], gid, cover)
@@ -304,3 +306,17 @@ def put_color(body: ColorIn, user: store.User = Depends(current_user), conn: sql
     if not store.claim_color(conn, user.id, color):
         raise HTTPException(409, "cor em uso")
     return Response(status_code=204)
+
+
+@router.get("/covers")
+async def covers(
+    title: str,
+    author: str | None = None,
+    _: store.User = Depends(current_user),
+    http: httpx.AsyncClient = Depends(get_http),
+    google_key: str | None = Depends(get_google_key),
+):
+    title = title.strip()
+    if not title or len(title) > 200:
+        raise HTTPException(422, "title must be 1-200 chars")
+    return await search_covers(http, title, (author or "").strip() or None, google_key)

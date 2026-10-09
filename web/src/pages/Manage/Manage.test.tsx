@@ -15,6 +15,7 @@ vi.mock("../../api/client", async (orig) => ({
   getPalette: vi.fn(),
   setColor: vi.fn(),
   startFromDocument: vi.fn(),
+  searchCovers: vi.fn(),
 }));
 
 import * as api from "../../api/client";
@@ -49,6 +50,14 @@ beforeEach(() => {
   vi.mocked(api.getPalette).mockReset().mockResolvedValue(PALETTE);
   vi.mocked(api.setColor).mockReset().mockResolvedValue(undefined);
   vi.mocked(api.startFromDocument).mockReset().mockResolvedValue({ id: 5 });
+  vi.mocked(api.searchCovers)
+    .mockReset()
+    .mockResolvedValue({
+      results: [
+        { url: "https://covers.openlibrary.org/b/id/9-L.jpg", title: "Duna", author: null, source: "openlibrary" },
+      ],
+      unavailable: [],
+    });
 });
 
 describe("Manage", () => {
@@ -343,5 +352,16 @@ describe("Manage", () => {
     const m = await screen.findByText("Esse documento já está ligado a uma leitura.");
     expect(m.className).toContain("danger");
     expect(screen.queryByText(/Algo deu errado/)).toBeNull();
+  });
+
+  it("Buscar capa opens the search modal and saves the picked cover", async () => {
+    const user = userEvent.setup();
+    render(<Manage token="tok" />);
+    await user.click(await screen.findByRole("button", { name: "Buscar capa" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(await within(dialog).findByRole("button", { name: /Usar capa: Duna/ }));
+    expect(api.setCover).toHaveBeenCalledWith("tok", expect.any(Number), "https://covers.openlibrary.org/b/id/9-L.jpg");
+    expect(await screen.findByText("Capa salva.")).toBeTruthy();
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

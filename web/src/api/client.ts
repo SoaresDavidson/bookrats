@@ -1,4 +1,4 @@
-import type { ColorOption, ReadingListItem, SessionOut, Summary, UnlinkedDocument } from "./types";
+import type { ColorOption, CoverSearchResult, ReadingListItem, SessionOut, Summary, UnlinkedDocument } from "./types";
 
 export class HttpError extends Error {
   status: number;
@@ -60,6 +60,12 @@ export const setCover = (token: string, readingId: number, coverUrl: string | nu
     method: "PATCH",
     body: JSON.stringify({ cover_url: coverUrl }),
   });
+
+export const searchCovers = (token: string, title: string, author?: string) => {
+  const q = new URLSearchParams({ title });
+  if (author) q.set("author", author);
+  return request<CoverSearchResult>(token, `/api/covers?${q}`);
+};
 
 export const getPalette = (token: string) => request<ColorOption[]>(token, "/api/palette");
 

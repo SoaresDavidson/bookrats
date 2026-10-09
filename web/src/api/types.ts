@@ -55,3 +55,16 @@ export interface ReadingListItem {
   created_at: string;
   readers: ReadingReader[];
 }
+
+export interface CoverOption {
+  url: string;
+  title: string | null;
+  author: string | null;
+  source: "openlibrary" | "google";
+}
+
+export interface CoverSearchResult {
+  results: CoverOption[];
+  /** Sources that failed (down, rate-limited, no quota) and returned nothing. */
+  unavailable: CoverOption["source"][];
+}

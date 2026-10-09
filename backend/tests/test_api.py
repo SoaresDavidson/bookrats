@@ -277,3 +277,58 @@ def test_put_color_own_current_ok(client, davi, colega):
 
 def test_put_color_requires_token(client, davi):
     assert client.put("/api/me/color", json={"color": "verde"}).status_code == 401
+
+
+def test_cover_search_endpoint(client, davi):
+    import httpx as _httpx
+
+    client.app.state.http = _httpx.AsyncClient(
+        transport=_httpx.MockTransport(
+            lambda r: (
+                _httpx.Response(200, json={"docs": [{"title": "Duna", "cover_i": 7}]})
+                if r.url.host == "openlibrary.org"
+                else _httpx.Response(200, json={})
+            )
+        )
+    )
+    h = {"Authorization": "Bearer t-davi"}
+    r = client.get("/api/covers", params={"title": "Duna", "author": "Frank Herbert"}, headers=h)
+    assert r.status_code == 200
+    assert r.json() == {
+        "results": [
+            {
+                "url": "https://covers.openlibrary.org/b/id/7-L.jpg",
+                "title": "Duna",
+                "author": None,
+                "source": "openlibrary",
+            }
+        ],
+        "unavailable": [],
+    }
+    assert client.get("/api/covers", params={"title": "  "}, headers=h).status_code == 422
+    assert client.get("/api/covers", params={"title": "Duna"}).status_code == 401
+
+
+def test_google_books_key_from_env_reaches_google(monkeypatch, db_path):
+    import httpx as _httpx
+    from fastapi.testclient import TestClient
+
+    from bookrats import db as _db
+    from bookrats import store as _store
+    from bookrats.main import create_app
+
+    monkeypatch.setenv("BOOKRATS_GOOGLE_BOOKS_KEY", "k-env")
+    app = create_app(db_path, start_poller=False)
+    seen = []
+
+    def handler(r):
+        seen.append(r)
+        return _httpx.Response(200, json={})
+
+    with TestClient(app) as c:
+        app.state.http = _httpx.AsyncClient(transport=_httpx.MockTransport(handler))
+        _store.add_user(_db.connect(db_path), "D", "t-d")
+        assert (
+            c.get("/api/covers", params={"title": "Duna"}, headers={"Authorization": "Bearer t-d"}).status_code == 200
+        )
+    assert [r.url.params["key"] for r in seen if r.url.host == "www.googleapis.com"] == ["k-env"]

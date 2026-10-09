@@ -14,6 +14,7 @@ import {
 import type { ColorOption, Summary, UnlinkedDocument } from "../../api/types";
 import { ColorPicker } from "../../components/ColorPicker/ColorPicker";
 import { Cover } from "../../components/Cover/Cover";
+import { CoverSearch } from "../../components/CoverSearch/CoverSearch";
 import { ui } from "../../lib/ui";
 
 interface Props {
@@ -30,6 +31,7 @@ export function Manage({ token, onAuthError }: Props) {
   const [grId, setGrId] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
   const [newCover, setNewCover] = useState("");
+  const [searching, setSearching] = useState(false);
   const [msg, setMsg] = useState("");
   const [msgErr, setMsgErr] = useState(false);
   const notify = (text: string, err = false) => {
@@ -270,7 +272,29 @@ export function Manage({ token, onAuthError }: Props) {
         >
           Salvar capa
         </button>
+        <button
+          className={`${ui.btn} ${ui.btnDefault}`}
+          type="button"
+          disabled={readingId === undefined}
+          onClick={() => setSearching(true)}
+        >
+          Buscar capa
+        </button>
       </form>
+      {searching && summary?.reading && (
+        <CoverSearch
+          token={token}
+          title={summary.reading.title}
+          author={summary.reading.author}
+          onClose={() => setSearching(false)}
+          onAuthError={onAuthError}
+          onPick={(url) => {
+            setSearching(false);
+            setCoverErr("");
+            void run("cover", () => setCover(token, readingId!, url), "Capa salva.");
+          }}
+        />
+      )}
 
       <section className={ui.card}>
         <h2 className={ui.sub}>Documentos sem leitura</h2>

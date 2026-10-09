@@ -35,6 +35,7 @@ def create_app(db_path: str, start_poller: bool = True) -> FastAPI:
 
     app = FastAPI(title="Bookrats", lifespan=lifespan)
     app.state.db_path = db_path
+    app.state.google_books_key = Settings.from_env().google_books_key
     app.state.start_poller = start_poller
 
     @app.exception_handler(kosync.KosyncError)

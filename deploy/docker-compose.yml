@@ -24,6 +24,8 @@ services:
     command: ["uvicorn", "bookrats.asgi:app", "--host", "127.0.0.1", "--port", "8000", "--proxy-headers"]
     environment:
       BOOKRATS_DB: /data/bookrats.db
+      # Optional: Google Books API key for cover search (works without one, with a lower quota).
+      BOOKRATS_GOOGLE_BOOKS_KEY: ${BOOKRATS_GOOGLE_BOOKS_KEY:-}
     volumes:
       - bookrats-data:/data
     depends_on:

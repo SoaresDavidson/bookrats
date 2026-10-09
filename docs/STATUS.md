@@ -18,9 +18,9 @@ Lint and format: Biome for TS/JS/CSS (`biome.json` at the repo root, shared by `
 - kosync server API for KOReader and CrossPoint (`/users/auth`, `PUT/GET /syncs/progress`, `/healthcheck`); sign-up disabled; every sync stored as a snapshot; CrossPoint metadata (title/authors) stored.
 - Goodreads updates RSS poller (15 min) for the colleague; progress items become document `gr:<book_id>`.
 - `/api/*` (bearer token per user): summary (reading + cover + per-reader pct, last session, color), sessions, manual progress, readings list/activate/patch, start reading from a document, link documents, palette, `PUT /api/me/color` (palette id or custom hex with contrast-safe variants).
-- Covers via Open Library, then Google Books (exact/prefix title match, never guesses); manual URL fallback.
+- Covers via Open Library, then Google Books (exact/prefix title match, never guesses); manual URL fallback. `GET /api/covers?title=&author=` returns every candidate from both sources for the "Buscar capa" modal in Gerenciar.
 - CLI: `bookrats add-user --name … --kosync-user … --kosync-password …` / `--goodreads-id …` (prints the API token), `bookrats set-goodreads --name … --goodreads-id …` (link an existing user), `bookrats new-reading --title … --author … --goodreads-book-id … --cover-url …`.
-- Env: `BOOKRATS_DB`, `BOOKRATS_GOODREADS_POLL_SECONDS`, `BOOKRATS_WEB_DIST`. Web served at `/app`.
+- Env: `BOOKRATS_DB`, `BOOKRATS_GOODREADS_POLL_SECONDS`, `BOOKRATS_WEB_DIST`, `BOOKRATS_GOOGLE_BOOKS_KEY` (optional). Web served at `/app`.
 
 ### Web features
 Tabs Progresso / Estante / Gerenciar. Dashboard: cover + one bar per reader (last session, delta), who is ahead, animated first-load bars, live count-up + glow on updates, retractable animated history. Estante: cover grid with dock magnification, skeleton + per-cover spinner, detail dialog (start/finish dates, days, who finished first, Retomar, Editar). Gerenciar: progress, new reading, cover, color picker (two circles + popover + custom color), unlinked documents ("Começar a ler este" / "É este livro"). Light/dark, pt-BR, reduced motion respected.

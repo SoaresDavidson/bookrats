@@ -24,3 +24,7 @@ def get_http(request: Request) -> httpx.AsyncClient:
     if getattr(state, "http", None) is None:
         state.http = new_http_client()
     return state.http
+
+
+def get_google_key(request: Request) -> str | None:
+    return getattr(request.app.state, "google_books_key", None)
