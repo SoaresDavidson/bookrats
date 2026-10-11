@@ -1,3 +1,7 @@
+import json
+
+import httpx
+
 from bookrats import store
 
 H = {"x-auth-user": "davi", "x-auth-key": "md5x"}
@@ -138,3 +142,67 @@ def test_put_numeric_progress_for_paged_documents(client, davi):
     b = {"document": "h1", "progress": 12, "percentage": 0.1, "device": "d", "device_id": "d"}
     assert client.put("/syncs/progress", json=b, headers=H).status_code == 200
     assert client.get("/syncs/progress/h1", headers=H).json()["progress"] == "12"
+
+
+def _upstream(client, handler):
+    client.app.state.kosync_upstream = "http://kosync:17200"
+    seen = []
+
+    def wrapped(req):
+        seen.append(req)
+        return handler(req)
+
+    client.app.state.http = httpx.AsyncClient(transport=httpx.MockTransport(wrapped))
+    return seen
+
+
+def test_put_mirrors_raw_body_to_upstream(client, davi):
+    seen = _upstream(client, lambda r: httpx.Response(200, json={"document": "h1", "timestamp": 1}))
+    body = {"document": "h1", "progress": "p", "percentage": 0.5, "device": "K", "device_id": "k", "position": {"x": 1}}
+    assert client.put("/syncs/progress", json=body, headers=H).status_code == 200
+    (req,) = seen
+    assert req.method == "PUT" and str(req.url) == "http://kosync:17200/syncs/progress"
+    assert req.headers["x-auth-user"] == "davi" and req.headers["x-auth-key"] == "md5x"
+    assert req.headers["accept"] == "application/vnd.koreader.v1+json"
+    assert json.loads(req.content)["position"] == {"x": 1}
+
+
+def test_get_reads_from_upstream(client, davi):
+    up = {"document": "h1", "progress": "up", "percentage": 0.9, "device": "Kobo", "device_id": "b", "timestamp": 5}
+    _upstream(client, lambda r: httpx.Response(200, json=up))
+    assert client.get("/syncs/progress/h1", headers=H).json() == up
+
+
+def test_get_falls_back_to_local_when_upstream_down(client, davi):
+    body = {"document": "h1", "progress": "local", "percentage": 0.3, "device": "K", "device_id": "k"}
+    client.put("/syncs/progress", json=body, headers=H)
+
+    def down(req):
+        raise httpx.ConnectError("down")
+
+    _upstream(client, down)
+    assert client.get("/syncs/progress/h1", headers=H).json()["progress"] == "local"
+
+
+def test_put_succeeds_when_upstream_down(client, conn, davi):
+    def down(req):
+        raise httpx.ConnectError("down")
+
+    _upstream(client, down)
+    body = {"document": "h9", "progress": "p", "percentage": 0.2, "device": "K", "device_id": "k"}
+    assert client.put("/syncs/progress", json=body, headers=H).status_code == 200
+    assert store.latest_kosync(conn, davi.id, "h9")["progress"] == "p"
+
+
+def test_put_succeeds_when_upstream_rejects(client, davi, caplog):
+    _upstream(client, lambda r: httpx.Response(401, json={"code": 2001, "message": "Unauthorized"}))
+    body = {"document": "h9", "progress": "p", "percentage": 0.2, "device": "K", "device_id": "k"}
+    assert client.put("/syncs/progress", json=body, headers=H).status_code == 200
+    assert "account missing" in caplog.text
+
+
+def test_get_falls_back_to_local_when_upstream_lacks_document(client, davi):
+    body = {"document": "h1", "progress": "local", "percentage": 0.3, "device": "K", "device_id": "k"}
+    client.put("/syncs/progress", json=body, headers=H)
+    _upstream(client, lambda r: httpx.Response(200, json={}))
+    assert client.get("/syncs/progress/h1", headers=H).json()["progress"] == "local"
